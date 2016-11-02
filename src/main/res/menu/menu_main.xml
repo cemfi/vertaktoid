@@ -1,0 +1,52 @@
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+
+    <group android:id="@+id/group_other">
+        <item
+            android:id="@+id/action_brush"
+            android:title="Erase"
+            android:icon="@drawable/brushon"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_cut"
+            android:title="Cut"
+            android:icon="@drawable/cutoff"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_erase"
+            android:title="Erase"
+            android:icon="@drawable/eraseroff"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_type"
+            android:title="Type"
+            android:icon="@drawable/textboxoff"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_open"
+            android:title="Type"
+            android:icon="@drawable/folderoutline"
+            app:showAsAction="always" />
+    </group>
+
+    <group android:id="@+id/group_navigation">
+        <item
+            android:id="@+id/action_minus"
+            android:title="Type"
+            android:icon="@drawable/arrowleft"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_plus"
+            android:title="Type"
+            android:icon="@drawable/arrowright"
+            app:showAsAction="always" />
+    </group>
+</menu>
