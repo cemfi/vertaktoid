@@ -1,4 +1,4 @@
-﻿# FeedbackSchere
+# Feedback
 
 - Schere in beide Dimensionen
 - Tools sollten nicht gewählt werden müssen
