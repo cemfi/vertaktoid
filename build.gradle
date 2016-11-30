@@ -3,9 +3,11 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 22
     buildToolsVersion "24.0.1"
-
+    repositories {
+        maven { url 'http://repo1.maven.org/maven2' }
+    }
     defaultConfig {
-        applicationId "zemfi.de.vertacktoid"
+        applicationId "zemfi.de.vertaktoid"
         minSdkVersion 19
         targetSdkVersion 22
         versionCode 1
@@ -16,6 +18,23 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            debuggable false
+        }
+    }
+
+    dataBinding {
+        enabled = true
+    }
+}
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.2'
     }
 }
 

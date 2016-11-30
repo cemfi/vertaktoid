@@ -1,26 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".MainActivity"
-    tools:showIn="@layout/activity_main">
+<layout>
+    <data>
+        <import type="zemfi.de.vertaktoid.FacsimileView"/>
+        <import type="zemfi.de.vertaktoid.Facsimile"/>
+        <import type="zemfi.de.vertaktoid.Page"/>
+        <import type="zemfi.de.vertaktoid.BindingUtils"/>
+        <import type="zemfi.de.vertaktoid.Status"/>
+        <import type="android.text.format.DateFormat"/>
+        <variable
+            name="fview"
+            type="zemfi.de.vertaktoid.FacsimileView"/>
+        <variable
+            name="cstatus"
+            type="zemfi.de.vertaktoid.Status"/>
 
-    <zemfi.de.vertacktoid.FacsimileView
-        android:id="@+id/custom_view"
+    </data>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/toolbar_bottom" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:context=".MainActivity"
+        tools:showIn="@layout/activity_main">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar_bottom"
-        android:layout_width="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:popupTheme="@style/AppTheme.PopupOverlay"
-        android:visibility="gone"/>
+        <zemfi.de.vertaktoid.FacsimileView
+            android:id="@+id/custom_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/toolbar_bottom" />
 
-</RelativeLayout>
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar_bottom"
+            android:layout_width="match_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_height="20dp"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay">
+            <RelativeLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:paddingRight="16dp"
+                android:layout_height="match_parent">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:textColor="#FFFFFF"
+                    android:typeface="monospace"
+                    android:text="@{fview.currentPath}"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:textColor="#FFFFFF"
+                    android:typeface="monospace"
+                    android:text="@{String.format(@string/status_format, BindingUtils.string(cstatus.status), BindingUtils.string(cstatus.action), DateFormat.format(@string/status_date_format,cstatus.date))}"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:textColor="#FFFFFF"
+                    android:typeface="monospace"
+                    android:text="@{String.valueOf(fview.pageNumber + 1) + '/' + String.valueOf(fview.maxPageNumber)}"/>
+            </RelativeLayout>
+            </android.support.v7.widget.Toolbar>
+
+    </RelativeLayout>
+</layout>

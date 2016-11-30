@@ -1,14 +1,16 @@
-package zemfi.de.vertacktoid;
+package zemfi.de.vertaktoid;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
@@ -16,19 +18,49 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
 import java.io.File;
-import java.util.ArrayList;
+import android.text.format.DateFormat;
 
+import java.util.Date;
 
+import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
+import android.databinding.DataBindingUtil;
 
 public class MainActivity extends AppCompatActivity {
 
-    final String TAG = "de.zemfi.vertacktoid";
+    final String TAG = "de.zemfi.vertaktoid";
+    private Handler tmpSaveHandler = new Handler();
+    private Runnable tmpSaveRunnable = new Runnable() {
+        @Override
+        public void run() {
+            saveTemporaryMEI();
+            tmpSaveHandler.postDelayed(this, 300000);
+        }
+    };
+
+    protected void saveTemporaryMEI() {
+        FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
+        if(view.needToSave) {
+            Date saveDate = new Date();
+            String filename = "" + DateFormat.format("dd-MM-yyyy_kk-mm-ss", saveDate) + ".mei";
+            if (view.getFacsimile() != null) {
+                boolean result = view.getFacsimile().saveToDisk(path, filename);
+                status.setDate(saveDate);
+                status.setAction(R.string.action_tmp_save);
+                if (result) status.setStatus(R.string.status_success);
+                else status.setStatus(R.string.status_fail);
+            }
+            view.needToSave = false;
+        }
+    }
+
+    final Status status = new Status();
 
     private String getContentName(ContentResolver resolver, Uri uri){
         Cursor cursor = resolver.query(uri, null, null, null, null);
@@ -46,14 +78,42 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
+        ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         SubsamplingScaleImageView view = (SubsamplingScaleImageView) findViewById(R.id.custom_view);
-        view.setImage(ImageSource.resource(R.drawable.handel));
+        view.setMinimumDpi(40);
+        FacsimileView facsimileView = (FacsimileView) findViewById(R.id.custom_view);
 
+        SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
+        path = prefs.getString("zemfi.de.vertaktoid.path", "");
+        if(!path.equals("")) {
+            Facsimile facsimile = new Facsimile();
+            facsimile.openDirectory(path);
+
+            facsimileView.setFacsimile(facsimile);
+            status.setDate(new Date());
+            status.setAction(R.string.action_load);
+            status.setStatus(R.string.status_success);
+        } else {
+            view.setImage(ImageSource.resource(R.drawable.handel));
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    actionOpen();
+                }
+            });
+        }
+
+        binding.setFview(facsimileView);
+        status.setStatus(R.string.status_success);
+        status.setAction(R.string.action_start);
+        binding.setCstatus(status);
 
         Intent intent = getIntent();
         String action = intent.getAction();
@@ -66,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         meiInOut = new MEIInOut();
+        tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
 
     }
 
@@ -79,14 +140,18 @@ public class MainActivity extends AppCompatActivity {
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         path = savedInstanceState.getString("path");
-    }
 
+    }
 
     @Override
     protected void onPause() {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
         if (view.getFacsimile() != null) {
-            view.getFacsimile().saveToDisk();
+            boolean result = view.getFacsimile().saveToDisk();
+            status.setDate(new Date());
+            status.setAction(R.string.action_save);
+            if(result) status.setStatus(R.string.status_success);
+            else status.setStatus(R.string.status_fail);
         }
         super.onPause();
     }
@@ -145,16 +210,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if (id == R.id.action_open) {
 
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("*/*");
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-            try {
-                startActivityForResult(Intent.createChooser(intent, "Choose Directory"), 0);
-            } catch (android.content.ActivityNotFoundException ex) {
-                // Potentially direct the user to the Market with a Dialog
-                Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
-            }
+            actionOpen();
             view.resetMenu();
 
         }
@@ -174,6 +230,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void actionOpen() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        try {
+            startActivityForResult(Intent.createChooser(intent, "Choose Directory"), 0);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+        }
+    }
 
 
     String path = null;
@@ -189,13 +257,26 @@ public class MainActivity extends AppCompatActivity {
                     File jpgFile = new File(path);
                     File f = new File(jpgFile.getParent());
                     path = f.getAbsolutePath();
-                    Log.v("path: ", path);
+                    //Log.v("path: ", path);
 
                     Facsimile facsimile = new Facsimile();
                     facsimile.openDirectory(path);
 
                     FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
                     view.setFacsimile(facsimile);
+                    status.setDate(new Date());
+                    status.setAction(R.string.action_load);
+                    status.setStatus(R.string.status_success);
+                    view.setOnClickListener(null);
+
+                    SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor mEditor = prefs.edit();
+                    mEditor.putString("zemfi.de.vertaktoid.path", path).apply();
+                }
+                else {
+                    status.setDate(new Date());
+                    status.setAction(R.string.action_load);
+                    status.setStatus(R.string.status_fail);
 
                 }
                 break;

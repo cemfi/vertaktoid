@@ -1,6 +1,4 @@
-package zemfi.de.vertacktoid;
-
-import android.graphics.PointF;
+package zemfi.de.vertaktoid;
 
 import java.io.Serializable;
 

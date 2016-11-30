@@ -1,8 +1,7 @@
-package zemfi.de.vertacktoid;
+package zemfi.de.vertaktoid;
 
 import java.io.File;
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -63,8 +62,13 @@ public class Facsimile implements Serializable {
         }
     }
 
-    public void saveToDisk() {
+    public boolean saveToDisk() {
         MEIInOut meiInOut = new MEIInOut();
-        meiInOut.writeMei(path, pages, files);
+        return meiInOut.writeMei(path, pages, files);
+    }
+
+    public boolean saveToDisk(String path, String filename) {
+        MEIInOut meiInOut = new MEIInOut();
+        return meiInOut.writeMei(path, filename, pages, files);
     }
 }

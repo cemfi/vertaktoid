@@ -1,8 +1,4 @@
-package zemfi.de.vertacktoid;
-
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.util.Log;
+package zemfi.de.vertaktoid;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -105,6 +101,15 @@ public class Page implements Serializable {
             count += lines.get(i).boxes.size();
         }
         return count;
+    }
+
+    public ArrayList<Box> getBoxes() {
+        ArrayList<Box> boxes = new ArrayList<>();
+        int i;
+        for(i = 0 ; i < lines.size(); i++) {
+            boxes.addAll(lines.get(i).boxes);
+        }
+        return boxes;
     }
 
     public Box getBox(int i) {

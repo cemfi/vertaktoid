@@ -1,10 +1,7 @@
-package zemfi.de.vertacktoid;
-
-import android.util.Log;
+package zemfi.de.vertaktoid;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Vector;
 
 /**
  * Created by aristotelis on 01.08.16.

@@ -1,17 +1,13 @@
-package zemfi.de.vertacktoid;
+package zemfi.de.vertaktoid;
 
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Environment;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.Collection;
 import java.util.UUID;
 
 import nu.xom.*;
@@ -58,6 +54,79 @@ public class MEIInOut {
         score.appendChild(section);
     }
 
+
+    Element lastMeasure = null;
+    String lastMeasureName = null;
+    String lastUuidZone = null;
+    private  void addFileWithZones(String filename, Collection<Box> boxes) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        BitmapFactory.decodeFile(filename, options);
+        int imageHeight = options.outHeight;
+        int imageWidth = options.outWidth;
+
+        Element graphic = new Element("graphic");
+        Attribute a = new Attribute("target", filename.substring(filename.lastIndexOf("/") + 1));
+        a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
+        graphic.addAttribute(a);
+        a = new Attribute("type", "facsimile");
+        graphic.addAttribute(a);
+        a = new Attribute("width", "" + imageWidth);
+        graphic.addAttribute(a);
+        a = new Attribute("height", "" + imageHeight);
+        graphic.addAttribute(a);
+
+        for (Box box: boxes) {
+            String uuidZone = UUID.randomUUID().toString();
+            a = new Attribute("id", uuidZone);
+            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
+            Element zone = new Element("zone");
+            zone.addAttribute(a);
+            a = new Attribute("type", "measure");
+            zone.addAttribute(a);
+            a = new Attribute("ulx", "" + box.left);
+            zone.addAttribute(a);
+            a = new Attribute("uly", "" + box.top);
+            zone.addAttribute(a);
+            a = new Attribute("lrx", "" + box.right);
+            zone.addAttribute(a);
+            a = new Attribute("lry", "" + box.bottom);
+            zone.addAttribute(a);
+            graphic.appendChild(zone);
+
+            String newMeasureName;
+            if (box.manualSequenceNumber != null) {
+                newMeasureName = box.manualSequenceNumber;
+            } else {
+                newMeasureName = "" + box.sequenceNumber;
+            }
+            if (lastMeasureName == null || !newMeasureName.equals(lastMeasureName)) {
+                // new zone and new measure
+                Element measure = new Element("measure");
+                a = new Attribute("n", newMeasureName);
+
+                measure.addAttribute(a);
+                String uuidMeasure = UUID.randomUUID().toString();
+                a = new Attribute("id", uuidMeasure);
+                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
+                measure.addAttribute(a);
+                a = new Attribute("facs", uuidZone);
+                measure.addAttribute(a);
+                section.appendChild(measure);
+                lastMeasure = measure;
+                lastMeasureName = newMeasureName;
+                lastUuidZone = uuidZone;
+            } else {
+                // new zone for old measure
+                lastUuidZone = lastUuidZone + " " + uuidZone;
+                a = new Attribute("facs", lastUuidZone);
+                lastMeasure.addAttribute(a);
+            }
+        }
+
+        surface.appendChild(graphic);
+    }
+
+    @Deprecated
     private void addFile(String filename) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         BitmapFactory.decodeFile(filename, options);
@@ -77,9 +146,7 @@ public class MEIInOut {
         surface.appendChild(graphic);
     }
 
-    Element lastMeasure = null;
-    String lastMeasureName = null;
-    String lastUuidZone = null;
+    @Deprecated
     void addZone(Box box) {
         String uuidZone = UUID.randomUUID().toString();
         Attribute a = new Attribute("id", uuidZone);
@@ -128,31 +195,30 @@ public class MEIInOut {
         }
     }
 
-    public boolean writeMei(String filename, ArrayList<Page> pages, ArrayList<String> files) {
+
+    public boolean writeMei(String path, ArrayList<Page> pages, ArrayList<String> files) {
+        return writeMei(path, "mei.mei", pages, files);
+    }
+
+
+    public boolean writeMei(String path, String filename, ArrayList<Page> pages, ArrayList<String> files) {
 
         makEmptyMei();
-        int i;
 
+        int i;
         for (i = 0; i < pages.size(); i++) {
-            addFile(files.get(i));
-            Page page = pages.get(i);
-            int j;
-            for (j = 0; j < page.numberOfBoxes(); j++) {
-                Box box = page.getBox(j);
-                addZone(box);
-            }
+            addFileWithZones(files.get(i), pages.get(i).getBoxes());
         }
 
-        if (filename == null) {
+        if (path == null) {
             return false;
         }
         // create the file in the file system
         boolean returnValue = true;
 
-        File myDir = new File(filename);
+        File myDir = new File(path);
         myDir.mkdirs();
-        String fname = "mei.mei";
-        File file = new File (myDir, fname);
+        File file = new File (myDir, filename);
         Log.d("zemfi", "path : " + file.getAbsolutePath());
         if (file.exists ()) file.delete ();
         try {
@@ -163,7 +229,7 @@ public class MEIInOut {
                 serializer.setIndent(4);                                // specify indents in xml code
                 serializer.write(this.meiDocument);                             // write data from mei to file
             } catch (IOException e) {
-                Log.v("Vertacktoid", "IOException");
+                Log.v("Vertaktoid", "IOException");
                 e.printStackTrace();
                 returnValue = false;
             } catch (NullPointerException e) {
@@ -227,25 +293,26 @@ public class MEIInOut {
         Element facsimile = facsimiles.get(0);
         Elements surfaces = facsimile.getChildElements("surface");
         Element surface = surfaces.get(0);
-        Elements insideSurface = surface.getChildElements();
+        Elements graphics = surface.getChildElements("graphic");
 
-        Page currentPage = null;
         int i;
-        for (i = 0; i < insideSurface.size(); i++) {
-            Element element = insideSurface.get(i);
-            if (element.getLocalName().equals("graphic")) {
-                String filename = element.getAttributeValue("target", "http://www.w3.org/XML/1998/namespace");
-                if (currentPage != null) {
-                    result.add(currentPage);
-                }
-                currentPage = new Page();
-                currentPage.filename = filename;
-            } else if (element.getLocalName().equals("zone")) {
-                float ulx = Float.parseFloat(element.getAttributeValue("ulx"));
-                float uly = Float.parseFloat(element.getAttributeValue("uly"));
-                float lrx = Float.parseFloat(element.getAttributeValue("lrx"));
-                float lry = Float.parseFloat(element.getAttributeValue("lry"));
-                String uuidZone = element.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
+        for(i = 0; i < graphics.size(); i++) {
+            Element graphic = graphics.get(i);
+            String filename = graphic.getAttributeValue("target", "http://www.w3.org/XML/1998/namespace");
+            Page currentPage = new Page();
+            currentPage.filename = filename;
+
+            Elements zones = graphic.getChildElements("zone");
+
+            int j;
+            for(j = 0; j < zones.size(); j++) {
+                Element zone = zones.get(j);
+
+                float ulx = Float.parseFloat(zone.getAttributeValue("ulx"));
+                float uly = Float.parseFloat(zone.getAttributeValue("uly"));
+                float lrx = Float.parseFloat(zone.getAttributeValue("lrx"));
+                float lry = Float.parseFloat(zone.getAttributeValue("lry"));
+                String uuidZone = zone.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
                 Element measure = findMeasureFor(uuidZone);
                 String uuidMeasure = measure.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
                 String name = measure.getAttributeValue("n");
@@ -256,6 +323,8 @@ public class MEIInOut {
                 box.measureUuid = uuidMeasure;
                 currentPage.addBox(box);
             }
+
+            result.add(currentPage);
         }
         this.pages = result;
     }

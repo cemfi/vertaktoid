@@ -1,3 +1,13 @@
 <resources>
-    <string name="app_name">Vertacktoid</string>
+    <string name="app_name">Vertaktoid</string>
+    <string name="status_success">Successful</string>
+    <string name="status_fail">Failure</string>
+    <string name="status_unknown">Unknown status</string>
+    <string name="action_start">Application Started</string>
+    <string name="action_save">Saved</string>
+    <string name="action_tmp_save">Temporary Saved</string>
+    <string name="action_load">Loaded</string>
+    <string name="action_unknown">Unknown action</string>
+    <string name="status_format">%1$s: %2$s at %3$s.</string>
+    <string name="status_date_format">hh:mm:ss</string>
 </resources>
