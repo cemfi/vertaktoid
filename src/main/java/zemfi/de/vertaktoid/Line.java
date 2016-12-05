@@ -12,6 +12,7 @@ public class Line implements Serializable {
     public ArrayList<Box> boxes = new ArrayList<Box>();
 
     public void addBox(Box box) {
+
         if (box.top < this.top) {
             this.top = box.top;
         }
@@ -40,6 +41,31 @@ public class Line implements Serializable {
         }
     }
 
+    /*public boolean isContained(Box box) {
+        if(box.top > bottom || box.bottom < top) return false;
+        if(box.top < top && box.bottom > bottom) return true;
+        float boxHeight = box.bottom - box.top;
+        float intersectionHeight = bottom - box.top;
+        System.out.println(intersectionHeight / boxHeight > 0.5f);
+        return intersectionHeight / boxHeight > 0.5f;
+    }*/
+
+    public void recalcSize(){
+        float minY = Float.POSITIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+        for(int i = 0; i < boxes.size(); i++) {
+            if(minY > boxes.get(i).top) {
+                minY = boxes.get(i).top;
+            }
+            if(maxY < boxes.get(i).bottom) {
+                maxY = boxes.get(i).bottom;
+            }
+        }
+
+        top = minY;
+        bottom = maxY;
+    }
+
     public boolean isContained(Box box) {
         // returns true if the smaller element (box or line) is contained at least 50% in the larger element
 
@@ -47,7 +73,6 @@ public class Line implements Serializable {
         float smallerBottom;
         float largerTop;
         float largerBottom;
-
         if (box.bottom - box.top < bottom - top) {
             // box is smaller than line
             smallerTop = box.top;

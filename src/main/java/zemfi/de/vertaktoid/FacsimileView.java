@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -16,10 +17,13 @@ import android.os.Parcelable;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
+import android.graphics.Point;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
@@ -278,6 +282,30 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
         canvas.drawPath(drawPath, drawPaint);
         canvas.drawPath(polygonHoverPath, drawPaint);
+
+        //uncomment the following line to enable the lines drawing for debugging
+        //debugLinesDraw(canvas);
+    }
+
+    @Deprecated
+    private void debugLinesDraw(Canvas canvas) {
+        Paint linesPaint = new Paint();
+        linesPaint.setColor(Color.BLUE);
+        linesPaint.setStrokeWidth(2);
+        linesPaint.setStyle(Paint.Style.STROKE);
+
+        Context context = Vertaktoid.getAppContext();
+        WindowManager vm = (WindowManager) context.getSystemService(context.WINDOW_SERVICE);
+        Display display = vm.getDefaultDisplay();
+        Point size = new Point();
+        display.getRealSize(size);
+
+        for(int j = 0; j < document.pages.get(pageNumber.get()).lines.size(); j ++) {
+            Line line = document.pages.get(pageNumber.get()).lines.get(j);
+            PointF lineTopLeft = transformCoordBitmapToTouch(0, line.top);
+            PointF lineBottomLeft = transformCoordBitmapToTouch(size.x, line.bottom);
+            canvas.drawRect(0, lineTopLeft.y, size.x, lineBottomLeft.y, linesPaint);
+        }
     }
 
 

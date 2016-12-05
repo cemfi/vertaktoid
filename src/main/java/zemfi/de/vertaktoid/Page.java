@@ -31,7 +31,9 @@ public class Page implements Serializable {
             int i;
             for (i = 0; i < lines.size(); i++) {
                 if(lines.get(i).isContained(box)) {
+                    System.out.println("add box in existing line");
                     lines.get(i).addBox(box);
+                    //TODO what will be happen, if the box can be contained in more that one line?
                     break;
                 }
             }
@@ -94,6 +96,21 @@ public class Page implements Serializable {
         endsWith = sequenceNumber - 1;
     }
 
+    public void cleanLines() {
+        for(int i = 0; i < lines.size(); i++) {
+            cleanLines(i);
+        }
+    }
+
+    public  void cleanLines(int index) {
+        if(lines.get(index).boxes.size() == 0) {
+            lines.remove(index);
+        }
+        else {
+            lines.get(index).recalcSize();
+        }
+    }
+
     public int numberOfBoxes() {
         int count = 0;
         int i;
@@ -131,6 +148,7 @@ public class Page implements Serializable {
                 if(box.containsPoint(x, y)) {
                     lines.get(i).boxes.remove(j);
                     updateSequenceNumbers();
+                    cleanLines(i);
                     return true;
                 }
             }
@@ -148,12 +166,14 @@ public class Page implements Serializable {
                 Box box = lines.get(i).boxes.get(j);
                 if(box.containsLine(startX, startY, endX, endY)) {
                     lines.get(i).boxes.remove(j);
+                    //TODO check that line[i] is not empty. If empty - remove line.
                     hasDeleted = true;
                 }
             }
         }
         if (hasDeleted) {
             updateSequenceNumbers();
+            cleanLines();
         }
         return hasDeleted;
     }
