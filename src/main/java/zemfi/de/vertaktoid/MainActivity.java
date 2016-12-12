@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -142,7 +143,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
-        view.setImage(ImageSource.uri(Uri.fromFile(new File(view.document.pages.get(view.pageNumber.get()).filePath))));
+        if(view.document != null) {
+            view.setImage(ImageSource.uri(Uri.fromFile(new File(view.document.pages.get(view.pageNumber.get()).filePath))));
+        }
         super.onResume();
     }
 

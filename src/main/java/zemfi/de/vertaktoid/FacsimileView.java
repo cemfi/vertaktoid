@@ -144,6 +144,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
     }
 
     public void setPage(int page) {
+        if(document == null) {
+            return;
+        }
         if (page >= 0 && page < document.pages.size()) {
             this.pageNumber.set(page);
             setImage(ImageSource.uri(Uri.fromFile(new File(document.pages.get(pageNumber.get()).filePath))));
