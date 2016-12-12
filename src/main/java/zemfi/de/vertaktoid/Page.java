@@ -1,5 +1,7 @@
 package zemfi.de.vertaktoid;
 
+import android.graphics.BitmapFactory;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -7,19 +9,33 @@ import java.util.ArrayList;
  * Created by aristotelis on 01.08.16.
  */
 public class Page implements Serializable {
-    ArrayList<Line> lines = new ArrayList<Line>();
+    ArrayList<Line> lines = new ArrayList<>();
+    String fileName;
+    String filePath;
 
+    int imageWidth;
+    int imageHeight;
 
-    public Page() {
-        
+    int startsWith = 1;
+    int endsWith = 0;
+
+    Page(String filename) {
+        this.fileName = filename;
+        filePath = "";
     }
-    public String filename;
 
+    void calculateDimensions() {
+        if(filePath.equals("")) { return;}
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        //The option inJustDecodeBounds is very important here.
+        //Without this option the Bitmap will be read and stored in the memory, what cause the memory leaks.
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(filePath, options);
+        imageHeight = options.outHeight;
+        imageWidth = options.outWidth;
+    }
 
-    public int startsWith = 1;
-    public int endsWith = 0;
-
-    public void addBox(Box box) {
+    void addBox(Box box) {
         if (lines.size() == 0) {
             // create new first line
             Line aLine = new Line();
@@ -60,12 +76,12 @@ public class Page implements Serializable {
         updateSequenceNumbers();
     }
 
-    public void addBox(float left, float right, float top, float bottom) {
+    void addBox(float left, float right, float top, float bottom) {
         Box box = new Box(left, right, top, bottom);
         addBox(box);
     }
 
-    public void updateSequenceNumbers() {
+    void updateSequenceNumbers() {
         int sequenceNumber = startsWith;
 
         int i;
@@ -96,13 +112,13 @@ public class Page implements Serializable {
         endsWith = sequenceNumber - 1;
     }
 
-    public void cleanLines() {
+    private void cleanLines() {
         for(int i = 0; i < lines.size(); i++) {
             cleanLines(i);
         }
     }
 
-    public  void cleanLines(int index) {
+    private   void cleanLines(int index) {
         if(lines.get(index).boxes.size() == 0) {
             lines.remove(index);
         }
@@ -111,7 +127,7 @@ public class Page implements Serializable {
         }
     }
 
-    public int numberOfBoxes() {
+    int numberOfBoxes() {
         int count = 0;
         int i;
         for (i = 0; i < lines.size(); i++) {
@@ -120,7 +136,7 @@ public class Page implements Serializable {
         return count;
     }
 
-    public ArrayList<Box> getBoxes() {
+    ArrayList<Box> getBoxes() {
         ArrayList<Box> boxes = new ArrayList<>();
         int i;
         for(i = 0 ; i < lines.size(); i++) {
@@ -129,7 +145,7 @@ public class Page implements Serializable {
         return boxes;
     }
 
-    public Box getBox(int i) {
+    Box getBox(int i) {
         int currentLine = 0;
         int firstBoxInLine = 0;
         while (i >= firstBoxInLine + lines.get(currentLine).boxes.size()) {
@@ -139,7 +155,7 @@ public class Page implements Serializable {
         return lines.get(currentLine).boxes.get(i - firstBoxInLine);
     }
 
-    public boolean deleteBox(float x, float y) {
+    boolean deleteBox(float x, float y) {
         int i;
         for (i = 0; i < lines.size(); i++) {
             int j;
@@ -156,7 +172,7 @@ public class Page implements Serializable {
         return false;
     }
 
-    public boolean deleteBox(float startX, float startY, float endX, float endY) {
+    boolean deleteBox(float startX, float startY, float endX, float endY) {
         //Log.v("bla", "delete from (" + startX + ", " + startY + ") to (" + endX + ", " + endY + ")");
         boolean hasDeleted = false;
         int i;
@@ -178,7 +194,7 @@ public class Page implements Serializable {
         return hasDeleted;
     }
 
-    public Box getBoxAt(float x, float y) {
+    Box getBoxAt(float x, float y) {
         int i;
         for (i = 0; i < lines.size(); i++) {
             int j;
@@ -192,7 +208,7 @@ public class Page implements Serializable {
         return null;
     }
 
-    public void stripManualSequenceNumbers() {
+    void stripManualSequenceNumbers() {
         updateSequenceNumbers();
         int i;
         for (i = 0; i < lines.size(); i++) {

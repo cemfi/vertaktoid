@@ -1,27 +1,26 @@
 package zemfi.de.vertaktoid;
 
-import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.UUID;
+import java.util.Collection;
 
 import nu.xom.*;
 
 /**
  * Created by aristotelis on 08.08.16.
  */
-public class MEIInOut {
+class MEIInOut {
 
-    nu.xom.Document meiDocument;
+    private nu.xom.Document meiDocument;
 
 
-    Element surface;
-    Element section;
+    private Element surface;
+    private Element section;
 
     private void makEmptyMei() {
         Element mei = new Element("mei");
@@ -55,25 +54,23 @@ public class MEIInOut {
     }
 
 
-    Element lastMeasure = null;
-    String lastMeasureName = null;
-    String lastUuidZone = null;
-    private  void addFileWithZones(String filename, Collection<Box> boxes) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        BitmapFactory.decodeFile(filename, options);
-        int imageHeight = options.outHeight;
-        int imageWidth = options.outWidth;
+    private Element lastMeasure = null;
+    private String lastMeasureName = null;
+    private String lastUuidZone = null;
+    private  void addPage(Page page) {
 
         Element graphic = new Element("graphic");
-        Attribute a = new Attribute("target", filename.substring(filename.lastIndexOf("/") + 1));
+        Attribute a = new Attribute("target", page.fileName);
         a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
         graphic.addAttribute(a);
         a = new Attribute("type", "facsimile");
         graphic.addAttribute(a);
-        a = new Attribute("width", "" + imageWidth);
+        a = new Attribute("width", "" + page.imageWidth);
         graphic.addAttribute(a);
-        a = new Attribute("height", "" + imageHeight);
+        a = new Attribute("height", "" + page.imageHeight);
         graphic.addAttribute(a);
+
+        Collection<Box> boxes = page.getBoxes();
 
         for (Box box: boxes) {
             String uuidZone = UUID.randomUUID().toString();
@@ -126,88 +123,19 @@ public class MEIInOut {
         surface.appendChild(graphic);
     }
 
-    @Deprecated
-    private void addFile(String filename) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        BitmapFactory.decodeFile(filename, options);
-        int imageHeight = options.outHeight;
-        int imageWidth = options.outWidth;
 
-        Element graphic = new Element("graphic");
-        Attribute a = new Attribute("target", filename.substring(filename.lastIndexOf("/") + 1));
-        a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-        graphic.addAttribute(a);
-        a = new Attribute("type", "facsimile");
-        graphic.addAttribute(a);
-        a = new Attribute("width", "" + imageWidth);
-        graphic.addAttribute(a);
-        a = new Attribute("height", "" + imageHeight);
-        graphic.addAttribute(a);
-        surface.appendChild(graphic);
-    }
-
-    @Deprecated
-    void addZone(Box box) {
-        String uuidZone = UUID.randomUUID().toString();
-        Attribute a = new Attribute("id", uuidZone);
-        a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
-        Element e = new Element("zone");
-        e.addAttribute(a);
-        a = new Attribute("type", "measure");
-        e.addAttribute(a);
-        a = new Attribute("ulx", "" + box.left);
-        e.addAttribute(a);
-        a = new Attribute("uly", "" + box.top);
-        e.addAttribute(a);
-        a = new Attribute("lrx", "" + box.right);
-        e.addAttribute(a);
-        a = new Attribute("lry", "" + box.bottom);
-        e.addAttribute(a);
-        surface.appendChild(e);
-
-        String newMeasureName;
-        if (box.manualSequenceNumber != null) {
-            newMeasureName = box.manualSequenceNumber;
-        } else {
-            newMeasureName = "" + box.sequenceNumber;
-        }
-        if (lastMeasureName == null || !newMeasureName.equals(lastMeasureName)) {
-            // new zone and new measure
-            Element measure = new Element("measure");
-            a = new Attribute("n", newMeasureName);
-
-            measure.addAttribute(a);
-            String uuidMeasure = UUID.randomUUID().toString();
-            a = new Attribute("id", uuidMeasure);
-            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-            measure.addAttribute(a);
-            a = new Attribute("facs", uuidZone);
-            measure.addAttribute(a);
-            section.appendChild(measure);
-            lastMeasure = measure;
-            lastMeasureName = newMeasureName;
-            lastUuidZone = uuidZone;
-        } else {
-            // new zone for old measure
-            lastUuidZone = lastUuidZone + " " + uuidZone;
-            a = new Attribute("facs", lastUuidZone);
-            lastMeasure.addAttribute(a);
-        }
+    boolean writeMei(String path, ArrayList<Page> pages) {
+        return writeMei(path, "mei.mei", pages);
     }
 
 
-    public boolean writeMei(String path, ArrayList<Page> pages, ArrayList<String> files) {
-        return writeMei(path, "mei.mei", pages, files);
-    }
-
-
-    public boolean writeMei(String path, String filename, ArrayList<Page> pages, ArrayList<String> files) {
+    boolean writeMei(String path, String filename, ArrayList<Page> pages) {
 
         makEmptyMei();
 
         int i;
         for (i = 0; i < pages.size(); i++) {
-            addFileWithZones(files.get(i), pages.get(i).getBoxes());
+            addPage(pages.get(i));
         }
 
         if (path == null) {
@@ -223,7 +151,7 @@ public class MEIInOut {
         if (file.exists ()) file.delete ();
         try {
             FileOutputStream out = new FileOutputStream(file);
-            Serializer serializer = null;
+            Serializer serializer;
             try {
                 serializer = new Serializer(out, "UTF-8"); // connect serializer with FileOutputStream and specify encoding
                 serializer.setIndent(4);                                // specify indents in xml code
@@ -246,8 +174,8 @@ public class MEIInOut {
     }
 
 
-    File file;
-    public boolean readMeiFile(String path) {
+    private File file;
+    boolean readMeiFile(String path) {
 
         this.file = new File(path);
 
@@ -277,15 +205,15 @@ public class MEIInOut {
         return true;
     }
 
-    protected ArrayList<Page> pages;
-    public ArrayList<Page> getPages() {
+    private ArrayList<Page> pages;
+    ArrayList<Page> getPages() {
         return pages;
     }
 
 
-    public void parseXml() {
+    void parseXml() {
         Element meiElement = meiDocument.getRootElement();
-        ArrayList<Page> result = new ArrayList<Page>();
+        ArrayList<Page> result = new ArrayList<>();
 
         Elements musics = meiElement.getChildElements("music");
         Element music = musics.get(0);
@@ -299,8 +227,7 @@ public class MEIInOut {
         for(i = 0; i < graphics.size(); i++) {
             Element graphic = graphics.get(i);
             String filename = graphic.getAttributeValue("target", "http://www.w3.org/XML/1998/namespace");
-            Page currentPage = new Page();
-            currentPage.filename = filename;
+            Page currentPage = new Page(filename);
 
             Elements zones = graphic.getChildElements("zone");
 
@@ -330,7 +257,7 @@ public class MEIInOut {
     }
 
 
-    protected Element findMeasureFor(String uuidZone) {
+    private Element findMeasureFor(String uuidZone) {
         Element meiElement = meiDocument.getRootElement();
         Elements musics = meiElement.getChildElements("music");
         Element music = musics.get(0);

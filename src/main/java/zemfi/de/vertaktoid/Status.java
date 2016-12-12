@@ -10,12 +10,12 @@ import java.util.Date;
  */
 
 public final class Status extends BaseObservable {
-    private int status = R.string.status_unknown;
-    private int action = R.string.action_unknown;
+    private StatusStrings.StatusId status = StatusStrings.StatusId.UNKNOWN;
+    private StatusStrings.ActionId action = StatusStrings.ActionId.UNKNOWN;
     private Date date = new Date();
 
     @Bindable
-    public int getAction() {
+    public StatusStrings.ActionId getAction() {
         return action;
     }
 
@@ -25,22 +25,22 @@ public final class Status extends BaseObservable {
     }
 
     @Bindable
-    public int getStatus() {
+    public StatusStrings.StatusId getStatus() {
         return status;
     }
 
-    public void setAction(int action) {
+    public void setAction(StatusStrings.ActionId action) {
         this.action = action;
-        notifyPropertyChanged(BR.status);
+        notifyPropertyChanged(BR.action);
     }
 
     public void setDate(Date date) {
         this.date = date;
-        notifyPropertyChanged(BR.action);
+        notifyPropertyChanged(BR.date);
     }
 
-    public void setStatus(int status) {
+    public void setStatus(StatusStrings.StatusId status) {
         this.status = status;
-        notifyPropertyChanged(BR.date);
+        notifyPropertyChanged(BR.status);
     }
 }

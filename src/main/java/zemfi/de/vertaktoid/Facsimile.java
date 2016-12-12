@@ -10,17 +10,15 @@ import java.util.Collections;
  */
 public class Facsimile implements Serializable {
 
-    public ArrayList<String> files;
-    public ArrayList<Page> pages;
+    ArrayList<Page> pages;
 
 
-    public Facsimile() {
-        pages = new ArrayList<Page>();
-        files = new ArrayList<String>();
+    Facsimile() {
+        pages = new ArrayList<>();
     }
 
 
-    public void updateSequenceNumbers() {
+    void updateSequenceNumbers() {
         int i;
         int startsWith = 1;
         for (i = 0; i < pages.size(); i++) {
@@ -30,17 +28,16 @@ public class Facsimile implements Serializable {
         }
     }
 
-    protected String path;
-    protected void openDirectory(String path) {
+    String path;
+    void openDirectory(String path) {
         this.path = path;
         File f = new File(path);
         File file[] = f.listFiles();
-        files = new ArrayList<String>();
+        ArrayList<String> files = new ArrayList<>();
 
         for (int i=0; i < file.length; i++) {
             if (!file[i].getName().startsWith(".")) {
                 if (file[i].getName().toLowerCase().endsWith(".jpg") || file[i].getName().toLowerCase().endsWith(".png")) {
-                    //Log.d("Files", "FileName:" + file[i].getName());
                     files.add(file[i].getAbsolutePath());
                 }
             }
@@ -53,22 +50,26 @@ public class Facsimile implements Serializable {
         pages = meiInOut.getPages();
         updateSequenceNumbers();
         int i;
-        for (i = 0; i < pages.size(); i++) {
-            pages.get(i).stripManualSequenceNumbers();
-        }
-        while (pages.size() < files.size()) {
-            // add empty pages
-            pages.add(new Page());
+
+        for(i = 0; i < files.size(); i++) {
+            if(i < pages.size()) {
+                pages.get(i).stripManualSequenceNumbers();
+            }
+            else {
+                pages.add(new Page(files.get(i).substring(files.get(i).lastIndexOf("/") + 1)));
+            }
+            pages.get(i).filePath = files.get(i);
+            pages.get(i).calculateDimensions();
         }
     }
 
-    public boolean saveToDisk() {
+    boolean saveToDisk() {
         MEIInOut meiInOut = new MEIInOut();
-        return meiInOut.writeMei(path, pages, files);
+        return meiInOut.writeMei(path, pages);
     }
 
-    public boolean saveToDisk(String path, String filename) {
+    boolean saveToDisk(String path, String filename) {
         MEIInOut meiInOut = new MEIInOut();
-        return meiInOut.writeMei(path, filename, pages, files);
+        return meiInOut.writeMei(path, filename, pages);
     }
 }

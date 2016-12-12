@@ -1,20 +1,27 @@
 package zemfi.de.vertaktoid;
 
-import android.content.res.Resources;
-
 /**
  * Created by yevgen on 24.11.2016.
  */
 
 public class BindingUtils {
-    public static String string(int resourceId) {
-        try {
-            return Vertaktoid.getAppContext().getString(resourceId);
+    public static String action(StatusStrings.ActionId action) {
+
+        String result = StatusStrings.actionStrs.get(action);
+        if(result == null) {
+            return StatusStrings.actionStrs.get(StatusStrings.ActionId.UNKNOWN);
         }
-        catch (Resources.NotFoundException e)
-        {
-            return "not found";
+        return result;
+
+    }
+
+    public static String status(StatusStrings.StatusId status) {
+
+        String result = StatusStrings.statusStrs.get(status);
+        if(result == null) {
+            return StatusStrings.statusStrs.get(StatusStrings.StatusId.UNKNOWN);
         }
+        return result;
 
     }
 }

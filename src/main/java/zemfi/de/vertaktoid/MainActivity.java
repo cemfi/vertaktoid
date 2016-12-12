@@ -52,9 +52,9 @@ public class MainActivity extends AppCompatActivity {
             if (view.getFacsimile() != null) {
                 boolean result = view.getFacsimile().saveToDisk(path, filename);
                 status.setDate(saveDate);
-                status.setAction(R.string.action_tmp_save);
-                if (result) status.setStatus(R.string.status_success);
-                else status.setStatus(R.string.status_fail);
+                status.setAction(StatusStrings.ActionId.TMP_SAVED);
+                if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+                else status.setStatus(StatusStrings.StatusId.FAIL);
             }
             view.needToSave = false;
         }
@@ -78,9 +78,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-        super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -98,8 +95,8 @@ public class MainActivity extends AppCompatActivity {
 
             facsimileView.setFacsimile(facsimile);
             status.setDate(new Date());
-            status.setAction(R.string.action_load);
-            status.setStatus(R.string.status_success);
+            status.setAction(StatusStrings.ActionId.LOADED);
+            status.setStatus(StatusStrings.StatusId.SUCCESS);
         } else {
             view.setImage(ImageSource.resource(R.drawable.handel));
             view.setOnClickListener(new View.OnClickListener() {
@@ -111,8 +108,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         binding.setFview(facsimileView);
-        status.setStatus(R.string.status_success);
-        status.setAction(R.string.action_start);
+        status.setStatus(StatusStrings.StatusId.SUCCESS);
+        status.setAction(StatusStrings.ActionId.STARTED);
         binding.setCstatus(status);
 
         Intent intent = getIntent();
@@ -140,7 +137,13 @@ public class MainActivity extends AppCompatActivity {
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         path = savedInstanceState.getString("path");
+    }
 
+    @Override
+    protected void onResume() {
+        FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
+        view.setImage(ImageSource.uri(Uri.fromFile(new File(view.document.pages.get(view.pageNumber.get()).filePath))));
+        super.onResume();
     }
 
     @Override
@@ -149,9 +152,10 @@ public class MainActivity extends AppCompatActivity {
         if (view.getFacsimile() != null) {
             boolean result = view.getFacsimile().saveToDisk();
             status.setDate(new Date());
-            status.setAction(R.string.action_save);
-            if(result) status.setStatus(R.string.status_success);
-            else status.setStatus(R.string.status_fail);
+            status.setAction(StatusStrings.ActionId.SAVED);
+            if(result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+            else status.setStatus(StatusStrings.StatusId.FAIL);
+            view.recycle();
         }
         super.onPause();
     }
@@ -159,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
     Menu mainMenu;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflate the menu; this adds items to the ActionId bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         mainMenu = menu;
 
@@ -172,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
+        // Handle ActionId bar item clicks here. The ActionId bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
 
@@ -253,10 +257,11 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     path = getPath(getApplicationContext(), uri);
-
-                    File jpgFile = new File(path);
-                    File f = new File(jpgFile.getParent());
-                    path = f.getAbsolutePath();
+                    if(path != null) {
+                        File jpgFile = new File(path);
+                        File f = new File(jpgFile.getParent());
+                        path = f.getAbsolutePath();
+                    }
                     //Log.v("path: ", path);
 
                     Facsimile facsimile = new Facsimile();
@@ -265,8 +270,8 @@ public class MainActivity extends AppCompatActivity {
                     FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
                     view.setFacsimile(facsimile);
                     status.setDate(new Date());
-                    status.setAction(R.string.action_load);
-                    status.setStatus(R.string.status_success);
+                    status.setAction(StatusStrings.ActionId.LOADED);
+                    status.setStatus(StatusStrings.StatusId.SUCCESS);
                     view.setOnClickListener(null);
 
                     SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
@@ -275,8 +280,8 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else {
                     status.setDate(new Date());
-                    status.setAction(R.string.action_load);
-                    status.setStatus(R.string.status_fail);
+                    status.setAction(StatusStrings.ActionId.LOADED);
+                    status.setStatus(StatusStrings.StatusId.FAIL);
 
                 }
                 break;

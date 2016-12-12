@@ -63,7 +63,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         currentBrushSize = 5; //getResources().getInteger(R.integer.medium_size);
         grayPath = new Path();
         drawPath = new Path();
-        pointPath = new ArrayList<PointF>();
+        pointPath = new ArrayList<>();
         polygonHoverPath = new Path();
         drawPaint = new Paint();
         drawPaint.setColor(paintColor);
@@ -144,15 +144,15 @@ public class FacsimileView extends SubsamplingScaleImageView {
     }
 
     public void setPage(int page) {
-        if (page >= 0 && page < document.files.size()) {
+        if (page >= 0 && page < document.pages.size()) {
             this.pageNumber.set(page);
-            setImage(ImageSource.uri(Uri.fromFile(new File(document.files.get(pageNumber.get())))));
+            setImage(ImageSource.uri(Uri.fromFile(new File(document.pages.get(pageNumber.get()).filePath))));
         }
     }
 
     public void plusClicked() {
         int newPageNumber = pageNumber.get() + 1;
-        if(newPageNumber < document.files.size() && newPageNumber >= 0) {
+        if(newPageNumber < document.pages.size() && newPageNumber >= 0) {
             pageNumber.set(newPageNumber);
             clean();
             setPage(newPageNumber);
@@ -185,7 +185,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public void setFacsimile(Facsimile facsimile) {
         this.document = facsimile;
         pageNumber.set(0);
-        setImage(ImageSource.uri(Uri.fromFile(new File(document.files.get(0)))));
+        setImage(ImageSource.uri(Uri.fromFile(new File(document.pages.get(0).filePath))));
         maxPageNumber.set(document.pages.size());
         currentPath.set(document.path);
     }
@@ -294,7 +294,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         linesPaint.setStrokeWidth(2);
         linesPaint.setStyle(Paint.Style.STROKE);
 
-        Context context = Vertaktoid.getAppContext();
+        Context context = this.getContext();
         WindowManager vm = (WindowManager) context.getSystemService(context.WINDOW_SERVICE);
         Display display = vm.getDefaultDisplay();
         Point size = new Point();
@@ -337,7 +337,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         shouldErase = false;
         shouldType = false;
         shouldCut = false;
-        pointPath = new ArrayList<PointF>();
+        pointPath = new ArrayList<>();
         invalidate();
     }
 
@@ -384,7 +384,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                     if (box == null) {
                         //resetState();
                         //resetMenu();
-                        // continue and handle the action as a click in brush state
+                        // continue and handle the ActionId as a click in brush state
                     } else {
                         if (shouldErase) {
                             final PointF p = transformCoordTouchToBitmap(touchX, touchY);
@@ -404,7 +404,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                     if (box == null) {
                         resetState();
                         resetMenu();
-                        // continue and handle the action as a click in brush state
+                        // continue and handle the ActionId as a click in brush state
                     } else {
                         currentPage.deleteBox(bitmapCoord.x, bitmapCoord.y);
                         currentPage.addBox(box.left, bitmapCoord.x, box.top, box.bottom);
