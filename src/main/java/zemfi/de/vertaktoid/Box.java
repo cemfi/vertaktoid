@@ -31,13 +31,7 @@ public class Box implements Serializable {
         }
         float smallerX = startX < endX ? startX : endX;
         float largerX = startX > endX ? startX : endX;
-        if (largerX < left) {
-            return false;
-        }
-        if (smallerX > right) {
-            return false;
-        }
-        return true;
+        return largerX > left && smallerX < right;
     }
 
 
