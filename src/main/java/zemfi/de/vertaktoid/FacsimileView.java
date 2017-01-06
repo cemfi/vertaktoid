@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -17,24 +16,21 @@ import android.os.Parcelable;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.EditText;
-import android.graphics.Point;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
-import java.io.File;
 import java.util.ArrayList;
 
 /**
  * Created by aristotelis on 23.08.16.
  */
 public class FacsimileView extends SubsamplingScaleImageView {
+
     public FacsimileView(Context context, AttributeSet attr) {
         super(context, attr);
         init();
@@ -55,6 +51,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     Path polygonHoverPath;
     protected Facsimile document;
     public final ObservableInt pageNumber = new ObservableInt(-1);
+    int currentMovementNumber = 0;
     public final ObservableField<String> currentPath = new ObservableField<>();
     public final ObservableInt maxPageNumber = new ObservableInt(0);
     public boolean needToSave = false;
@@ -131,7 +128,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
             setPage(pageNumber.get());
             super.onRestoreInstanceState(bundle.getParcelable("instanceState"));
             maxPageNumber.set(document.pages.size());
-            currentPath.set(document.path);
+            currentPath.set(document.dir.getPath());
             return;
         }
 
@@ -149,7 +146,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
         if (page >= 0 && page < document.pages.size()) {
             this.pageNumber.set(page);
-            setImage(ImageSource.uri(Uri.fromFile(new File(document.pages.get(pageNumber.get()).filePath))));
+            setImage(ImageSource.uri(Uri.fromFile(document.pages.get(pageNumber.get()).imageFile)));
         }
     }
 
@@ -188,9 +185,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public void setFacsimile(Facsimile facsimile) {
         this.document = facsimile;
         pageNumber.set(0);
-        setImage(ImageSource.uri(Uri.fromFile(new File(document.pages.get(0).filePath))));
+        setImage(ImageSource.uri(Uri.fromFile(document.pages.get(0).imageFile)));
         maxPageNumber.set(document.pages.size());
-        currentPath.set(document.path);
+        currentPath.set(document.dir.getPath());
     }
 
     public Facsimile getFacsimile() {
@@ -218,10 +215,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
         int i;
         drawPath.reset();
 
-        for (i = 0; i < document.pages.get(pageNumber.get()).numberOfBoxes(); i++) {
-            Box box = document.pages.get(pageNumber.get()).getBox(i);
-            PointF topLeft = transformCoordBitmapToTouch(box.left, box.top);
-            PointF bottomRight = transformCoordBitmapToTouch(box.right, box.bottom);
+        for (i = 0; i < document.pages.get(pageNumber.get()).measures.size(); i++) {
+            Measure measure = document.pages.get(pageNumber.get()).measures.get(i);
+            PointF topLeft = transformCoordBitmapToTouch(measure.left, measure.top);
+            PointF bottomRight = transformCoordBitmapToTouch(measure.right, measure.bottom);
             if (topLeft == null) {
                 // still loading image
                 return;
@@ -240,13 +237,13 @@ public class FacsimileView extends SubsamplingScaleImageView {
             whiteAlpha.setColor(0x55ffffff);
             whiteAlpha.setStyle(Paint.Style.FILL);
 
-            if (box.manualSequenceNumber != null) {
+            if (measure.manualSequenceNumber != null) {
                 Paint darkAlpha = new Paint();
                 darkAlpha.setColor(0x99555555);
                 darkAlpha.setStrokeWidth(10);
                 darkAlpha.setStyle(Paint.Style.STROKE);
 
-                paint.getTextBounds(box.manualSequenceNumber, 0, box.manualSequenceNumber.length(), rect);
+                paint.getTextBounds(measure.manualSequenceNumber, 0, measure.manualSequenceNumber.length(), rect);
 
                 float leftTextBox = (topLeft.x + bottomRight.x) / 2 - rect.centerX() - 5;
                 float topTextBox = topLeft.y + 50 - rect.height() ;
@@ -256,10 +253,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, whiteAlpha);
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, drawPaint);
 
-                canvas.drawText(box.manualSequenceNumber, (topLeft.x + bottomRight.x) / 2 - rect.centerX(), topLeft.y + 50,  paint);
+                canvas.drawText(measure.manualSequenceNumber, (topLeft.x + bottomRight.x) / 2 - rect.centerX(), topLeft.y + 50,  paint);
                 //canvas.drawLine(leftTextBox, bottomTextBox, rightTextBox, bottomTextBox, drawPaint);
             } else {
-                String str = "" + box.sequenceNumber;
+                String str = "" + measure.sequenceNumber;
                 paint.getTextBounds(str, 0, str.length(), rect);
 
                 float leftTextBox = (topLeft.x + bottomRight.x) / 2 - rect.centerX() - 5;
@@ -268,7 +265,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 float bottomTextBox = topLeft.y + 50;
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, whiteAlpha);
 
-                canvas.drawText("" + box.sequenceNumber, (topLeft.x + bottomRight.x) / 2 - rect.centerX(), topLeft.y + 50,  paint);
+                canvas.drawText("" + measure.sequenceNumber, (topLeft.x + bottomRight.x) / 2 - rect.centerX(), topLeft.y + 50,  paint);
             }
         }
 
@@ -285,31 +282,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
         canvas.drawPath(drawPath, drawPaint);
         canvas.drawPath(polygonHoverPath, drawPaint);
-
-        //uncomment the following line to enable the lines drawing for debugging
-        //debugLinesDraw(canvas);
     }
 
-    @Deprecated
-    private void debugLinesDraw(Canvas canvas) {
-        Paint linesPaint = new Paint();
-        linesPaint.setColor(Color.BLUE);
-        linesPaint.setStrokeWidth(2);
-        linesPaint.setStyle(Paint.Style.STROKE);
-
-        Context context = this.getContext();
-        WindowManager vm = (WindowManager) context.getSystemService(context.WINDOW_SERVICE);
-        Display display = vm.getDefaultDisplay();
-        Point size = new Point();
-        display.getRealSize(size);
-
-        for(int j = 0; j < document.pages.get(pageNumber.get()).lines.size(); j ++) {
-            Line line = document.pages.get(pageNumber.get()).lines.get(j);
-            PointF lineTopLeft = transformCoordBitmapToTouch(0, line.top);
-            PointF lineBottomLeft = transformCoordBitmapToTouch(size.x, line.bottom);
-            canvas.drawRect(0, lineTopLeft.y, size.x, lineBottomLeft.y, linesPaint);
-        }
-    }
 
 
     public void brushClicked() {
@@ -370,6 +344,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         PointF curr = new PointF(event.getX(), event.getY());
         float touchX = event.getX();
         float touchY = event.getY();
+        final Page currentPage = document.pages.get(pageNumber.get());
         if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
             //if (isFirstPoint) {
                 // do not allow navigation while entering the polygon
@@ -377,24 +352,30 @@ public class FacsimileView extends SubsamplingScaleImageView {
             //}
             //return true;
         }
-
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (shouldType || shouldErase) {
-                    Page currentPage = document.pages.get(pageNumber.get());
+                if (shouldErase) {
                     PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
-                    Box box = currentPage.getBoxAt(bitmapCoord.x, bitmapCoord.y);
-                    if (box == null) {
+                    ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
+                    if (measures.size() == 0) {
                         //resetState();
                         //resetMenu();
                         // continue and handle the ActionId as a click in brush state
                     } else {
-                        if (shouldErase) {
-                            final PointF p = transformCoordTouchToBitmap(touchX, touchY);
-                            if (document.pages.get(pageNumber.get()).deleteBox(p.x, p.y)) {
-                                invalidate();
+                        final PointF p = transformCoordTouchToBitmap(touchX, touchY);
+                        document.removeMeasures(measures);
+                        ArrayList<Movement> changedMovements = new ArrayList<>();
+                        for(Measure measure : measures) {
+                            if(!changedMovements.contains(measure.movement)) {
+                                changedMovements.add(measure.movement);
                             }
                         }
+
+                        for(Movement movement : changedMovements) {
+                            document.resort(movement, currentPage);
+                        }
+                        invalidate();
+
                         // wait until action_up for typing
                         break;
                     }
@@ -402,16 +383,18 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
                 if (shouldCut) {
                     PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
-                    Page currentPage = document.pages.get(pageNumber.get());
-                    Box box = currentPage.getBoxAt(bitmapCoord.x, bitmapCoord.y);
-                    if (box == null) {
+                    Measure measure = currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
+                    if (measure == null) {
                         resetState();
                         resetMenu();
                         // continue and handle the ActionId as a click in brush state
                     } else {
-                        currentPage.deleteBox(bitmapCoord.x, bitmapCoord.y);
-                        currentPage.addBox(box.left, bitmapCoord.x, box.top, box.bottom);
-                        currentPage.addBox(bitmapCoord.x, box.right, box.top, box.bottom);
+                        Measure mleft = new Measure(measure.left, measure.top, bitmapCoord.x, measure.bottom);
+                        Measure mright= new Measure(bitmapCoord.x, measure.top, measure.right, measure.bottom);
+                        document.removeMeasureAt(bitmapCoord.x, bitmapCoord.y, currentPage);
+                        document.addMeasure(mleft, measure.movement, currentPage);
+                        document.addMeasure(mright, measure.movement, currentPage);
+                        document.resort(measure.movement, currentPage);
                         // do not continue
                         break;
                     }
@@ -437,7 +420,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
             case MotionEvent.ACTION_MOVE:
                 if (shouldErase) {
                     final PointF p = transformCoordTouchToBitmap(touchX, touchY);
-                    if (document.pages.get(pageNumber.get()).deleteBox(p.x, p.y, lastPoint.x, lastPoint.y)) {
+                    if(document.removeMeasuresAt(p.x, p.y, lastPoint.x, lastPoint.y, currentPage)) {
                         invalidate();
                     }
                 }
@@ -462,12 +445,24 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 final PointF p = transformCoordTouchToBitmap(touchX, touchY);
                 if (event.getToolType(0) != MotionEvent.TOOL_TYPE_FINGER) {
                     if (shouldErase) {
-                        if (document.pages.get(pageNumber.get()).deleteBox(p.x, p.y)) {
+                        ArrayList<Measure> measures = currentPage.getMeasuresAt(p.x, p.y);
+                        if (measures.size() > 0) {
+                            document.removeMeasures(measures);
+                            ArrayList<Movement> changedMovements = new ArrayList<>();
+                            for(Measure measure : measures) {
+                                if(!changedMovements.contains(measure.movement)) {
+                                    changedMovements.add(measure.movement);
+                                }
+                            }
+
+                            for(Movement movement : changedMovements) {
+                                document.resort(movement, currentPage);
+                            }
                             invalidate();
                             break;
                         }
                     } else if (shouldType) {
-                        if (document.pages.get(pageNumber.get()).getBoxAt(p.x, p.y) != null) {
+                        if (currentPage.getMeasureAt(p.x, p.y) != null) {
                             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                             builder.setTitle("Taktnummer");
                             final EditText input = new EditText(getContext());
@@ -477,9 +472,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     String text = input.getText().toString();
-                                    Box box = document.pages.get(pageNumber.get()).getBoxAt(p.x, p.y);
-                                    box.manualSequenceNumber = text;
-                                    document.pages.get(pageNumber.get()).updateSequenceNumbers();
+                                    Measure measure = currentPage.getMeasureAt(p.x, p.y);
+                                    measure.manualSequenceNumber = text;
+                                    measure.movement.calculateSequenceNumbers();
+                                    measure.page.sortMeasures();
                                     invalidate();
                                 }
                             });
@@ -508,9 +504,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
                         if (distance < 20.0f && trackLength > 100.0f) {
                             if ((rightMost - leftMost > 50) && (bottomMost - topMost > 50)) {
                                 //boxes.add(new RectF(left, top, right, bottom));
-                                document.pages.get(pageNumber.get()).addBox(leftMost, rightMost, topMost, bottomMost);
-                                updateSequenceNumbers();
-                                //pages.get(pageNumber).addBox(leftMost, rightMost, topMost, bottomMost);
+                                Measure measure = new Measure(leftMost, topMost, rightMost, bottomMost);
+                                document.addMeasure(measure, document.movements.get(currentMovementNumber), currentPage);
+                                document.resort(measure.movement, measure.page);
+                                invalidate();
                             }
                             Log.v("bla", "complete" + trackLength);
                             pointPath = new ArrayList<>();
@@ -545,11 +542,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 menu.getItem(i).setIcon(R.drawable.brushon);
             }
         }
-    }
-
-    void updateSequenceNumbers() {
-        document.updateSequenceNumbers();
-        invalidate();
     }
 
 }

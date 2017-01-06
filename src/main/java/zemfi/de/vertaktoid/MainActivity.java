@@ -73,9 +73,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    protected MEIInOut meiInOut;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,7 +89,8 @@ public class MainActivity extends AppCompatActivity {
         path = prefs.getString("zemfi.de.vertaktoid.path", "");
         if(!path.equals("")) {
             Facsimile facsimile = new Facsimile();
-            facsimile.openDirectory(path);
+            File dir = new File(path);
+            facsimile.openDirectory(dir);
 
             facsimileView.setFacsimile(facsimile);
             status.setDate(new Date());
@@ -123,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        meiInOut = new MEIInOut();
         tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
 
     }
@@ -144,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
         if(view.document != null) {
-            view.setImage(ImageSource.uri(Uri.fromFile(new File(view.document.pages.get(view.pageNumber.get()).filePath))));
+            view.setImage(ImageSource.uri(Uri.fromFile(view.document.pages.get(view.pageNumber.get()).imageFile)));
         }
         super.onResume();
     }
@@ -260,15 +257,16 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     path = getPath(getApplicationContext(), uri);
+                    File dir = new File(path);
                     if(path != null) {
                         File jpgFile = new File(path);
-                        File f = new File(jpgFile.getParent());
-                        path = f.getAbsolutePath();
+                        dir = new File(jpgFile.getParent());
+                        path = dir.getAbsolutePath();
                     }
                     //Log.v("path: ", path);
 
                     Facsimile facsimile = new Facsimile();
-                    facsimile.openDirectory(path);
+                    facsimile.openDirectory(dir);
 
                     FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
                     view.setFacsimile(facsimile);
