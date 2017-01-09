@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -24,6 +25,7 @@ import android.widget.EditText;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -146,7 +148,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
         if (page >= 0 && page < document.pages.size()) {
             this.pageNumber.set(page);
-            setImage(ImageSource.uri(Uri.fromFile(document.pages.get(pageNumber.get()).imageFile)));
+            setImage(findImageForPage(pageNumber.get()));
         }
     }
 
@@ -182,10 +184,24 @@ public class FacsimileView extends SubsamplingScaleImageView {
         return viewToSourceCoord(point);
     }
 
+    ImageSource findImageForPage(int pagenum) {
+        File appSubFolder = new File(document.dir, Vertaktoid.APP_SUBFOLDER);
+        File stubImg = new File(appSubFolder, Vertaktoid.NOT_FOUND_STUBIMG);
+        if(document.pages.size() < pagenum || pagenum < 0) {
+            return null;
+        }
+        if(!document.pages.get(pagenum).imageFile.exists()) {
+            return ImageSource.uri(Uri.fromFile(stubImg));
+        }
+        else {
+            return ImageSource.uri(Uri.fromFile(document.pages.get(pagenum).imageFile));
+        }
+    }
+
     public void setFacsimile(Facsimile facsimile) {
         this.document = facsimile;
         pageNumber.set(0);
-        setImage(ImageSource.uri(Uri.fromFile(document.pages.get(0).imageFile)));
+        setImage(findImageForPage(0));
         maxPageNumber.set(document.pages.size());
         currentPath.set(document.dir.getPath());
     }
@@ -202,6 +218,20 @@ public class FacsimileView extends SubsamplingScaleImageView {
             return;
         }
 
+        if (!document.pages.get(pageNumber.get()).imageFile.exists()) {
+
+            Paint paint = new Paint();
+            paint.setColor(Color.BLACK);
+            paint.setTextSize(50);
+            paint.setFakeBoldText(true);
+            Rect rect = new Rect();
+
+            paint.getTextBounds(document.pages.get(pageNumber.get()).imageFile.getName(), 0,
+                    document.pages.get(pageNumber.get()).imageFile.getName().length(), rect);
+            canvas.drawText("" + document.pages.get(pageNumber.get()).imageFile.getName(),
+                    (this.getRight() - this.getLeft()) / 2  - rect.centerX(), 100,  paint);
+            return;
+        }
 
         Paint hoverPaint = new Paint();
         hoverPaint.setColor(0x55555555);
@@ -473,7 +503,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                 public void onClick(DialogInterface dialog, int which) {
                                     String text = input.getText().toString();
                                     Measure measure = currentPage.getMeasureAt(p.x, p.y);
-                                    measure.manualSequenceNumber = text;
+                                    measure.manualSequenceNumber = text.equals("") ? null : text;
                                     measure.movement.calculateSequenceNumbers();
                                     measure.page.sortMeasures();
                                     invalidate();
@@ -503,7 +533,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
                         double distance = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
                         if (distance < 20.0f && trackLength > 100.0f) {
                             if ((rightMost - leftMost > 50) && (bottomMost - topMost > 50)) {
-                                //boxes.add(new RectF(left, top, right, bottom));
                                 Measure measure = new Measure(leftMost, topMost, rightMost, bottomMost);
                                 document.addMeasure(measure, document.movements.get(currentMovementNumber), currentPage);
                                 document.resort(measure.movement, measure.page);

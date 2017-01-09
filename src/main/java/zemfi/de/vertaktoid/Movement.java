@@ -36,7 +36,7 @@ public class Movement implements Serializable {
                     modified.trim();
                     String mnumStr = modified.split(" ")[0];
                     int mnum = Integer.parseInt(mnumStr);
-                    if (String.valueOf(mnum).equals(measure.manualSequenceNumber)) {
+                    if (String.valueOf(mnum).equals(measure.manualSequenceNumber) && mnum == num) {
                         measure.manualSequenceNumber = null;
                     }
                     measure.sequenceNumber = mnum;

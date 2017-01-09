@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,7 +17,6 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +28,9 @@ import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import java.io.File;
 import android.text.format.DateFormat;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
 
 import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
@@ -50,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
             Date saveDate = new Date();
             String filename = "" + DateFormat.format("dd-MM-yyyy_kk-mm-ss", saveDate) + ".mei";
             if (view.getFacsimile() != null) {
-                boolean result = view.getFacsimile().saveToDisk(path, filename);
+                boolean result = view.getFacsimile().saveToDisk(path + "/" + Vertaktoid.APP_SUBFOLDER, filename);
                 status.setDate(saveDate);
                 status.setAction(StatusStrings.ActionId.TMP_SAVED);
                 if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
@@ -87,9 +91,11 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
         path = prefs.getString("zemfi.de.vertaktoid.path", "");
+
         if(!path.equals("")) {
             Facsimile facsimile = new Facsimile();
             File dir = new File(path);
+            prepareFiles(dir);
             facsimile.openDirectory(dir);
 
             facsimileView.setFacsimile(facsimile);
@@ -125,6 +131,29 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void prepareFiles(File dir) {
+        File systemDir = new File (dir, Vertaktoid.APP_SUBFOLDER);
+        if(!systemDir.exists()) {
+            systemDir.mkdir();
+        }
+        File image404 = new File (systemDir, Vertaktoid.NOT_FOUND_STUBIMG);
+        if(!image404.exists()) {
+            Bitmap bm = BitmapFactory.decodeResource( getResources(), R.drawable.facsimile404);
+            try {
+                FileOutputStream outStream = new FileOutputStream(image404);
+                bm.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+                outStream.flush();
+                outStream.close();
+            }
+            catch (FileNotFoundException ex) {
+
+            }
+            catch (IOException ex) {
+
+            }
+        }
+    }
+
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
@@ -141,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
         if(view.document != null) {
-            view.setImage(ImageSource.uri(Uri.fromFile(view.document.pages.get(view.pageNumber.get()).imageFile)));
+            view.setImage(view.findImageForPage(view.pageNumber.get()));
         }
         super.onResume();
     }
@@ -266,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
                     //Log.v("path: ", path);
 
                     Facsimile facsimile = new Facsimile();
+                    prepareFiles(dir);
                     facsimile.openDirectory(dir);
 
                     FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
