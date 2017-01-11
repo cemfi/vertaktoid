@@ -210,54 +210,65 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
 
         int id = item.getItemId();
-        if (id != R.id.action_plus && id != R.id.action_minus) {
+        if (id != R.id.action_plus && id != R.id.action_minus && id != R.id.action_goto) {
             for (int i = 0; i < mainMenu.size(); i++) {
                 // Set default icons
-                if (mainMenu.getItem(i).getItemId() == R.id.action_erase) {
-                    mainMenu.getItem(i).setIcon(R.drawable.eraseroff);
-                } else if (mainMenu.getItem(i).getItemId() == R.id.action_type) {
-                    mainMenu.getItem(i).setIcon(R.drawable.textboxoff);
-                } else if (mainMenu.getItem(i).getItemId() == R.id.action_brush) {
-                    mainMenu.getItem(i).setIcon(R.drawable.brushoff);
-                } else if (mainMenu.getItem(i).getItemId() == R.id.action_cut) {
-                    mainMenu.getItem(i).setIcon(R.drawable.cutoff);
+                switch (mainMenu.getItem(i).getItemId()) {
+                    case R.id.action_erase:
+                        mainMenu.getItem(i).setIcon(R.drawable.eraseroff);
+                        break;
+                    case R.id.action_type:
+                        mainMenu.getItem(i).setIcon(R.drawable.textboxoff);
+                        break;
+                    case R.id.action_brush:
+                        mainMenu.getItem(i).setIcon(R.drawable.brushoff);
+                        break;
+                    case R.id.action_cut:
+                        mainMenu.getItem(i).setIcon(R.drawable.cutoff);
+                        break;
+                    case R.id.action_movement:
+                        mainMenu.getItem(i).setIcon(R.drawable.movementoff);
+                        break;
                 }
             }
         }
 
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
-        if (id == R.id.action_erase) {
-            item.setIcon(R.drawable.eraseron);
-            view.eraseClicked();
-            return true;
+        switch (id) {
+            case R.id.action_erase:
+                item.setIcon(R.drawable.eraseron);
+                view.eraseClicked();
+                return true;
+            case R.id.action_type:
+                item.setIcon(R.drawable.textboxon);
+                view.typeClicked();
+                return true;
+            case R.id.action_brush:
+                item.setIcon(R.drawable.brushon);
+                view.brushClicked();
+                return true;
+            case R.id.action_open:
+                actionOpen();
+                view.resetMenu();
+                break;
+            case R.id.action_plus:
+                view.plusClicked();
+                break;
+            case R.id.action_minus:
+                view.minusClicked();
+                break;
+            case R.id.action_cut:
+                item.setIcon(R.drawable.cuton);
+                view.cutClicked();
+                break;
+            case R.id.action_goto:
+                view.gotoClicked();
+                break;
+            case R.id.action_movement:
+                item.setIcon(R.drawable.movementon);
+                view.movementClicked();
+                break;
         }
-        else if (id == R.id.action_type) {
-            item.setIcon(R.drawable.textboxon);
-            view.typeClicked();
-            return true;
-        }
-        else if (id == R.id.action_brush) {
-            item.setIcon(R.drawable.brushon);
-            view.brushClicked();
-            return true;
-        }
-        else if (id == R.id.action_open) {
-
-            actionOpen();
-            view.resetMenu();
-
-        }
-        else if (id == R.id.action_plus) {
-            view.plusClicked();
-        }
-        else if (id == R.id.action_minus) {
-            view.minusClicked();
-        }
-        else if (id == R.id.action_cut) {
-            item.setIcon(R.drawable.cuton);
-            view.cutClicked();
-        }
-
 
         return super.onOptionsItemSelected(item);
     }

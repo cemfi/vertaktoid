@@ -31,6 +31,7 @@ import java.util.ArrayList;
 /**
  * Created by aristotelis on 23.08.16.
  */
+
 public class FacsimileView extends SubsamplingScaleImageView {
 
     public FacsimileView(Context context, AttributeSet attr) {
@@ -57,6 +58,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public final ObservableField<String> currentPath = new ObservableField<>();
     public final ObservableInt maxPageNumber = new ObservableInt(0);
     public boolean needToSave = false;
+    public enum Action {DRAW, ERASE, TYPE, CUT, MOVEMENT}
+    Action nextAction = Action.DRAW;
 
     private void init() {
         currentBrushSize = 5; //getResources().getInteger(R.integer.medium_size);
@@ -77,7 +80,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         setOnHoverListener(new View.OnHoverListener() {
             @Override
             public boolean onHover(View v, MotionEvent event) {
-                if (!shouldErase && !shouldType) {
+                if (nextAction == Action.DRAW || nextAction == Action.CUT) {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_HOVER_ENTER:
                             if (!isFirstPoint) {
@@ -168,6 +171,39 @@ public class FacsimileView extends SubsamplingScaleImageView {
             clean();
             setPage(newPageNumber);
         }
+    }
+
+    public  void gotoClicked(){
+        resetState();
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Go to page");
+        final EditText input = new EditText(getContext());
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        builder.setView(input);
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    int newPageNumber = Integer.parseInt(input.getText().toString()) - 1;
+                    if(newPageNumber >= 0 && newPageNumber < document.pages.size()) {
+                        pageNumber.set(newPageNumber);
+                        clean();
+                        setPage(newPageNumber);
+                    }
+                }
+                catch (NumberFormatException e) {
+
+                }
+                invalidate();
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
     PointF transformCoordBitmapToTouch(float x, float y) {
@@ -320,30 +356,30 @@ public class FacsimileView extends SubsamplingScaleImageView {
         resetState();
     }
 
-    boolean shouldErase = false;
     public void eraseClicked() {
         resetState();
-        shouldErase = true;
+        nextAction = Action.ERASE;
     }
 
-    boolean shouldType = false;
     public void typeClicked() {
         resetState();
-        shouldType = true;
+        nextAction = Action.TYPE;
     }
 
 
-    boolean shouldCut = false;
     public void cutClicked() {
         resetState();
-        shouldCut = true;
+        nextAction = Action.CUT;
+    }
+
+    public  void movementClicked(){
+        resetState();
+        nextAction = Action.MOVEMENT;
     }
 
     void resetState() {
         isFirstPoint = true;
-        shouldErase = false;
-        shouldType = false;
-        shouldCut = false;
+        nextAction = Action.DRAW;
         pointPath = new ArrayList<>();
         invalidate();
     }
@@ -354,8 +390,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
     private PointF last = new PointF();
     float downX = 0.0f;
     float downY = 0.0f;
-    float lastX = 0.0f;
-    float lastY = 0.0f;
 
     float leftMost = -1.0f;
     float topMost = -1.0f;
@@ -382,167 +416,160 @@ public class FacsimileView extends SubsamplingScaleImageView {
             //}
             //return true;
         }
+        PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (shouldErase) {
-                    PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
-                    ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
-                    if (measures.size() == 0) {
-                        //resetState();
-                        //resetMenu();
-                        // continue and handle the ActionId as a click in brush state
-                    } else {
-                        final PointF p = transformCoordTouchToBitmap(touchX, touchY);
-                        document.removeMeasures(measures);
-                        ArrayList<Movement> changedMovements = new ArrayList<>();
-                        for(Measure measure : measures) {
-                            if(!changedMovements.contains(measure.movement)) {
-                                changedMovements.add(measure.movement);
-                            }
-                        }
-
-                        for(Movement movement : changedMovements) {
-                            document.resort(movement, currentPage);
-                        }
-                        invalidate();
-
-                        // wait until action_up for typing
-                        break;
-                    }
-                }
-
-                if (shouldCut) {
-                    PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
-                    Measure measure = currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
-                    if (measure == null) {
-                        resetState();
-                        resetMenu();
-                        // continue and handle the ActionId as a click in brush state
-                    } else {
-                        Measure mleft = new Measure(measure.left, measure.top, bitmapCoord.x, measure.bottom);
-                        Measure mright= new Measure(bitmapCoord.x, measure.top, measure.right, measure.bottom);
-                        document.removeMeasureAt(bitmapCoord.x, bitmapCoord.y, currentPage);
-                        document.addMeasure(mleft, measure.movement, currentPage);
-                        document.addMeasure(mright, measure.movement, currentPage);
-                        document.resort(measure.movement, currentPage);
-                        // do not continue
-                        break;
-                    }
-                }
-                if (isFirstPoint) {
-                    pointPath = new ArrayList<>();
-                    PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
-                    firstPoint = bitmapCoord;
-                    pointPath.add(bitmapCoord);
-                    leftMost = bitmapCoord.x;
-                    rightMost = bitmapCoord.x;
-                    topMost = bitmapCoord.y;
-                    bottomMost = bitmapCoord.y;
-                    isFirstPoint = false;
-                    lastPolygonPoint = bitmapCoord;
-                    trackLength = 0.0f;
-                    invalidate();
-                }
-                downX = touchX;
-                downY = touchY;
-                break;
-
-            case MotionEvent.ACTION_MOVE:
-                if (shouldErase) {
-                    final PointF p = transformCoordTouchToBitmap(touchX, touchY);
-                    if(document.removeMeasuresAt(p.x, p.y, lastPoint.x, lastPoint.y, currentPage)) {
-                        invalidate();
-                    }
-                }
-                if (shouldErase || shouldType || shouldCut) {
-                    break;
-                }
-                if (!isFirstPoint) {
-                    PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
-                    trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
-                    leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
-                    rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
-                    topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
-                    bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
-                    pointPath.add(bitmapCoord);
-                    lastPolygonPoint = bitmapCoord;
-                    invalidate();
-                }
-
-                break;
-
-            case MotionEvent.ACTION_UP:
-                final PointF p = transformCoordTouchToBitmap(touchX, touchY);
-                if (event.getToolType(0) != MotionEvent.TOOL_TYPE_FINGER) {
-                    if (shouldErase) {
-                        ArrayList<Measure> measures = currentPage.getMeasuresAt(p.x, p.y);
-                        if (measures.size() > 0) {
+                switch (nextAction) {
+                    case ERASE:
+                        ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
+                        if (measures.size() == 0) {
+                            //resetState();
+                            //resetMenu();
+                            // continue and handle the ActionId as a click in brush state
+                        } else {
+                            final PointF p = transformCoordTouchToBitmap(touchX, touchY);
                             document.removeMeasures(measures);
                             ArrayList<Movement> changedMovements = new ArrayList<>();
-                            for(Measure measure : measures) {
-                                if(!changedMovements.contains(measure.movement)) {
+                            for (Measure measure : measures) {
+                                if (!changedMovements.contains(measure.movement)) {
                                     changedMovements.add(measure.movement);
                                 }
                             }
 
-                            for(Movement movement : changedMovements) {
+                            for (Movement movement : changedMovements) {
                                 document.resort(movement, currentPage);
                             }
                             invalidate();
-                            break;
                         }
-                    } else if (shouldType) {
-                        if (currentPage.getMeasureAt(p.x, p.y) != null) {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                            builder.setTitle("Taktnummer");
-                            final EditText input = new EditText(getContext());
-                            input.setInputType(InputType.TYPE_CLASS_TEXT);
-                            builder.setView(input);
-                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    String text = input.getText().toString();
-                                    Measure measure = currentPage.getMeasureAt(p.x, p.y);
-                                    measure.manualSequenceNumber = text.equals("") ? null : text;
-                                    measure.movement.calculateSequenceNumbers();
-                                    measure.page.sortMeasures();
-                                    invalidate();
-                                }
-                            });
-                            builder.setNegativeButton("Abbrechen", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            });
-                            builder.show();
+                        break;
+                    case CUT:
+                        Measure measure = currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
+                        if (measure == null) {
+                            resetState();
+                            resetMenu();
+                            // continue and handle the ActionId as a click in brush state
+                        } else {
+                            Measure mleft = new Measure(measure.left, measure.top, bitmapCoord.x, measure.bottom);
+                            Measure mright = new Measure(bitmapCoord.x, measure.top, measure.right, measure.bottom);
+                            document.removeMeasureAt(bitmapCoord.x, bitmapCoord.y, currentPage);
+                            document.addMeasure(mleft, measure.movement, currentPage);
+                            document.addMeasure(mright, measure.movement, currentPage);
+                            document.resort(measure.movement, currentPage);
+                            // do not continue
                         }
-                    }
-                    else if (shouldCut) {
-                        // do nothing
-                    } else {
-                        PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
-                        trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
-                        leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
-                        rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
-                        topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
-                        bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
-                        pointPath.add(bitmapCoord);
-                        lastPolygonPoint = new PointF(touchX, touchY);
-                        PointF firstPointInTouch = transformCoordBitmapToTouch(firstPoint.x, firstPoint.y); // due to scrolling this may be another position than initially stored in firstPoint
-                        double distance = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
-                        if (distance < 20.0f && trackLength > 100.0f) {
-                            if ((rightMost - leftMost > 50) && (bottomMost - topMost > 50)) {
-                                Measure measure = new Measure(leftMost, topMost, rightMost, bottomMost);
-                                document.addMeasure(measure, document.movements.get(currentMovementNumber), currentPage);
-                                document.resort(measure.movement, measure.page);
-                                invalidate();
-                            }
-                            Log.v("bla", "complete" + trackLength);
+                        break;
+                    case DRAW:
+                        if (isFirstPoint) {
                             pointPath = new ArrayList<>();
-                            isFirstPoint = true;
+                            firstPoint = bitmapCoord;
+                            pointPath.add(bitmapCoord);
+                            leftMost = bitmapCoord.x;
+                            rightMost = bitmapCoord.x;
+                            topMost = bitmapCoord.y;
+                            bottomMost = bitmapCoord.y;
+                            isFirstPoint = false;
+                            lastPolygonPoint = bitmapCoord;
+                            trackLength = 0.0f;
                             invalidate();
                         }
+                        downX = touchX;
+                        downY = touchY;
+                        break;
+                }
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                switch (nextAction) {
+                    case ERASE:
+                        if(document.removeMeasuresAt(bitmapCoord.x, bitmapCoord.y, lastPoint.x, lastPoint.y, currentPage)) {
+                            invalidate();
+                        }
+                        break;
+                    case DRAW:
+                        if (!isFirstPoint) {
+                            trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
+                            leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
+                            rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
+                            topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
+                            bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
+                            pointPath.add(bitmapCoord);
+                            lastPolygonPoint = bitmapCoord;
+                            invalidate();
+                        }
+                        break;
+                }
+                break;
+
+            case MotionEvent.ACTION_UP:
+                if (event.getToolType(0) != MotionEvent.TOOL_TYPE_FINGER) {
+                    switch (nextAction) {
+                        case ERASE:
+                            ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
+                            if (measures.size() > 0) {
+                                document.removeMeasures(measures);
+                                ArrayList<Movement> changedMovements = new ArrayList<>();
+                                for (Measure measure : measures) {
+                                    if (!changedMovements.contains(measure.movement)) {
+                                        changedMovements.add(measure.movement);
+                                    }
+                                }
+
+                                for (Movement movement : changedMovements) {
+                                    document.resort(movement, currentPage);
+                                }
+                                invalidate();
+                            }
+                            break;
+                        case TYPE:
+                            if (currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y) != null) {
+                                final PointF p = transformCoordTouchToBitmap(touchX, touchY);
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                builder.setTitle("Measure number");
+                                final EditText input = new EditText(getContext());
+                                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                                builder.setView(input);
+                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        String text = input.getText().toString();
+                                        Measure measure = currentPage.getMeasureAt(p.x, p.y);
+                                        measure.manualSequenceNumber = text.equals("") ? null : text;
+                                        measure.movement.calculateSequenceNumbers();
+                                        measure.page.sortMeasures();
+                                        invalidate();
+                                    }
+                                });
+                                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.cancel();
+                                    }
+                                });
+                                builder.show();
+                            }
+                            break;
+                        case DRAW:
+                            trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
+                            leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
+                            rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
+                            topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
+                            bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
+                            pointPath.add(bitmapCoord);
+                            lastPolygonPoint = new PointF(touchX, touchY);
+                            PointF firstPointInTouch = transformCoordBitmapToTouch(firstPoint.x, firstPoint.y); // due to scrolling this may be another position than initially stored in firstPoint
+                            double distance = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
+                            if (distance < 20.0f && trackLength > 100.0f) {
+                                if ((rightMost - leftMost > 50) && (bottomMost - topMost > 50)) {
+                                    Measure measure = new Measure(leftMost, topMost, rightMost, bottomMost);
+                                    document.addMeasure(measure, document.movements.get(currentMovementNumber), currentPage);
+                                    document.resort(measure.movement, measure.page);
+                                    invalidate();
+                                }
+                                Log.v("bla", "complete" + trackLength);
+                                pointPath = new ArrayList<>();
+                                isFirstPoint = true;
+                                invalidate();
+                            }
                     }
                 }
         } // end switch

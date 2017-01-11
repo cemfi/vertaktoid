@@ -30,8 +30,14 @@
             app:showAsAction="always" />
 
         <item
+            android:id="@+id/action_movement"
+            android:title="Movement"
+            android:icon="@drawable/movementoff"
+            app:showAsAction="always" />
+
+        <item
             android:id="@+id/action_open"
-            android:title="Type"
+            android:title="Open"
             android:icon="@drawable/folderoutline"
             app:showAsAction="always" />
     </group>
@@ -39,13 +45,19 @@
     <group android:id="@+id/group_navigation">
         <item
             android:id="@+id/action_minus"
-            android:title="Type"
+            android:title="Left"
             android:icon="@drawable/arrowleft"
             app:showAsAction="always" />
 
         <item
+            android:id="@+id/action_goto"
+            android:title="GoTo"
+            android:icon="@drawable/gotopage"
+            app:showAsAction="always" />
+
+        <item
             android:id="@+id/action_plus"
-            android:title="Type"
+            android:title="Right"
             android:icon="@drawable/arrowright"
             app:showAsAction="always" />
     </group>
