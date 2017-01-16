@@ -13,12 +13,20 @@ public class Facsimile implements Serializable {
     ArrayList<Movement> movements;
     File dir;
 
-    public Facsimile() {
+    Facsimile() {
         pages = new ArrayList<>();
         movements = new ArrayList<>();
         Movement movement = new Movement();
         movement.number = 1;
         movements.add(movement);
+    }
+
+    int measuresCount() {
+        int count = 0;
+        for(Movement movement : movements) {
+            count += movement.measures.size();
+        }
+        return count;
     }
 
     void addMeasure(Measure measure, Movement movement, Page page) {
@@ -35,15 +43,6 @@ public class Facsimile implements Serializable {
         page.sortMeasures();
     }
 
-    void changeMovement(Measure measure, Movement movement) {
-        if (measure.movement == null) {
-            return;
-        }
-        measure.movement.removeMeasure(measure);
-        movement.measures.add(measure);
-        measure.movement = movement;
-    }
-
     void removeMeasure(Measure measure) {
         measure.movement.removeMeasure(measure);
         measure.page.removeMeasure(measure);
@@ -53,6 +52,20 @@ public class Facsimile implements Serializable {
         for(Measure measure : measures) {
             measure.movement.removeMeasure(measure);
             measure.page.removeMeasure(measure);
+        }
+    }
+
+    void cleanMovements() {
+        ArrayList<Movement> toRemove = new ArrayList<>();
+        for (Movement movement : movements) {
+            if(movement.measures.size() == 0) {
+                toRemove.add(movement);
+            }
+        }
+        movements.removeAll(toRemove);
+
+        for(int i = 0; i < movements.size(); i++) {
+            movements.get(i).number = i + 1;
         }
     }
 

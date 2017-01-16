@@ -14,6 +14,7 @@ class Measure implements Comparable<Measure>, Serializable {
 
     int sequenceNumber = -1;
     String manualSequenceNumber = null;
+    int repeat = 0;
     String zoneUuid = null;
     String measureUuid = null;
     Movement movement;
@@ -51,6 +52,19 @@ class Measure implements Comparable<Measure>, Serializable {
         return largerX > left && smallerX < right;
     }
 
+    public void changeMovement(Movement newMovement) {
+        if (newMovement == null) {
+            return;
+        }
+        if(this.movement != null) {
+            this.movement.removeMeasure(this);
+        }
+        if(!newMovement.measures.contains(this)) {
+            newMovement.measures.add(this);
+        }
+        this.movement = newMovement;
+    }
+
     static final Comparator<Measure> MEASURE_NUMBER_COMPARATOR = new Comparator<Measure>() {
         @Override
         public int compare(Measure m1, Measure m2) {
@@ -82,6 +96,12 @@ class Measure implements Comparable<Measure>, Serializable {
             else return m1.page.number - m2.page.number;
         }
     };
+
+    public String getName() {
+        if(manualSequenceNumber != null)
+            return manualSequenceNumber;
+        else return "" + sequenceNumber;
+    }
 
     @Override
     public int compareTo(Measure measure) {

@@ -3,7 +3,6 @@ package zemfi.de.vertaktoid;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * Created by yevgen on 16.12.2016.
@@ -12,6 +11,7 @@ import java.util.Comparator;
 public class Movement implements Serializable {
     ArrayList<Measure> measures;
     int number;
+    String label = "";
 
     Movement() {
         measures = new ArrayList<>();
@@ -28,7 +28,7 @@ public class Movement implements Serializable {
         for (int i = 0; i < measures.size(); i++) {
             measure = measures.get(i);
             if(i > 0) {
-                num = measures.get(i-1).sequenceNumber + 1;
+                num = measures.get(i-1).sequenceNumber + measures.get(i-1).repeat + 1;
             }
             if(measure.manualSequenceNumber != null) {
                 try {
@@ -65,4 +65,8 @@ public class Movement implements Serializable {
         calculateSequenceNumbers();
     }
 
+    String getName() {
+        if(!label.equals("")) return label;
+        else return "Movement " + number;
+    }
 }
