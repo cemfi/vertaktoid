@@ -268,6 +268,9 @@ public class MainActivity extends AppCompatActivity {
                 item.setIcon(R.drawable.movementon);
                 view.movementClicked();
                 break;
+            case R.id.action_settings:
+                view.settingsClicked();
+                break;
         }
 
         return super.onOptionsItemSelected(item);

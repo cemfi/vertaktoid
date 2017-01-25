@@ -12,6 +12,7 @@ public class Vertaktoid extends Application implements Serializable {
     public final static String DEFAULT_MEI_FILENAME = "mei.mei";
     public final static String NOT_FOUND_STUBIMG = "facsimile404.png";
     public final static String APP_SUBFOLDER = "vertaktoid";
+    public final static String MEI_NS = "http://www.music-encoding.org/ns/mei";
     public void onCreate() {
         super.onCreate();
     }

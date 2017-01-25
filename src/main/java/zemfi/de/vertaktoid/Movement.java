@@ -28,7 +28,7 @@ public class Movement implements Serializable {
         for (int i = 0; i < measures.size(); i++) {
             measure = measures.get(i);
             if(i > 0) {
-                num = measures.get(i-1).sequenceNumber + measures.get(i-1).repeat + 1;
+                num = measures.get(i-1).sequenceNumber + (measures.get(i-1).rest > 1 ? measures.get(i-1).rest : 1);
             }
             if(measure.manualSequenceNumber != null) {
                 try {

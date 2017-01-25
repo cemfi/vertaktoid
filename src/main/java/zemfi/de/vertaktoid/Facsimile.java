@@ -64,6 +64,12 @@ public class Facsimile implements Serializable {
         }
         movements.removeAll(toRemove);
 
+        if(movements.size() == 0) {
+            Movement movement = new Movement();
+            movement.number = 1;
+            movements.add(movement);
+        }
+
         for(int i = 0; i < movements.size(); i++) {
             movements.get(i).number = i + 1;
         }

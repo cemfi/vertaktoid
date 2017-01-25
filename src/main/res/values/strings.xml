@@ -2,4 +2,6 @@
     <string name="app_name">Vertaktoid</string>
     <string name="status_format">%1$s: %2$s at %3$s.</string>
     <string name="status_date_format">hh:mm:ss</string>
+    <string name="dialog_button_negative">Cancel</string>
+    <string name="dialog_button_positive">Ok</string>
 </resources>

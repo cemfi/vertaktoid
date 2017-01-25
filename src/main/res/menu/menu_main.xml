@@ -40,6 +40,12 @@
             android:title="Open"
             android:icon="@drawable/folderoutline"
             app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_settings"
+            android:title="Settings"
+            android:icon="@drawable/settings"
+            app:showAsAction="always" />
     </group>
 
     <group android:id="@+id/group_navigation">

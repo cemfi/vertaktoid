@@ -9,7 +9,7 @@ import java.util.Random;
 
 public class HSLColorsGenerator {
     private static float _golden_ratio_conjugate = 0.618033988749895f;
-    private static float h = -0.618033988749895f;
+    private static float h = -_golden_ratio_conjugate;
     private static Random rnd = new Random();
 
     public static HSLColor generateColor(float s, float l, float a)
@@ -33,5 +33,7 @@ public class HSLColorsGenerator {
     {
         h = rnd.nextFloat();
     }
+
+    public static void resetHueToDefault() { h = -_golden_ratio_conjugate;}
 
 }

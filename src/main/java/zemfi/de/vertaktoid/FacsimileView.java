@@ -1,6 +1,7 @@
 package zemfi.de.vertaktoid;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.databinding.ObservableField;
@@ -11,17 +12,15 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.InputType;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -59,6 +58,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     private float l = 30f;
     private float a = 1f;
     private float currentBrushSize = 5;
+    public int horOverlapping = 0;
     Path grayPath;
     Path polygonHoverPath;
     protected Facsimile document;
@@ -130,6 +130,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
         bundle.putParcelable("instanceState", super.onSaveInstanceState());
         bundle.putSerializable("document", document);
         bundle.putInt("pageNumber", pageNumber.get());
+        bundle.putInt("currentMovementNumber", currentMovementNumber);
+        bundle.putInt("horOverlapping", horOverlapping);
         return bundle;
     }
 
@@ -139,10 +141,13 @@ public class FacsimileView extends SubsamplingScaleImageView {
             Bundle bundle = (Bundle) state;
             document = (Facsimile) bundle.getSerializable("document");
             pageNumber.set(bundle.getInt("pageNumber"));
+            currentMovementNumber = bundle.getInt("currentMovementNumber");
+            horOverlapping = bundle.getInt("horOverlapping");
             setPage(pageNumber.get());
             super.onRestoreInstanceState(bundle.getParcelable("instanceState"));
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getPath());
+            HSLColorsGenerator.resetHueToDefault();
             return;
         }
 
@@ -184,11 +189,48 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
     public  void gotoClicked(){
         resetState();
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        final Dialog gotoDialog = new Dialog(getContext());
+        gotoDialog.setContentView(R.layout.dialog_goto);
+        gotoDialog.setTitle("Go To Page");
+        TextView gotoPageLabel = (TextView) gotoDialog.findViewById(R.id.dialog_goto_page_label);
+        gotoPageLabel.setText("Page number:");
+        final EditText gotoPageInput = (EditText) gotoDialog.findViewById(R.id.dialog_goto_page_input);
+        gotoPageInput.setHint("1 - " + (document.pages.size()));
+        gotoPageInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        Button gotoButtonNegative = (Button) gotoDialog.findViewById(R.id.dialog_goto_button_negative);
+        gotoButtonNegative.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gotoDialog.cancel();
+            }
+        });
+
+        Button gotoButtonPositive = (Button) gotoDialog.findViewById(R.id.dialog_goto_button_positive);
+        gotoButtonPositive.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    int newPageNumber = Integer.parseInt(gotoPageInput.getText().toString()) - 1;
+                    if(newPageNumber >= 0 && newPageNumber < document.pages.size()) {
+                        pageNumber.set(newPageNumber);
+                        clean();
+                        setPage(newPageNumber);
+                    }
+                }
+                catch (NumberFormatException e) {
+
+                }
+                invalidate();
+                gotoDialog.dismiss();
+            }
+        });
+
+        gotoDialog.show();
+        /*AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Go to page");
         final EditText input = new EditText(getContext());
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        input.setHint("1 - " + (document.pages.size() + 1));
+        input.setHint("1 - " + (document.pages.size()));
         builder.setView(input);
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
@@ -213,7 +255,74 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 dialog.cancel();
             }
         });
-        builder.show();
+        builder.show();*/
+    }
+
+    public void settingsClicked() {
+        resetState();
+        final Dialog settingsDialog = new Dialog(getContext());
+        settingsDialog.setContentView(R.layout.dialog_settings);
+        settingsDialog.setTitle("Settings");
+        TextView settingsLabel = (TextView) settingsDialog.findViewById(R.id.dialog_settings_horover_label);
+        settingsLabel.setText("Horizontal overlapping:");
+        final EditText settingsHoroverInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_horover_input);
+        settingsHoroverInput.setHint("" + horOverlapping);
+        settingsHoroverInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        Button gotoButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
+        gotoButtonNegative.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                settingsDialog.cancel();
+            }
+        });
+
+        Button gotoButtonPositive = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_positive);
+        gotoButtonPositive.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    horOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
+                }
+                catch (NumberFormatException e) {
+                }
+                invalidate();
+                settingsDialog.dismiss();
+            }
+        });
+
+        settingsDialog.show();
+
+        /*resetState();
+        AlertDialog.Builder meBuilder = new AlertDialog.Builder(getContext());
+        meBuilder.setTitle("Settings");
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        final EditText horOverInput = new EditText(getContext());
+        TextView horOverLabel = new TextView(getContext());
+        horOverLabel.setText("Horizontal Overlapping:");
+        horOverInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        horOverInput.setHint("" + horOverlapping);
+        layout.addView(horOverLabel);
+        layout.addView(horOverInput);
+        meBuilder.setView(layout);
+        meBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    horOverlapping = Integer.parseInt(horOverInput.getText().toString());
+                }
+                catch (NumberFormatException e) {
+                }
+                invalidate();
+            }
+        });
+        meBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        meBuilder.show();*/
     }
 
     PointF transformCoordBitmapToTouch(float x, float y) {
@@ -247,9 +356,11 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public void setFacsimile(Facsimile facsimile) {
         this.document = facsimile;
         pageNumber.set(0);
+        currentMovementNumber = document.movements.size() - 1;
         setImage(findImageForPage(0));
         maxPageNumber.set(document.pages.size());
         currentPath.set(document.dir.getPath());
+        horOverlapping = Math.round(document.pages.get(0).imageWidth * 0.01f);
     }
 
     public Facsimile getFacsimile() {
@@ -264,21 +375,27 @@ public class FacsimileView extends SubsamplingScaleImageView {
             return;
         }
 
+        Paint largeBoldText = new Paint();
+        largeBoldText.setColor(Color.BLACK);
+        largeBoldText.setTextSize(50);
+        largeBoldText.setFakeBoldText(true);
+
+        Paint smallBoldText = new Paint();
+        smallBoldText.setColor(Color.BLACK);
+        smallBoldText.setTextSize(36);
+        smallBoldText.setFakeBoldText(true);
+
         int colorsToGenerate = document.movements.size() - movementColors.size();
         movementColors.addAll(HSLColorsGenerator.generateColorSet(colorsToGenerate, s, l, a));
 
         if (!document.pages.get(pageNumber.get()).imageFile.exists()) {
 
-            Paint paint = new Paint();
-            paint.setColor(Color.BLACK);
-            paint.setTextSize(50);
-            paint.setFakeBoldText(true);
             Rect rect = new Rect();
 
-            paint.getTextBounds(document.pages.get(pageNumber.get()).imageFile.getName(), 0,
+            largeBoldText.getTextBounds(document.pages.get(pageNumber.get()).imageFile.getName(), 0,
                     document.pages.get(pageNumber.get()).imageFile.getName().length(), rect);
             canvas.drawText("" + document.pages.get(pageNumber.get()).imageFile.getName(),
-                    (this.getRight() - this.getLeft()) / 2  - rect.centerX(), 100,  paint);
+                    (this.getRight() - this.getLeft()) / 2  - rect.centerX(), 100,  largeBoldText);
             return;
         }
 
@@ -287,6 +404,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
         Page page = document.pages.get(pageNumber.get());
         for (i = 0; i < page.measures.size(); i++) {
             Measure measure = page.measures.get(i);
+            largeBoldText.setColor(HSLColor.toRGB(movementColors.get(
+                    document.movements.indexOf(measure.movement))));
+            smallBoldText.setColor(HSLColor.toRGB(movementColors.get(
+                    document.movements.indexOf(measure.movement))));
             drawPaint.setColor(HSLColor.toRGB(movementColors.get(
                     document.movements.indexOf(measure.movement))));
             PointF topLeft = transformCoordBitmapToTouch(measure.left, measure.top);
@@ -299,13 +420,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
             canvas.drawPath(drawPath, drawPaint);
             drawPath.reset();
 
-            Paint largeBoldText = new Paint();
-            largeBoldText.setColor(HSLColor.toRGB(movementColors.get(
-                    document.movements.indexOf(measure.movement))));
-            largeBoldText.setTextSize(50);
-            largeBoldText.setFakeBoldText(true);
-
             Rect measureNameRect = new Rect();
+            Rect movementNameRect = new Rect();
 
             Paint whiteAlpha = new Paint();
             whiteAlpha.setColor(0x55ffffff);
@@ -313,23 +429,27 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
             String measureLabel = measure.manualSequenceNumber != null ?
                     "" + measure.manualSequenceNumber : "" + measure.sequenceNumber;
-            if(measure.movement.measures.indexOf(measure) == 0) {
-                measureLabel += ", mdiv " + measure.movement.number;
-            }
+
+            String movementLabel = measure.movement.getName() + " >>";
 
             largeBoldText.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
+            smallBoldText.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
 
             float leftTextBox = (topLeft.x + bottomRight.x) / 2 - measureNameRect.centerX() - 5;
             float topTextBox = topLeft.y + 50 - measureNameRect.height();
             float rightTextBox = (topLeft.x + bottomRight.x) / 2 + measureNameRect.centerX() + 5;
             float bottomTextBox = topLeft.y + 50;
+
             //canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, whiteAlpha);
             if(measure.manualSequenceNumber != null) {
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, drawPaint);
             }
 
             canvas.drawText(measureLabel, (topLeft.x + bottomRight.x) / 2 - measureNameRect.centerX(), topLeft.y + 50, largeBoldText);
+            if(measure.movement.measures.indexOf(measure) == 0) {
+                canvas.drawText(movementLabel, (topLeft.x + bottomRight.x) / 2 - movementNameRect.centerX(), topLeft.y + 100, smallBoldText);
 
+            }
         }
 
         drawPath.reset();
@@ -414,22 +534,22 @@ public class FacsimileView extends SubsamplingScaleImageView {
             //return true;
         }
         PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
+        final ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
+        final Measure measure = currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 switch (nextAction) {
                     case ERASE:
-                        ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
                         if (measures.size() == 0) {
                             //resetState();
                             //resetMenu();
                             // continue and handle the ActionId as a click in brush state
                         } else {
-                            final PointF p = transformCoordTouchToBitmap(touchX, touchY);
                             document.removeMeasures(measures);
                             ArrayList<Movement> changedMovements = new ArrayList<>();
-                            for (Measure measure : measures) {
-                                if (!changedMovements.contains(measure.movement)) {
-                                    changedMovements.add(measure.movement);
+                            for (Measure me : measures) {
+                                if (!changedMovements.contains(me.movement)) {
+                                    changedMovements.add(me.movement);
                                 }
                             }
 
@@ -440,14 +560,15 @@ public class FacsimileView extends SubsamplingScaleImageView {
                         }
                         break;
                     case CUT:
-                        Measure measure = currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
                         if (measure == null) {
                             resetState();
                             resetMenu();
                             // continue and handle the ActionId as a click in brush state
                         } else {
-                            Measure mleft = new Measure(measure.left, measure.top, bitmapCoord.x, measure.bottom);
-                            Measure mright = new Measure(bitmapCoord.x, measure.top, measure.right, measure.bottom);
+                            Measure mleft = new Measure(measure.left, measure.top,
+                                    bitmapCoord.x + horOverlapping, measure.bottom);
+                            Measure mright = new Measure(bitmapCoord.x - horOverlapping, measure.top,
+                                    measure.right, measure.bottom);
                             document.removeMeasureAt(bitmapCoord.x, bitmapCoord.y, currentPage);
                             document.addMeasure(mleft, measure.movement, currentPage);
                             document.addMeasure(mright, measure.movement, currentPage);
@@ -474,7 +595,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
                         break;
                 }
                 break;
-
             case MotionEvent.ACTION_MOVE:
                 switch (nextAction) {
                     case ERASE:
@@ -501,13 +621,12 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 if (event.getToolType(0) != MotionEvent.TOOL_TYPE_FINGER) {
                     switch (nextAction) {
                         case ERASE:
-                            ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
                             if (measures.size() > 0) {
                                 document.removeMeasures(measures);
                                 ArrayList<Movement> changedMovements = new ArrayList<>();
-                                for (Measure measure : measures) {
-                                    if (!changedMovements.contains(measure.movement)) {
-                                        changedMovements.add(measure.movement);
+                                for (Measure me : measures) {
+                                    if (!changedMovements.contains(me.movement)) {
+                                        changedMovements.add(me.movement);
                                     }
                                 }
 
@@ -516,27 +635,117 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                 }
                                 invalidate();
                             }
+                            document.cleanMovements();
+                            if(currentMovementNumber >= document.movements.size()) {
+                                currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
+                            }
                             break;
                         case MOVEMENT:
-                            final Measure measureToMove = currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
                             final ArrayList<Measure> measuresToMove = new ArrayList<>();
-                            if(measureToMove != null) {
-                                Movement currentMov = measureToMove.movement;
-                                for (int i = currentMov.measures.indexOf(measureToMove); i < currentMov.measures.size(); i++) {
+                            if(measure != null) {
+                                Movement currentMov = measure.movement;
+                                for (int i = currentMov.measures.indexOf(measure); i < currentMov.measures.size(); i++) {
                                     measuresToMove.add(currentMov.measures.get(i));
                                 }
                             }
-                            final AlertDialog.Builder moBuilder = new AlertDialog.Builder(getContext());
-                            moBuilder.setTitle("Set Movement Anchor");
-                            TextView moheader1 = new TextView(getContext());
-                            moheader1.setText("Select existing movement");
-                            final Spinner movSpinner = new Spinner(getContext());
+
+                            final Dialog editMODialog = new Dialog(getContext());
+                            editMODialog.setContentView(R.layout.dialog_editmo);
+                            editMODialog.setTitle("Set Movement Anchor");
+                            TextView editMOMovementLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_movement_label);
+                            editMOMovementLabel.setText("Select existing movement or create new one:");
+                            final Spinner editMOMovementInput = (Spinner) editMODialog.findViewById(R.id.dialog_editmo_movement_input);
                             ArrayList<String> movementOptions = new ArrayList();
-                            movementOptions.add("no action");
                             movementOptions.add("create new");
                             for(Movement movement : document.movements) {
                                 movementOptions.add(movement.getName());
                             }
+                            movementOptions.add("change label only");
+                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, movementOptions);
+                            editMOMovementInput.setAdapter(adapter);
+                            editMOMovementInput.setSelection(0);
+                            TextView editMOLabelLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_label_label);
+                            editMOLabelLabel.setText("Label for movement");
+                            final EditText editMOLabelInput = (EditText) editMODialog.findViewById(R.id.dialog_editmo_label_input);
+                            editMOLabelInput.setHint("optional");
+                            editMOLabelInput.setInputType(InputType.TYPE_CLASS_TEXT);
+                            Button editMOButtonNegative = (Button) editMODialog.findViewById(R.id.dialog_editmo_button_negative);
+                            editMOButtonNegative.setOnClickListener(new OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    editMODialog.cancel();
+                                }
+                            });
+
+                            Button editMOButtonPositive = (Button) editMODialog.findViewById(R.id.dialog_editmo_button_positive);
+                            editMOButtonPositive.setOnClickListener(new OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    String option = editMOMovementInput.getSelectedItem().toString();
+                                    String labelStr = editMOLabelInput.getText().toString();
+                                    if(option.equals("add label only")) {
+                                        if(measure != null && !labelStr.equals("")) {
+                                            measure.movement.label = labelStr;
+                                        }
+                                        return;
+                                    }
+                                    if(option.equals("create new")) {
+                                        Movement newMovement = new Movement();
+                                        newMovement.number = document.movements.get
+                                                (document.movements.size() - 1).number + 1;
+                                        newMovement.label = labelStr;
+                                        document.movements.add(newMovement);
+                                        currentMovementNumber = document.movements.indexOf(newMovement);
+                                        if(measure != null) {
+                                            for(Measure measure : measuresToMove) {
+                                                measure.changeMovement(newMovement);
+                                            }
+                                            document.resort(measure.movement, measure.page);
+                                            document.cleanMovements();
+                                            if(currentMovementNumber >= document.movements.size()) {
+                                                currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        Movement oldMovement = null;
+                                        for(Movement movement : document.movements) {
+                                            if(movement.getName().equals(option)) {
+                                                oldMovement = movement;
+                                                break;
+                                            }
+                                        }
+                                        if(oldMovement != null) {
+                                            oldMovement.label = labelStr;
+                                            currentMovementNumber = document.movements.indexOf(oldMovement);
+                                            if(measure != null) {
+                                                for(Measure measure : measuresToMove) {
+                                                    measure.changeMovement(oldMovement);
+                                                }
+                                                document.resort(measure.movement, measure.page);
+                                                document.cleanMovements();
+                                                if(currentMovementNumber >= document.movements.size()) {
+                                                    currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    editMODialog.dismiss();
+                                }
+                            });
+
+                            editMODialog.show();
+                            /*final AlertDialog.Builder moBuilder = new AlertDialog.Builder(getContext());
+                            moBuilder.setTitle("Set Movement Anchor");
+                            TextView moheader1 = new TextView(getContext());
+                            moheader1.setText("Select existing movement or create new one");
+                            final Spinner movSpinner = new Spinner(getContext());
+                            ArrayList<String> movementOptions = new ArrayList();
+                            movementOptions.add("create new");
+                            for(Movement movement : document.movements) {
+                                movementOptions.add(movement.getName());
+                            }
+                            movementOptions.add("change label only");
                             ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, movementOptions);
                             movSpinner.setAdapter(adapter);
                             movSpinner.setSelection(0);
@@ -557,7 +766,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                         public void onClick(DialogInterface dialog, int which) {
                                             String option = movSpinner.getSelectedItem().toString();
                                             String labelStr = label.getText().toString();
-                                            if(option.equals("no action")) {
+                                            if(option.equals("add label only")) {
+                                                if(measure != null && !labelStr.equals("")) {
+                                                    measure.movement.label = labelStr;
+                                                }
                                                 return;
                                             }
                                             if(option.equals("create new")) {
@@ -567,12 +779,15 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                                 newMovement.label = labelStr;
                                                 document.movements.add(newMovement);
                                                 currentMovementNumber = document.movements.indexOf(newMovement);
-                                                if(measureToMove != null) {
+                                                if(measure != null) {
                                                     for(Measure measure : measuresToMove) {
                                                         measure.changeMovement(newMovement);
                                                     }
-                                                    document.resort(measureToMove.movement, measureToMove.page);
+                                                    document.resort(measure.movement, measure.page);
                                                     document.cleanMovements();
+                                                    if(currentMovementNumber >= document.movements.size()) {
+                                                        currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
+                                                    }
                                                 }
                                             }
                                             else {
@@ -586,12 +801,15 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                                 if(oldMovement != null) {
                                                     oldMovement.label = labelStr;
                                                     currentMovementNumber = document.movements.indexOf(oldMovement);
-                                                    if(measureToMove != null) {
+                                                    if(measure != null) {
                                                         for(Measure measure : measuresToMove) {
                                                             measure.changeMovement(oldMovement);
                                                         }
-                                                        document.resort(measureToMove.movement, measureToMove.page);
+                                                        document.resort(measure.movement, measure.page);
                                                         document.cleanMovements();
+                                                        if(currentMovementNumber >= document.movements.size()) {
+                                                            currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -604,47 +822,87 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                     dialog.cancel();
                                 }
                             });
-                            moBuilder.show();
+                            moBuilder.show();*/
 
 
                             break;
                         case TYPE:
                             if (currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y) != null) {
-                                final Measure measureToType = currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
-                                final PointF p = transformCoordTouchToBitmap(touchX, touchY);
-                                AlertDialog.Builder meBuilder = new AlertDialog.Builder(getContext());
-                                meBuilder.setTitle("Edit Measure");
+                                final Dialog editMEDialog = new Dialog(getContext());
+                                editMEDialog.setContentView(R.layout.dialog_editme);
+                                editMEDialog.setTitle("Edit Measure");
+                                TextView editMENameLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_name_label);
+                                editMENameLabel.setText("Measure name:");
+                                final EditText editMENameInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_name_input);
+                                editMENameInput.setHint(measure.getName());
+                                editMENameInput.setInputType(InputType.TYPE_CLASS_TEXT);
+                                TextView editMERestLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_rest_label);
+                                editMERestLabel.setText("Rest bars:");
+                                String repeatTxt = "" + measure.rest;
+                                final EditText editMERestInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_rest_input);
+                                editMERestInput.setHint(repeatTxt);
+                                editMERestInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+                                Button editMEButtonNegative = (Button) editMEDialog.findViewById(R.id.dialog_editme_button_negative);
+                                editMEButtonNegative.setOnClickListener(new OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        editMEDialog.cancel();
+                                    }
+                                });
+
+                                Button editMEButtonPositive = (Button) editMEDialog.findViewById(R.id.dialog_editme_button_positive);
+                                editMEButtonPositive.setOnClickListener(new OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        String text = editMENameInput.getText().toString();
+                                        measure.manualSequenceNumber = text.equals("") ? null : text;
+                                        try {
+                                            measure.rest = Integer.parseInt(editMERestInput.getText().toString());
+                                        }
+                                        catch (NumberFormatException e) {
+                                            measure.rest = 0;
+                                        }
+                                        measure.movement.calculateSequenceNumbers();
+                                        measure.page.sortMeasures();
+                                        editMEDialog.dismiss();
+                                        invalidate();
+                                    }
+                                });
+
+                                editMEDialog.show();
+                                /*AlertDialog.Builder meBuilder = new AlertDialog.Builder(getContext());
+              p                  meBuilder.setTitle("Edit Measure");
                                 LinearLayout meLayout = new LinearLayout(getContext());
                                 meLayout.setOrientation(LinearLayout.VERTICAL);
                                 final EditText name = new EditText(getContext());
-                                final EditText repeat = new EditText(getContext());
+                                final EditText rest = new EditText(getContext());
                                 TextView meheader1 = new TextView(getContext());
                                 meheader1.setText("Measure name:");
                                 TextView meheader2 = new TextView(getContext());
-                                meheader2.setText("Repeat:");
+                                meheader2.setText("Rest bars:");
                                 name.setInputType(InputType.TYPE_CLASS_TEXT);
-                                name.setHint(measureToType.getName());
-                                repeat.setInputType(InputType.TYPE_CLASS_NUMBER);
-                                String repeatTxt = "" + measureToType.repeat;
-                                repeat.setHint(repeatTxt);
+                                name.setHint(measure.getName());
+                                rest.setInputType(InputType.TYPE_CLASS_NUMBER);
+                                String repeatTxt = "" + measure.rest;
+                                rest.setHint(repeatTxt);
                                 meLayout.addView(meheader1);
                                 meLayout.addView(name);
                                 meLayout.addView(meheader2);
-                                meLayout.addView(repeat);
+                                meLayout.addView(rest);
                                 meBuilder.setView(meLayout);
                                 meBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         String text = name.getText().toString();
-                                        measureToType.manualSequenceNumber = text.equals("") ? null : text;
+                                        measure.manualSequenceNumber = text.equals("") ? null : text;
                                         try {
-                                            measureToType.repeat = Integer.parseInt(repeat.getText().toString());
+                                            measure.rest = Integer.parseInt(rest.getText().toString());
                                         }
                                         catch (NumberFormatException e) {
-                                            measureToType.repeat = 0;
+                                            measure.rest = 0;
                                         }
-                                        measureToType.movement.calculateSequenceNumbers();
-                                        measureToType.page.sortMeasures();
+                                        measure.movement.calculateSequenceNumbers();
+                                        measure.page.sortMeasures();
                                         invalidate();
                                     }
                                 });
@@ -654,7 +912,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                         dialog.cancel();
                                     }
                                 });
-                                meBuilder.show();
+                                meBuilder.show();*/
                             }
                             break;
                         case DRAW:
@@ -669,9 +927,12 @@ public class FacsimileView extends SubsamplingScaleImageView {
                             double distance = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
                             if (distance < 20.0f && trackLength > 100.0f) {
                                 if ((rightMost - leftMost > 50) && (bottomMost - topMost > 50)) {
-                                    Measure measure = new Measure(leftMost, topMost, rightMost, bottomMost);
-                                    document.addMeasure(measure, document.movements.get(currentMovementNumber), currentPage);
-                                    document.resort(measure.movement, measure.page);
+                                    Measure newMeasure = new Measure(leftMost, topMost, rightMost, bottomMost);
+                                    if(currentMovementNumber > document.movements.size() - 1) {
+                                        currentMovementNumber = document.movements.size() - 1;
+                                    }
+                                    document.addMeasure(newMeasure, document.movements.get(currentMovementNumber), currentPage);
+                                    document.resort(newMeasure.movement, newMeasure.page);
                                     invalidate();
                                 }
                                 pointPath = new ArrayList<>();

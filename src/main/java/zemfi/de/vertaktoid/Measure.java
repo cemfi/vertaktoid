@@ -14,7 +14,7 @@ class Measure implements Comparable<Measure>, Serializable {
 
     int sequenceNumber = -1;
     String manualSequenceNumber = null;
-    int repeat = 0;
+    int rest = 0;
     String zoneUuid = null;
     String measureUuid = null;
     Movement movement;
