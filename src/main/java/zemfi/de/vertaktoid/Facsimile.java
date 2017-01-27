@@ -1,12 +1,11 @@
 package zemfi.de.vertaktoid;
 
-import android.graphics.PointF;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+
 
 public class Facsimile implements Serializable {
     ArrayList<Page> pages;

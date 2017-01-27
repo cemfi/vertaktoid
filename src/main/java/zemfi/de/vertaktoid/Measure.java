@@ -1,7 +1,5 @@
 package zemfi.de.vertaktoid;
 
-import android.graphics.PointF;
-
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.UUID;

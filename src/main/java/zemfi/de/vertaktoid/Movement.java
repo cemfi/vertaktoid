@@ -32,14 +32,20 @@ public class Movement implements Serializable {
             }
             if(measure.manualSequenceNumber != null) {
                 try {
-                    String modified = measure.manualSequenceNumber.replaceAll("[\\D]", "");
-                    modified.trim();
-                    String mnumStr = modified.split(" ")[0];
-                    int mnum = Integer.parseInt(mnumStr);
-                    if (String.valueOf(mnum).equals(measure.manualSequenceNumber) && mnum == num) {
-                        measure.manualSequenceNumber = null;
+                    String modified = measure.manualSequenceNumber.replaceAll("[\\D]", " ");
+                    modified = modified.trim();
+                    String mnumStrs[] = modified.split(" ");
+                    if(mnumStrs.length == 0) {
+                        measure.sequenceNumber = num;
                     }
-                    measure.sequenceNumber = mnum;
+                    else {
+                        String mnumStr = mnumStrs[0];
+                        int mnum = Integer.parseInt(mnumStr);
+                        if (String.valueOf(mnum).equals(measure.manualSequenceNumber) && mnum == num) {
+                            measure.manualSequenceNumber = null;
+                        }
+                        measure.sequenceNumber = mnum;
+                    }
                 }
                 catch (NumberFormatException e) {
                     measure.sequenceNumber = num;

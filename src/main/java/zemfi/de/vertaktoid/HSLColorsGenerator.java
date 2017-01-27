@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Random;
 
 /**
+ * HSLColorsGenerator is a helper class for generating of color sets.
+ * The defined algorithm, that uses the HSLA color scheme and golden ration constant,
+ * guaranties good recognition of neighbor colors.
  * Created by eugen on 13.01.17.
  */
 
@@ -12,6 +15,13 @@ public class HSLColorsGenerator {
     private static float h = -_golden_ratio_conjugate;
     private static Random rnd = new Random();
 
+    /**
+     * Generates one HSLA color, that can be good recognized from last color.
+     * @param s saturation
+     * @param l lightness
+     * @param a alpha
+     * @return new HSLA color
+     */
     public static HSLColor generateColor(float s, float l, float a)
     {
         h += _golden_ratio_conjugate;
@@ -19,6 +29,14 @@ public class HSLColorsGenerator {
         return new HSLColor(h * 360, s, l, a);
     }
 
+    /**
+     * Generates HSLA color set. Each color can be good recognized from neighbor colors.
+     * @param n number of colors to generate
+     * @param s saturation
+     * @param l lightness
+     * @param a alpha
+     * @return
+     */
     public static ArrayList<HSLColor> generateColorSet(int n, float s, float l, float a)
     {
         ArrayList<HSLColor> colors = new ArrayList<>();
@@ -29,11 +47,18 @@ public class HSLColorsGenerator {
         return colors;
     }
 
+    /**
+     * Reset the used hue to a random.
+     */
     public static void resetHueToRandom()
     {
         h = rnd.nextFloat();
     }
 
+    /**
+     * Reset the hue to a value equals negative golden ratio.
+     * The next generates color start than from hue equals 0;
+     */
     public static void resetHueToDefault() { h = -_golden_ratio_conjugate;}
 
 }

@@ -3,6 +3,13 @@ package zemfi.de.vertaktoid;
 import android.graphics.Color;
 
 /**
+ * HSLColor class represents a color in the HSLA color scheme.
+ * HSLA color scheme operates with following parameters:
+ * h - hue
+ * s - saturation
+ * l - lightness
+ * a - alpha
+ * HSLColor class defines the import and exports methods for colors in RGB(ARGB) color scheme.
  * Created by eugen on 12.01.17.
  */
 
@@ -13,6 +20,13 @@ public class HSLColor extends Color {
     float l = 0f;
     float a = 1f;
 
+    /**
+     * Constructor. Creates new color in HSLA scheme.
+     * @param h hue
+     * @param s saturation
+     * @param l lightness
+     * @param a alpha
+     */
     public HSLColor(float h, float s, float l, float a) {
         this.h = h;
         this.s = s;
@@ -20,6 +34,9 @@ public class HSLColor extends Color {
         this.a = a;
     }
 
+    /**
+     * Construct with default empty values. Creates new color in HSLA scheme.
+     */
     public HSLColor () {
         this.h = 0f;
         this.s = 0f;
@@ -27,6 +44,14 @@ public class HSLColor extends Color {
         this.a = 1f;
     }
 
+    /**
+     * Converts a color in ARGB scheme to a equivalent color in HSLA scheme.
+     * @param r red
+     * @param g green
+     * @param b blue
+     * @param a alpha.
+     * @return color in HSLA scheme
+     */
     private static HSLColor fromRGB(float r, float g, float b, float a){
 
         //	Minimum and Maximum RGB values are used in the HSL calculations
@@ -65,6 +90,11 @@ public class HSLColor extends Color {
         return new HSLColor(h, s * 100, l * 100, a);
     }
 
+    /**
+     * Converts a color in RGB scheme to a equivalent color in HSLA scheme.
+     * @param color hexadecimal integer value of RGB color
+     * @return color in HSLA scheme
+     */
     public static HSLColor fromRGB(int color)
     {
         //  Get RGB values in the range 0 - 1
@@ -76,6 +106,11 @@ public class HSLColor extends Color {
         return fromRGB(r, g, b, 1.0f);
     }
 
+    /**
+     * Converts a color in ARGB scheme to a equivalent color in HSLA scheme.
+     * @param color hexadecimal integer value of ARGB color
+     * @return color in HSLA scheme
+     */
     public static HSLColor fromARGB(int color)
     {
         //  Get RGB values in the range 0 - 1
@@ -88,10 +123,23 @@ public class HSLColor extends Color {
         return fromRGB(r, g, b, a);
     }
 
+    /**
+     * Converts giving color in HSLA scheme to an equivalent color in RGB scheme.
+     * @param hsla HSLA color
+     * @return RGB color
+     */
     public static int toRGB(HSLColor hsla) {
         return toRGB(hsla.h, hsla.s, hsla.l, hsla.a);
     }
 
+    /**
+     * Converts giving color in HSLA scheme to an equivalent color in RGB scheme.
+     * @param h hue
+     * @param s saturation
+     * @param l lightness
+     * @param alpha alpha
+     * @return RGB color
+     */
     public static int toRGB(float h, float s, float l, float alpha)
     {
         if (s <0.0f || s > 100.0f)
@@ -140,10 +188,23 @@ public class HSLColor extends Color {
             (((int) (g * 255.0f)) << 8) | ((int) (b * 255.0f));
     }
 
+    /**
+     * Converts giving color in HSLA scheme to an equivalent color in ARGB scheme.
+     * @param hsla HSLA color
+     * @return ARBG color as hexadecimal integer value
+     */
     public static int toARGB(HSLColor hsla) {
         return toARGB(hsla.h, hsla.s, hsla.l, hsla.a);
     }
 
+    /**
+     * Converts giving color in HSLA scheme to an equivalent color in ARGB scheme.
+     * @param h hue
+     * @param s saturation
+     * @param l lightness
+     * @param alpha alpha
+     * @return ARBG color as hexadecimal integer value
+     */
     public static int toARGB(float h, float s, float l, float alpha)
     {
         if (s <0.0f || s > 100.0f)
@@ -191,6 +252,7 @@ public class HSLColor extends Color {
         return (((int) (alpha * 255.0f)) << 24) | (((int) (r * 255.0f)) << 16) |
                 (((int) (g * 255.0f)) << 8) | ((int) (b * 255.0f));
     }
+
 
     private static float HueToRGB(float p, float q, float h)
     {

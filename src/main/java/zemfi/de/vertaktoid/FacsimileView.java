@@ -1,9 +1,7 @@
 package zemfi.de.vertaktoid;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
 import android.graphics.Canvas;
@@ -22,7 +20,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ArrayAdapter;
@@ -53,6 +50,12 @@ public class FacsimileView extends SubsamplingScaleImageView {
     private Path drawPath;
     private ArrayList<PointF> pointPath;
     private Paint drawPaint;
+    private Paint largeBoldText = new Paint();
+    private Paint smallBoldText = new Paint();
+    private Paint whiteAlpha = new Paint();
+    private Rect pageNameRect = new Rect();
+    private Rect measureNameRect = new Rect();
+    private Rect movementNameRect = new Rect();
     private ArrayList<HSLColor> movementColors;
     private float s = 100f;
     private float l = 30f;
@@ -191,9 +194,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
         resetState();
         final Dialog gotoDialog = new Dialog(getContext());
         gotoDialog.setContentView(R.layout.dialog_goto);
-        gotoDialog.setTitle("Go To Page");
+        gotoDialog.setTitle(R.string.dialog_goto_titel);
         TextView gotoPageLabel = (TextView) gotoDialog.findViewById(R.id.dialog_goto_page_label);
-        gotoPageLabel.setText("Page number:");
+        gotoPageLabel.setText(R.string.dialog_goto_page_label);
         final EditText gotoPageInput = (EditText) gotoDialog.findViewById(R.id.dialog_goto_page_input);
         gotoPageInput.setHint("1 - " + (document.pages.size()));
         gotoPageInput.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -226,45 +229,15 @@ public class FacsimileView extends SubsamplingScaleImageView {
         });
 
         gotoDialog.show();
-        /*AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Go to page");
-        final EditText input = new EditText(getContext());
-        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        input.setHint("1 - " + (document.pages.size()));
-        builder.setView(input);
-        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                try {
-                    int newPageNumber = Integer.parseInt(input.getText().toString()) - 1;
-                    if(newPageNumber >= 0 && newPageNumber < document.pages.size()) {
-                        pageNumber.set(newPageNumber);
-                        clean();
-                        setPage(newPageNumber);
-                    }
-                }
-                catch (NumberFormatException e) {
-
-                }
-                invalidate();
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        builder.show();*/
     }
 
     public void settingsClicked() {
         resetState();
         final Dialog settingsDialog = new Dialog(getContext());
         settingsDialog.setContentView(R.layout.dialog_settings);
-        settingsDialog.setTitle("Settings");
-        TextView settingsLabel = (TextView) settingsDialog.findViewById(R.id.dialog_settings_horover_label);
-        settingsLabel.setText("Horizontal overlapping:");
+        settingsDialog.setTitle(R.string.dialog_settings_titel);
+        TextView settingsHoroverLabel = (TextView) settingsDialog.findViewById(R.id.dialog_settings_horover_label);
+        settingsHoroverLabel.setText(R.string.dialog_settings_horover_label);
         final EditText settingsHoroverInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_horover_input);
         settingsHoroverInput.setHint("" + horOverlapping);
         settingsHoroverInput.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -291,38 +264,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
         });
 
         settingsDialog.show();
-
-        /*resetState();
-        AlertDialog.Builder meBuilder = new AlertDialog.Builder(getContext());
-        meBuilder.setTitle("Settings");
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        final EditText horOverInput = new EditText(getContext());
-        TextView horOverLabel = new TextView(getContext());
-        horOverLabel.setText("Horizontal Overlapping:");
-        horOverInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-        horOverInput.setHint("" + horOverlapping);
-        layout.addView(horOverLabel);
-        layout.addView(horOverInput);
-        meBuilder.setView(layout);
-        meBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                try {
-                    horOverlapping = Integer.parseInt(horOverInput.getText().toString());
-                }
-                catch (NumberFormatException e) {
-                }
-                invalidate();
-            }
-        });
-        meBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        meBuilder.show();*/
     }
 
     PointF transformCoordBitmapToTouch(float x, float y) {
@@ -375,12 +316,11 @@ public class FacsimileView extends SubsamplingScaleImageView {
             return;
         }
 
-        Paint largeBoldText = new Paint();
+
         largeBoldText.setColor(Color.BLACK);
         largeBoldText.setTextSize(50);
         largeBoldText.setFakeBoldText(true);
 
-        Paint smallBoldText = new Paint();
         smallBoldText.setColor(Color.BLACK);
         smallBoldText.setTextSize(36);
         smallBoldText.setFakeBoldText(true);
@@ -390,12 +330,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
         if (!document.pages.get(pageNumber.get()).imageFile.exists()) {
 
-            Rect rect = new Rect();
-
             largeBoldText.getTextBounds(document.pages.get(pageNumber.get()).imageFile.getName(), 0,
-                    document.pages.get(pageNumber.get()).imageFile.getName().length(), rect);
+                    document.pages.get(pageNumber.get()).imageFile.getName().length(), pageNameRect);
             canvas.drawText("" + document.pages.get(pageNumber.get()).imageFile.getName(),
-                    (this.getRight() - this.getLeft()) / 2  - rect.centerX(), 100,  largeBoldText);
+                    (this.getRight() - this.getLeft()) / 2  - pageNameRect.centerX(), 100,  largeBoldText);
             return;
         }
 
@@ -420,10 +358,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
             canvas.drawPath(drawPath, drawPaint);
             drawPath.reset();
 
-            Rect measureNameRect = new Rect();
-            Rect movementNameRect = new Rect();
-
-            Paint whiteAlpha = new Paint();
             whiteAlpha.setColor(0x55ffffff);
             whiteAlpha.setStyle(Paint.Style.FILL);
 
@@ -522,7 +456,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        PointF curr = new PointF(event.getX(), event.getY());
+        if(document == null) {
+
+            return false;
+        }
         float touchX = event.getX();
         float touchY = event.getY();
         final Page currentPage = document.pages.get(pageNumber.get());
@@ -540,11 +477,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
             case MotionEvent.ACTION_DOWN:
                 switch (nextAction) {
                     case ERASE:
-                        if (measures.size() == 0) {
-                            //resetState();
-                            //resetMenu();
-                            // continue and handle the ActionId as a click in brush state
-                        } else {
+                        if(measures.size() > 0) {
                             document.removeMeasures(measures);
                             ArrayList<Movement> changedMovements = new ArrayList<>();
                             for (Measure me : measures) {
@@ -651,23 +584,23 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
                             final Dialog editMODialog = new Dialog(getContext());
                             editMODialog.setContentView(R.layout.dialog_editmo);
-                            editMODialog.setTitle("Set Movement Anchor");
+                            editMODialog.setTitle(R.string.dialog_editmo_titel);
                             TextView editMOMovementLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_movement_label);
-                            editMOMovementLabel.setText("Select existing movement or create new one:");
+                            editMOMovementLabel.setText(R.string.dialog_editmo_movement_label);
                             final Spinner editMOMovementInput = (Spinner) editMODialog.findViewById(R.id.dialog_editmo_movement_input);
                             ArrayList<String> movementOptions = new ArrayList();
-                            movementOptions.add("create new");
+                            movementOptions.add(getResources().getString(R.string.dialog_editmo_spinner_optdef));
                             for(Movement movement : document.movements) {
                                 movementOptions.add(movement.getName());
                             }
-                            movementOptions.add("change label only");
+                            movementOptions.add(getResources().getString(R.string.dialog_editmo_spinner_optelse));
                             ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, movementOptions);
                             editMOMovementInput.setAdapter(adapter);
                             editMOMovementInput.setSelection(0);
                             TextView editMOLabelLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_label_label);
-                            editMOLabelLabel.setText("Label for movement");
+                            editMOLabelLabel.setText(R.string.dialog_editmo_label_label);
                             final EditText editMOLabelInput = (EditText) editMODialog.findViewById(R.id.dialog_editmo_label_input);
-                            editMOLabelInput.setHint("optional");
+                            editMOLabelInput.setHint(R.string.dialog_editmo_label_input_hint);
                             editMOLabelInput.setInputType(InputType.TYPE_CLASS_TEXT);
                             Button editMOButtonNegative = (Button) editMODialog.findViewById(R.id.dialog_editmo_button_negative);
                             editMOButtonNegative.setOnClickListener(new OnClickListener() {
@@ -683,13 +616,13 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                 public void onClick(View v) {
                                     String option = editMOMovementInput.getSelectedItem().toString();
                                     String labelStr = editMOLabelInput.getText().toString();
-                                    if(option.equals("add label only")) {
+                                    if(option.equals(getResources().getString(R.string.dialog_editmo_spinner_optelse))) {
                                         if(measure != null && !labelStr.equals("")) {
                                             measure.movement.label = labelStr;
                                         }
                                         return;
                                     }
-                                    if(option.equals("create new")) {
+                                    if(option.equals(getResources().getString(R.string.dialog_editmo_spinner_optdef))) {
                                         Movement newMovement = new Movement();
                                         newMovement.number = document.movements.get
                                                 (document.movements.size() - 1).number + 1;
@@ -733,111 +666,20 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                     editMODialog.dismiss();
                                 }
                             });
-
                             editMODialog.show();
-                            /*final AlertDialog.Builder moBuilder = new AlertDialog.Builder(getContext());
-                            moBuilder.setTitle("Set Movement Anchor");
-                            TextView moheader1 = new TextView(getContext());
-                            moheader1.setText("Select existing movement or create new one");
-                            final Spinner movSpinner = new Spinner(getContext());
-                            ArrayList<String> movementOptions = new ArrayList();
-                            movementOptions.add("create new");
-                            for(Movement movement : document.movements) {
-                                movementOptions.add(movement.getName());
-                            }
-                            movementOptions.add("change label only");
-                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, movementOptions);
-                            movSpinner.setAdapter(adapter);
-                            movSpinner.setSelection(0);
-                            TextView moheader2 = new TextView(getContext());
-                            moheader2.setText("Label for movement");
-                            final EditText label = new EditText(getContext());
-                            label.setHint("optional");
-
-                            LinearLayout moLayout = new LinearLayout(getContext());
-                            moLayout.setOrientation(LinearLayout.VERTICAL);
-                            moLayout.addView(moheader1);
-                            moLayout.addView(movSpinner);
-                            moLayout.addView(moheader2);
-                            moLayout.addView(label);
-                            moBuilder.setView(moLayout);
-                            moBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            String option = movSpinner.getSelectedItem().toString();
-                                            String labelStr = label.getText().toString();
-                                            if(option.equals("add label only")) {
-                                                if(measure != null && !labelStr.equals("")) {
-                                                    measure.movement.label = labelStr;
-                                                }
-                                                return;
-                                            }
-                                            if(option.equals("create new")) {
-                                                Movement newMovement = new Movement();
-                                                newMovement.number = document.movements.get
-                                                        (document.movements.size() - 1).number + 1;
-                                                newMovement.label = labelStr;
-                                                document.movements.add(newMovement);
-                                                currentMovementNumber = document.movements.indexOf(newMovement);
-                                                if(measure != null) {
-                                                    for(Measure measure : measuresToMove) {
-                                                        measure.changeMovement(newMovement);
-                                                    }
-                                                    document.resort(measure.movement, measure.page);
-                                                    document.cleanMovements();
-                                                    if(currentMovementNumber >= document.movements.size()) {
-                                                        currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
-                                                    }
-                                                }
-                                            }
-                                            else {
-                                                Movement oldMovement = null;
-                                                for(Movement movement : document.movements) {
-                                                    if(movement.getName().equals(option)) {
-                                                        oldMovement = movement;
-                                                        break;
-                                                    }
-                                                }
-                                                if(oldMovement != null) {
-                                                    oldMovement.label = labelStr;
-                                                    currentMovementNumber = document.movements.indexOf(oldMovement);
-                                                    if(measure != null) {
-                                                        for(Measure measure : measuresToMove) {
-                                                            measure.changeMovement(oldMovement);
-                                                        }
-                                                        document.resort(measure.movement, measure.page);
-                                                        document.cleanMovements();
-                                                        if(currentMovementNumber >= document.movements.size()) {
-                                                            currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                            });
-                            moBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            });
-                            moBuilder.show();*/
-
-
                             break;
                         case TYPE:
                             if (currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y) != null) {
                                 final Dialog editMEDialog = new Dialog(getContext());
                                 editMEDialog.setContentView(R.layout.dialog_editme);
-                                editMEDialog.setTitle("Edit Measure");
+                                editMEDialog.setTitle(R.string.dialog_editme_titel);
                                 TextView editMENameLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_name_label);
-                                editMENameLabel.setText("Measure name:");
+                                editMENameLabel.setText(R.string.dialog_editme_name_label);
                                 final EditText editMENameInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_name_input);
                                 editMENameInput.setHint(measure.getName());
                                 editMENameInput.setInputType(InputType.TYPE_CLASS_TEXT);
                                 TextView editMERestLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_rest_label);
-                                editMERestLabel.setText("Rest bars:");
+                                editMERestLabel.setText(R.string.dialog_editme_rest_label);
                                 String repeatTxt = "" + measure.rest;
                                 final EditText editMERestInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_rest_input);
                                 editMERestInput.setHint(repeatTxt);
@@ -870,49 +712,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                 });
 
                                 editMEDialog.show();
-                                /*AlertDialog.Builder meBuilder = new AlertDialog.Builder(getContext());
-              p                  meBuilder.setTitle("Edit Measure");
-                                LinearLayout meLayout = new LinearLayout(getContext());
-                                meLayout.setOrientation(LinearLayout.VERTICAL);
-                                final EditText name = new EditText(getContext());
-                                final EditText rest = new EditText(getContext());
-                                TextView meheader1 = new TextView(getContext());
-                                meheader1.setText("Measure name:");
-                                TextView meheader2 = new TextView(getContext());
-                                meheader2.setText("Rest bars:");
-                                name.setInputType(InputType.TYPE_CLASS_TEXT);
-                                name.setHint(measure.getName());
-                                rest.setInputType(InputType.TYPE_CLASS_NUMBER);
-                                String repeatTxt = "" + measure.rest;
-                                rest.setHint(repeatTxt);
-                                meLayout.addView(meheader1);
-                                meLayout.addView(name);
-                                meLayout.addView(meheader2);
-                                meLayout.addView(rest);
-                                meBuilder.setView(meLayout);
-                                meBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        String text = name.getText().toString();
-                                        measure.manualSequenceNumber = text.equals("") ? null : text;
-                                        try {
-                                            measure.rest = Integer.parseInt(rest.getText().toString());
-                                        }
-                                        catch (NumberFormatException e) {
-                                            measure.rest = 0;
-                                        }
-                                        measure.movement.calculateSequenceNumbers();
-                                        measure.page.sortMeasures();
-                                        invalidate();
-                                    }
-                                });
-                                meBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.cancel();
-                                    }
-                                });
-                                meBuilder.show();*/
                             }
                             break;
                         case DRAW:

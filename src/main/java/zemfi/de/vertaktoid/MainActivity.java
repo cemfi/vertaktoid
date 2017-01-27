@@ -19,7 +19,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
@@ -104,12 +103,6 @@ public class MainActivity extends AppCompatActivity {
             status.setStatus(StatusStrings.StatusId.SUCCESS);
         } else {
             view.setImage(ImageSource.resource(R.drawable.handel));
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    actionOpen();
-                }
-            });
         }
 
         binding.setFview(facsimileView);

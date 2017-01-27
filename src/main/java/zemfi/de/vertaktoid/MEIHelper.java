@@ -1,6 +1,5 @@
 package zemfi.de.vertaktoid;
 
-import android.graphics.PointF;
 import android.util.Log;
 
 import java.io.File;

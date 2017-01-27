@@ -3,5 +3,19 @@
     <string name="status_format">%1$s: %2$s at %3$s.</string>
     <string name="status_date_format">hh:mm:ss</string>
     <string name="dialog_button_negative">Cancel</string>
-    <string name="dialog_button_positive">Ok</string>
+    <string name="dialog_button_positive">OK</string>
+    <string name="dialog_goto_page_label">Page number:</string>
+    <string name="dialog_goto_titel">Go To Page</string>
+    <string name="dialog_settings_horover_label">Horizontal overlapping:</string>
+    <string name="dialog_settings_titel">Settings</string>
+    <string name="dialog_editmo_titel">Set Movement Anchor</string>
+    <string name="dialog_editmo_movement_label">Select existing movement or create new one:</string>
+    <string name="dialog_editmo_spinner_optdef">create new</string>
+    <string name="dialog_editmo_spinner_optelse">set label only</string>
+    <string name="dialog_editmo_label_label">Label for movement:</string>
+    <string name="dialog_editmo_label_input_hint">optional</string>
+    <string name="dialog_editme_titel">Edit Measure</string>
+    <string name="dialog_editme_name_label">Measure name:</string>
+    <string name="dialog_editme_rest_label">Rest bars:</string>
+
 </resources>
