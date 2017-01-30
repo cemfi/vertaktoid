@@ -5,12 +5,11 @@ import android.graphics.Color;
 /**
  * HSLColor class represents a color in the HSLA color scheme.
  * HSLA color scheme operates with following parameters:
- * h - hue
- * s - saturation
- * l - lightness
- * a - alpha
+ * h - The hue value.
+ * s - The saturation value.
+ * l - The lightness value.
+ * a - The alpha value.
  * HSLColor class defines the import and exports methods for colors in RGB(ARGB) color scheme.
- * Created by eugen on 12.01.17.
  */
 
 public class HSLColor extends Color {
@@ -22,10 +21,10 @@ public class HSLColor extends Color {
 
     /**
      * Constructor. Creates new color in HSLA scheme.
-     * @param h hue
-     * @param s saturation
-     * @param l lightness
-     * @param a alpha
+     * @param h The hue value.
+     * @param s The saturation value.
+     * @param l The lightness value.
+     * @param a The alpha value.
      */
     public HSLColor(float h, float s, float l, float a) {
         this.h = h;
@@ -46,10 +45,10 @@ public class HSLColor extends Color {
 
     /**
      * Converts a color in ARGB scheme to a equivalent color in HSLA scheme.
-     * @param r red
-     * @param g green
-     * @param b blue
-     * @param a alpha.
+     * @param r The red color part.
+     * @param g The green color part.
+     * @param b The blue color part.
+     * @param a The alpha value.
      * @return color in HSLA scheme
      */
     private static HSLColor fromRGB(float r, float g, float b, float a){
@@ -108,8 +107,8 @@ public class HSLColor extends Color {
 
     /**
      * Converts a color in ARGB scheme to a equivalent color in HSLA scheme.
-     * @param color hexadecimal integer value of ARGB color
-     * @return color in HSLA scheme
+     * @param color The hexadecimal integer value of ARGB color.
+     * @return The color in HSLA scheme.
      */
     public static HSLColor fromARGB(int color)
     {
@@ -125,8 +124,8 @@ public class HSLColor extends Color {
 
     /**
      * Converts giving color in HSLA scheme to an equivalent color in RGB scheme.
-     * @param hsla HSLA color
-     * @return RGB color
+     * @param hsla The HSLA color value.
+     * @return The RGB color value.
      */
     public static int toRGB(HSLColor hsla) {
         return toRGB(hsla.h, hsla.s, hsla.l, hsla.a);
@@ -134,11 +133,11 @@ public class HSLColor extends Color {
 
     /**
      * Converts giving color in HSLA scheme to an equivalent color in RGB scheme.
-     * @param h hue
-     * @param s saturation
-     * @param l lightness
-     * @param alpha alpha
-     * @return RGB color
+     * @param h The hue value.
+     * @param s The saturation value.
+     * @param l The lightness value.
+     * @param alpha The alpha value.
+     * @return The RGB color value.
      */
     public static int toRGB(float h, float s, float l, float alpha)
     {
@@ -190,8 +189,8 @@ public class HSLColor extends Color {
 
     /**
      * Converts giving color in HSLA scheme to an equivalent color in ARGB scheme.
-     * @param hsla HSLA color
-     * @return ARBG color as hexadecimal integer value
+     * @param hsla The HSLA color value.
+     * @return The ARBG color as hexadecimal integer value.
      */
     public static int toARGB(HSLColor hsla) {
         return toARGB(hsla.h, hsla.s, hsla.l, hsla.a);
@@ -199,17 +198,17 @@ public class HSLColor extends Color {
 
     /**
      * Converts giving color in HSLA scheme to an equivalent color in ARGB scheme.
-     * @param h hue
-     * @param s saturation
-     * @param l lightness
-     * @param alpha alpha
-     * @return ARBG color as hexadecimal integer value
+     * @param h The hue value.
+     * @param s The saturation value.
+     * @param l The lightness value.
+     * @param alpha The alpha value.
+     * @return The ARBG color as hexadecimal integer value.
      */
     public static int toARGB(float h, float s, float l, float alpha)
     {
         if (s <0.0f || s > 100.0f)
         {
-            String message = "Color parameter outside of expected range - Saturation";
+            String message = "Color parameter outside of expected range - saturation.";
             throw new IllegalArgumentException( message );
         }
 

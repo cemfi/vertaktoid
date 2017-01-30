@@ -8,17 +8,27 @@ import java.util.Collections;
 import android.graphics.BitmapFactory;
 
 /**
- * Created by yevgen on 16.12.2016.
+ * Represents the single facsimile page. Contains reference to the image file.
+ * Contains a set of related movements, that are arranged on this page.
  */
 
 public class Page implements Serializable {
+    // Related movements.
     ArrayList<Measure> measures;
+    // Image file.
     File imageFile;
+    // Sequence number of the page.
     int number;
 
+    // Image dimensions.
     int imageWidth;
     int imageHeight;
 
+    /**
+     * The constructor.
+     * @param imageFile The image file.
+     * @param number The sequence number.
+     */
     public Page(File imageFile, int number) {
         this.imageFile = imageFile;
         measures = new ArrayList<>();
@@ -26,10 +36,19 @@ public class Page implements Serializable {
         calculateDimensions();
     }
 
+    /**
+     * Sorts the measures on the page by their sequence numbers.
+     */
     void sortMeasures() {
         Collections.sort(measures, Measure.MEASURE_NUMBER_COMPARATOR);
     }
 
+    /**
+     * Gets a first measure at giving position (means the measure, that contains the giving point).
+     * @param x The x coordinate of point.
+     * @param y The y coordinate of point.
+     * @return The measure.
+     */
     Measure getMeasureAt(float x, float y) {
         for (Measure measure : measures) {
             if (measure.containsPoint(x, y)) {
@@ -40,6 +59,12 @@ public class Page implements Serializable {
         return null;
     }
 
+    /**
+     * Gets all measures at giving position.
+     * @param x The x coordinate of point.
+     * @param y The y coordinate of point.
+     * @return The list of measures.
+     */
     ArrayList<Measure> getMeasuresAt(float x, float y) {
         ArrayList<Measure> result = new ArrayList<>();
         for (Measure measure : measures) {
@@ -51,18 +76,29 @@ public class Page implements Serializable {
         return result;
     }
 
+    /**
+     * Removes measure from page.
+     * @param measure
+     */
     void removeMeasure(Measure measure) {
         measures.remove(measure);
         measure.page = null;
     }
 
+    /**
+     * Removes a list of measures from page.
+     * @param measures
+     */
     void removeMeasures(ArrayList<Measure> measures) {
         for(Measure measure : measures) {
             removeMeasure(measure);
         }
     }
 
-    void calculateDimensions() {
+    /**
+     * Read the dimensions from image file.
+     */
+    private void calculateDimensions() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         //The option inJustDecodeBounds is very important here.
         //Without this option the Bitmap will be read and stored in the memory, what cause the memory leaks.

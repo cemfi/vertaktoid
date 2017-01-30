@@ -4,20 +4,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by yevgen on 12.12.2016.
+ * Maps and enums for status and action values.
  */
 
 public class StatusStrings {
 
+    // Status id enum.
     public enum StatusId {
         UNKNOWN, SUCCESS, FAIL
     }
 
+    // Action id enum.
     public enum ActionId {
         UNKNOWN, STARTED, SAVED, TMP_SAVED, LOADED
     }
 
+    // Status map in form id -> value
     static Map<StatusId, String> statusStrs;
+    // Action map in form id -> value
     static Map<ActionId, String> actionStrs;
 
     static {

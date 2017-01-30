@@ -10,12 +10,18 @@ import java.util.ArrayList;
 import nu.xom.*;
 
 /**
- * Created by yevgen on 03.01.2017.
+ * MEI input\output routines.
  */
 
-public class MEIHelper {
+class MEIHelper {
 
-    static boolean writeMEI(File meiFile, ArrayList<Page> pages, ArrayList<Movement> movements) {
+    /**
+     * Write the existing data to an file in MEI format.
+     * @param meiFile The target MEI file.
+     * @param document The facsimile.
+     * @return true if properly saved.
+     */
+    static boolean writeMEI(File meiFile, Facsimile document) {
         Element mei = new Element("mei", Vertaktoid.MEI_NS);
         Document meiDocument = new Document(mei);
         Element meiHead = new Element("meiHead", Vertaktoid.MEI_NS);
@@ -38,8 +44,8 @@ public class MEIHelper {
         music.appendChild(facsimile);
         music.appendChild(body);
 
-        for(int i = 0; i < pages.size(); i++) {
-            Page page = pages.get(i);
+        for(int i = 0; i < document.pages.size(); i++) {
+            Page page = document.pages.get(i);
             Element surface = new Element("surface", Vertaktoid.MEI_NS);
             a = new Attribute("n", "" + (i + 1));
             surface.addAttribute(a);
@@ -83,12 +89,12 @@ public class MEIHelper {
             facsimile.appendChild(surface);
         }
 
-        for(Movement movement : movements) {
+        for(Movement movement : document.movements) {
             Element mdiv = new Element("mdiv", Vertaktoid.MEI_NS);
             Element score = new Element("score", Vertaktoid.MEI_NS);
             Element scoreDef = new Element("scoreDef", Vertaktoid.MEI_NS);
             Element section = new Element("section", Vertaktoid.MEI_NS);
-            a = new Attribute("n", "" + (movements.indexOf(movement) + 1));
+            a = new Attribute("n", "" + (document.movements.indexOf(movement) + 1));
             mdiv.addAttribute(a);
             a = new Attribute("label", movement.label);
             mdiv.addAttribute(a);
@@ -140,7 +146,13 @@ public class MEIHelper {
         return returnValue;
     }
 
-    static boolean readMEI(File meiFile, ArrayList<Page> pages, ArrayList<Movement> movements) {
+    /**
+     * Reads the data from MEI file.
+     * @param meiFile The MEI file.
+     * @param document The facsimile.
+     * @return true if properly readed.
+     */
+    static boolean readMEI(File meiFile, Facsimile document) {
         File dir = meiFile.getParentFile();
 
         if(!meiFile.exists()) {
@@ -207,7 +219,7 @@ public class MEIHelper {
                     movement.measures.add(measure);
                 }
             }
-            movements.add(movement);
+            document.movements.add(movement);
         }
 
         for(int i = 0; i < surfaces.size(); i++) {
@@ -242,7 +254,7 @@ public class MEIHelper {
                 float lrx = Float.parseFloat(zone.getAttributeValue("lrx"));
                 float lry = Float.parseFloat(zone.getAttributeValue("lry"));
                 String uuidZone = zone.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
-                Measure measure = findMeasureFor(uuidZone, movements);
+                Measure measure = findMeasureFor(uuidZone, document.movements);
                 if(measure != null) {
                     measure.left = ulx;
                     measure.top = uly;
@@ -253,12 +265,12 @@ public class MEIHelper {
                 }
 
             }
-            pages.add(page);
+            document.pages.add(page);
         }
-        for (Movement movement : movements) {
+        for (Movement movement : document.movements) {
             movement.sortMeasures();
         }
-        for (Page page : pages) {
+        for (Page page : document.pages) {
             page.sortMeasures();
         }
         return true;

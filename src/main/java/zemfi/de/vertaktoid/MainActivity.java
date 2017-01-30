@@ -38,7 +38,11 @@ import android.databinding.DataBindingUtil;
 public class MainActivity extends AppCompatActivity {
 
     final String TAG = "de.zemfi.vertaktoid";
+    final Status status = new Status();
+    Menu mainMenu;
+    String path = null;
     private Handler tmpSaveHandler = new Handler();
+
     private Runnable tmpSaveRunnable = new Runnable() {
         @Override
         public void run() {
@@ -47,6 +51,10 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * Creates temporary MEI file.
+     * The file name will be set to current datetime plus ".mei" extension.
+     */
     protected void saveTemporaryMEI() {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
         if(view.needToSave) {
@@ -63,9 +71,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    final Status status = new Status();
-
-    private String getContentName(ContentResolver resolver, Uri uri){
+    /*private String getContentName(ContentResolver resolver, Uri uri){
         Cursor cursor = resolver.query(uri, null, null, null, null);
         cursor.moveToFirst();
         int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
@@ -74,8 +80,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             return null;
         }
-    }
+    }*/
 
+    /**
+     * Android application lifecycle: onCreate event.
+     * @param savedInstanceState The instance state bundle.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         if(!path.equals("")) {
             Facsimile facsimile = new Facsimile();
             File dir = new File(path);
-            prepareFiles(dir);
+            prepareApplicationFiles(dir);
             facsimile.openDirectory(dir);
 
             facsimileView.setFacsimile(facsimile);
@@ -124,7 +134,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void prepareFiles(File dir) {
+    /**
+     * Creates subfolder and dummy image file for not founded pages.
+     * The temporary MEI files will be stored in created subfolder.
+     * @param dir The directory.
+     */
+    private void prepareApplicationFiles(File dir) {
         File systemDir = new File (dir, Vertaktoid.APP_SUBFOLDER);
         if(!systemDir.exists()) {
             systemDir.mkdir();
@@ -147,18 +162,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Android application lifecycle: onSaveInstanceState event.
+     * @param savedInstanceState The instance state bundle.
+     */
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         savedInstanceState.putString("path", path);
     }
 
+    /**
+     * Android application lifecycle: onRestoreInstanceState event.
+     * @param savedInstanceState The instance state bundle.
+     */
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         path = savedInstanceState.getString("path");
     }
 
+    /**
+     * Android application lifecycle: onResume event.
+     */
     @Override
     protected void onResume() {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
@@ -168,6 +194,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
     }
 
+    /**
+     * Android application lifecycle: onPause event.
+     */
     @Override
     protected void onPause() {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
@@ -182,7 +211,11 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    Menu mainMenu;
+    /**
+     * onCreateIptionMenu events routine
+     * @param menu The menu.
+     * @return true value.
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the ActionId bar if it is present.
@@ -195,7 +228,11 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-
+    /**
+     * Processes selection in menu. Calls the corresponding methods in FacsimileView.
+     * @param item The selected menu item.
+     * @return The boolean value defined in parent.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle ActionId bar item clicks here. The ActionId bar will
@@ -245,10 +282,10 @@ public class MainActivity extends AppCompatActivity {
                 view.resetMenu();
                 break;
             case R.id.action_plus:
-                view.plusClicked();
+                view.nextPageClicked();
                 break;
             case R.id.action_minus:
-                view.minusClicked();
+                view.prevPageClicked();
                 break;
             case R.id.action_cut:
                 item.setIcon(R.drawable.cuton);
@@ -270,6 +307,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Shows the system file selection dialog.
+     */
     private void actionOpen() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
@@ -283,9 +323,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    String path = null;
-
+    /**
+     * Processes the result of system file selection dialog.
+     * @param requestCode request code
+     * @param resultCode result code
+     * @param data intent
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -302,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
                     //Log.v("path: ", path);
 
                     Facsimile facsimile = new Facsimile();
-                    prepareFiles(dir);
+                    prepareApplicationFiles(dir);
                     facsimile.openDirectory(dir);
 
                     FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);

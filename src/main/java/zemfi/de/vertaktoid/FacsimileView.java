@@ -31,16 +31,27 @@ import java.io.File;
 import java.util.ArrayList;
 
 /**
- * Created by aristotelis on 23.08.16.
+ * Contains the presentation and user interaction functions. Directs the UI layouts.
+ * Extends the SubsamplingScaleImageView class.
  */
 
 public class FacsimileView extends SubsamplingScaleImageView {
 
+
+    /**
+     * Constructor
+     * @param context android application context
+     * @param attr attributes
+     */
     public FacsimileView(Context context, AttributeSet attr) {
         super(context, attr);
         init();
     }
 
+    /**
+     * Constructor
+     * @param context android application context
+     */
     public FacsimileView(Context context) {
         super(context);
         init();
@@ -72,9 +83,22 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public boolean needToSave = false;
     public enum Action {DRAW, ERASE, TYPE, CUT, MOVEMENT}
     Action nextAction = Action.DRAW;
+    float downX = 0.0f;
+    float downY = 0.0f;
+    float leftMost = -1.0f;
+    float topMost = -1.0f;
+    float rightMost = -1.0f;
+    float bottomMost = -1.0f;
+    PointF firstPoint;
+    PointF lastPolygonPoint;
+    boolean isFirstPoint = true;
+    PointF lastPoint = null; // in bitmap coordinates
+    float trackLength;
 
+    /**
+     * Initialization
+     */
     private void init() {
-        //HSLColorsGenerator.resetHueToRandom();
         movementColors = new ArrayList<>();
         grayPath = new Path();
         drawPath = new Path();
@@ -127,6 +151,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
     }
 
 
+    /**
+     * Stores the instance state.
+     * @return parcelable object
+     */
     @Override
     public Parcelable onSaveInstanceState() {
         Bundle bundle = new Bundle();
@@ -138,6 +166,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
         return bundle;
     }
 
+    /**
+     * Restores the instance state.
+     * @param state parcelable object
+     */
     @Override
     public void onRestoreInstanceState(Parcelable state) {
         if (state instanceof Bundle) {
@@ -157,11 +189,18 @@ public class FacsimileView extends SubsamplingScaleImageView {
         super.onRestoreInstanceState(state);
     }
 
+    /**
+     * Cleans the current drawing path
+     */
     void clean() {
         pointPath.clear();
         isFirstPoint = true;
     }
 
+    /**
+     * Sets the current page to giving number
+     * @param page page number
+     */
     public void setPage(int page) {
         if(document == null) {
             return;
@@ -172,7 +211,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
     }
 
-    public void plusClicked() {
+    /**
+     * Changes to the next page.
+     */
+    public void nextPageClicked() {
         int newPageNumber = pageNumber.get() + 1;
         if(newPageNumber < document.pages.size() && newPageNumber >= 0) {
             pageNumber.set(newPageNumber);
@@ -181,7 +223,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
     }
 
-    public void minusClicked() {
+    /**
+     * Changes to the previous page
+     */
+    public void prevPageClicked() {
         int newPageNumber = pageNumber.get() - 1;
         if(newPageNumber >= 0) {
             pageNumber.set(newPageNumber);
@@ -190,6 +235,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
     }
 
+    /**
+     * Shows dialog and obtains the user defined next page number. Changes to the page with giving number.
+     */
     public  void gotoClicked(){
         resetState();
         final Dialog gotoDialog = new Dialog(getContext());
@@ -231,6 +279,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
         gotoDialog.show();
     }
 
+    /*
+    Shows the settings dialog and process the user input.
+    Currently obtains the horizontal overlapping parameter.
+     */
     public void settingsClicked() {
         resetState();
         final Dialog settingsDialog = new Dialog(getContext());
@@ -266,6 +318,12 @@ public class FacsimileView extends SubsamplingScaleImageView {
         settingsDialog.show();
     }
 
+    /**
+     * Transforms the coordinates from bitmap coordinate system to the touch coordinate system.
+     * @param x x coordinate
+     * @param y y coordinate
+     * @return point in touch coordinate system
+     */
     PointF transformCoordBitmapToTouch(float x, float y) {
         PointF point = new PointF();
         point.x = x;
@@ -273,6 +331,12 @@ public class FacsimileView extends SubsamplingScaleImageView {
         return sourceToViewCoord(point);
     }
 
+    /**
+     * Transforms the coordinates from touch coordinate system to the bitmap coordinate system.
+     * @param x x coordinate
+     * @param y y coordinate
+     * @return point in bitmap coordinate system
+     */
     PointF transformCoordTouchToBitmap(float x, float y) {
         PointF point = new PointF();
         point.x = x;
@@ -280,6 +344,11 @@ public class FacsimileView extends SubsamplingScaleImageView {
         return viewToSourceCoord(point);
     }
 
+    /**
+     * Searches the image file of selected page in the opened directory. Shows dummy page if not found.
+     * @param pagenum page number
+     * @return image source
+     */
     ImageSource findImageForPage(int pagenum) {
         File appSubFolder = new File(document.dir, Vertaktoid.APP_SUBFOLDER);
         File stubImg = new File(appSubFolder, Vertaktoid.NOT_FOUND_STUBIMG);
@@ -294,6 +363,11 @@ public class FacsimileView extends SubsamplingScaleImageView {
         }
     }
 
+
+    /**
+     * Sets the current facsimile
+     * @param facsimile facsimile
+     */
     public void setFacsimile(Facsimile facsimile) {
         this.document = facsimile;
         pageNumber.set(0);
@@ -304,11 +378,19 @@ public class FacsimileView extends SubsamplingScaleImageView {
         horOverlapping = Math.round(document.pages.get(0).imageWidth * 0.01f);
     }
 
+    /**
+     * Gets current facsimile.
+     * @return facsimile
+     */
     public Facsimile getFacsimile() {
         return this.document;
     }
 
 
+    /**
+     * Rendering function
+     * @param canvas canvas
+     */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -401,33 +483,48 @@ public class FacsimileView extends SubsamplingScaleImageView {
         canvas.drawPath(polygonHoverPath, drawPaint);
     }
 
-
-
+    /**
+     * Menu entry "brush" clicked.
+     */
     public void brushClicked() {
         resetState();
     }
 
+    /**
+     * Menu entry "erase" clicked.
+     */
     public void eraseClicked() {
         resetState();
         nextAction = Action.ERASE;
     }
 
+    /**
+     * Menu entry "type"
+     */
     public void typeClicked() {
         resetState();
         nextAction = Action.TYPE;
     }
 
-
+    /**
+     * Menu entry "cut" clicked.
+     */
     public void cutClicked() {
         resetState();
         nextAction = Action.CUT;
     }
 
+    /**
+     * Menu entry "movement" clicked.
+     */
     public  void movementClicked(){
         resetState();
         nextAction = Action.MOVEMENT;
     }
 
+    /**
+     * Reset current menu state to default "brush" entry
+     */
     void resetState() {
         isFirstPoint = true;
         nextAction = Action.DRAW;
@@ -435,25 +532,11 @@ public class FacsimileView extends SubsamplingScaleImageView {
         invalidate();
     }
 
-
-
-    // Remember last point position for dragging
-    private PointF last = new PointF();
-    float downX = 0.0f;
-    float downY = 0.0f;
-
-    float leftMost = -1.0f;
-    float topMost = -1.0f;
-    float rightMost = -1.0f;
-    float bottomMost = -1.0f;
-    PointF firstPoint;
-
-    PointF lastPolygonPoint;
-    boolean isFirstPoint = true;
-
-    PointF lastPoint = null; // in bitmap coordinates
-    float trackLength;
-
+    /**
+     * Processes the touch events.
+     * @param event touch event
+     * @return true if the touch input was correctly processed
+     */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if(document == null) {
@@ -464,11 +547,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
         float touchY = event.getY();
         final Page currentPage = document.pages.get(pageNumber.get());
         if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
-            //if (isFirstPoint) {
-                // do not allow navigation while entering the polygon
-                return super.onTouchEvent(event);
-            //}
-            //return true;
+            return super.onTouchEvent(event);
+
         }
         PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
         final ArrayList<Measure> measures = currentPage.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
@@ -588,7 +668,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                             TextView editMOMovementLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_movement_label);
                             editMOMovementLabel.setText(R.string.dialog_editmo_movement_label);
                             final Spinner editMOMovementInput = (Spinner) editMODialog.findViewById(R.id.dialog_editmo_movement_input);
-                            ArrayList<String> movementOptions = new ArrayList();
+                            ArrayList<String> movementOptions = new ArrayList<>();
                             movementOptions.add(getResources().getString(R.string.dialog_editmo_spinner_optdef));
                             for(Movement movement : document.movements) {
                                 movementOptions.add(movement.getName());
@@ -749,10 +829,18 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
 
     Menu menu;
+
+    /**
+     * Setter for menu.
+     * @param menu menu
+     */
     public void setMenu(Menu menu) {
         this.menu = menu;
     }
 
+    /**
+     * Reset menu icons.
+     */
     void resetMenu() {
         for (int i = 0; i < menu.size(); i++) {
             // Set default icons
