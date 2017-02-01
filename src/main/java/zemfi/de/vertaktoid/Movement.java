@@ -41,9 +41,13 @@ public class Movement implements Serializable {
         int num = 1;
         for (int i = 0; i < measures.size(); i++) {
             measure = measures.get(i);
+            // Calculate the next sequence number by default
             if(i > 0) {
                 num = measures.get(i-1).sequenceNumber + (measures.get(i-1).rest > 1 ? measures.get(i-1).rest : 1);
             }
+            // Try to parse manual sequence number if not null.
+            // If no number can be parsed from manual sequence number,
+            // then use the next number calculated by default.
             if(measure.manualSequenceNumber != null) {
                 try {
                     String modified = measure.manualSequenceNumber.replaceAll("[\\D]", " ");

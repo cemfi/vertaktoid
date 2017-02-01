@@ -31,7 +31,6 @@ class MEIHelper {
         Element pubStmt = new Element("pubStmt", Vertaktoid.MEI_NS);
         Element music = new Element("music", Vertaktoid.MEI_NS);
         Element facsimile = new Element("facsimile", Vertaktoid.MEI_NS);
-        //Element surface = new Element("surface", Vertaktoid.MEI_NS);
         Element body = new Element("body", Vertaktoid.MEI_NS);
         Attribute a;
         boolean returnValue = true;
