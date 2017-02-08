@@ -700,9 +700,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                         if(measure != null && !labelStr.equals("")) {
                                             measure.movement.label = labelStr;
                                         }
-                                        return;
                                     }
-                                    if(option.equals(getResources().getString(R.string.dialog_editmo_spinner_optdef))) {
+                                    else if(option.equals(getResources().getString(R.string.dialog_editmo_spinner_optdef))) {
                                         Movement newMovement = new Movement();
                                         newMovement.number = document.movements.get
                                                 (document.movements.size() - 1).number + 1;

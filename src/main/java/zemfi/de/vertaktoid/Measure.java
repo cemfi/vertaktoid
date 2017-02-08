@@ -119,8 +119,7 @@ class Measure implements Comparable<Measure>, Serializable {
         @Override
         public int compare(Measure m1, Measure m2) {
             if(m1.page.number == m2.page.number) {
-                if (m1.left == m2.left && m1.right == m2.right &&
-                        m1.top == m2.top && m1.bottom == m2.bottom) {
+                if (m1.left == m2.left && m1.top == m2.top) {
                     return 0;
                 }
                 if (m1.top < m2.top && m1.left < m2.left) {
