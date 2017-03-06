@@ -50,7 +50,18 @@ public class Facsimile implements Serializable {
         measure.page = page;
         movement.measures.add(measure);
         page.measures.add(measure);
+    }
 
+    void addMeasure(Measure measure, Page page) {
+        measure.page = page;
+        page.measures.add(measure);
+        for(int i = movements.size() - 1; i >= 0; i--) {
+            if(Measure.MEASURE_POSITION_COMPARATOR.compare(movements.get(i).measures.get(0), measure) < 0) {
+                measure.movement = movements.get(i);
+                movements.get(i).measures.add(measure);
+                return;
+            }
+        }
     }
 
     /**

@@ -20,6 +20,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
+import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ArrayAdapter;
@@ -292,7 +294,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
         settingsHoroverLabel.setText(R.string.dialog_settings_horover_label);
         final EditText settingsHoroverInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_horover_input);
         settingsHoroverInput.setHint("" + horOverlapping);
-        settingsHoroverInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        settingsHoroverInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        final RadioGroup settingsHoroverType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_horover_type);
+        settingsHoroverType.check(R.id.dialog_settings_horover_type_points);
         Button gotoButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
         gotoButtonNegative.setOnClickListener(new OnClickListener() {
             @Override
@@ -306,7 +310,20 @@ public class FacsimileView extends SubsamplingScaleImageView {
             @Override
             public void onClick(View v) {
                 try {
-                    horOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
+
+                    if(settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_points) {
+                        horOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
+                    }
+                    else if(settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_percents) {
+                        float percent = Float.parseFloat(settingsHoroverInput.getText().toString());
+                        if(percent > 100) {
+                            percent = percent % 100;
+                        }
+                        horOverlapping = Math.round(document.pages.get(pageNumber.get()).imageWidth * percent / 100);
+                    }
+                    else {
+                        horOverlapping = 0;
+                    }
                 }
                 catch (NumberFormatException e) {
                 }
@@ -375,7 +392,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         setImage(findImageForPage(0));
         maxPageNumber.set(document.pages.size());
         currentPath.set(document.dir.getPath());
-        horOverlapping = Math.round(document.pages.get(0).imageWidth * 0.01f);
+        horOverlapping = 0;
     }
 
     /**
@@ -720,19 +737,21 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                         }
                                     }
                                     else {
-                                        Movement oldMovement = null;
+                                        Movement newMovement = null;
                                         for(Movement movement : document.movements) {
                                             if(movement.getName().equals(option)) {
-                                                oldMovement = movement;
+                                                newMovement = movement;
                                                 break;
                                             }
                                         }
-                                        if(oldMovement != null) {
-                                            oldMovement.label = labelStr;
-                                            currentMovementNumber = document.movements.indexOf(oldMovement);
+                                        if(newMovement != null) {
+                                            if(!labelStr.equals("")) {
+                                                newMovement.label = labelStr;
+                                            }
+                                            currentMovementNumber = document.movements.indexOf(newMovement);
                                             if(measure != null) {
                                                 for(Measure measure : measuresToMove) {
-                                                    measure.changeMovement(oldMovement);
+                                                    measure.changeMovement(newMovement);
                                                 }
                                                 document.resort(measure.movement, measure.page);
                                                 document.cleanMovements();
@@ -809,7 +828,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                     if(currentMovementNumber > document.movements.size() - 1) {
                                         currentMovementNumber = document.movements.size() - 1;
                                     }
-                                    document.addMeasure(newMeasure, document.movements.get(currentMovementNumber), currentPage);
+                                    document.addMeasure(newMeasure, currentPage);
                                     document.resort(newMeasure.movement, newMeasure.page);
                                     invalidate();
                                 }

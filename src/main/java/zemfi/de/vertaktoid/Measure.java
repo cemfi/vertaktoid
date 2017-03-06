@@ -40,8 +40,8 @@ class Measure implements Comparable<Measure>, Serializable {
      * @param bottom The end y coordinate.
      */
     Measure(float left, float top, float right, float bottom) {
-        zoneUuid = UUID.randomUUID().toString();
-        measureUuid = UUID.randomUUID().toString();
+        zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + UUID.randomUUID().toString();
+        measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
         this.left = left;
         this.right = right;
         this.top = top;
@@ -52,8 +52,8 @@ class Measure implements Comparable<Measure>, Serializable {
      * The constructor.
      */
     Measure() {
-        zoneUuid = UUID.randomUUID().toString();
-        measureUuid = UUID.randomUUID().toString();
+        zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
+        measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
     }
 
     /**

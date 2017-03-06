@@ -75,13 +75,13 @@ class MEIHelper {
                 zone.addAttribute(a);
                 a = new Attribute("type", "measure");
                 zone.addAttribute(a);
-                a = new Attribute("ulx", "" + measure.left);
+                a = new Attribute("ulx", "" + normalize(measure.left, page.imageWidth));
                 zone.addAttribute(a);
-                a = new Attribute("uly", "" + measure.top);
+                a = new Attribute("uly", "" + normalize(measure.top, page.imageHeight));
                 zone.addAttribute(a);
-                a = new Attribute("lrx", "" + measure.right);
+                a = new Attribute("lrx", "" + normalize(measure.right, page.imageWidth));
                 zone.addAttribute(a);
-                a = new Attribute("lry", "" + measure.bottom);
+                a = new Attribute("lry", "" + normalize(measure.bottom, page.imageHeight));
                 zone.addAttribute(a);
                 surface.appendChild(zone);
             }
@@ -213,7 +213,13 @@ class MEIHelper {
                     if(measure.zoneUuid.startsWith("#")) {
                         measure.zoneUuid = measure.zoneUuid.substring(1);
                     }
+                    if(!measure.zoneUuid.substring(0, 5).equals(Vertaktoid.MEI_ZONE_ID_PREFIX)) {
+                        measure.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + measure.zoneUuid;
+                    }
                     measure.measureUuid = element.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
+                    if(!measure.measureUuid.substring(0, 8).equals(Vertaktoid.MEI_MEASURE_ID_PREFIX)) {
+                        measure.measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + measure.measureUuid;
+                    }
                     measure.movement = movement;
                     movement.measures.add(measure);
                 }
@@ -248,11 +254,14 @@ class MEIHelper {
 
             for(int j = 0; j < zones.size(); j++) {
                 Element zone = zones.get(j);
-                float ulx = Float.parseFloat(zone.getAttributeValue("ulx"));
-                float uly = Float.parseFloat(zone.getAttributeValue("uly"));
-                float lrx = Float.parseFloat(zone.getAttributeValue("lrx"));
-                float lry = Float.parseFloat(zone.getAttributeValue("lry"));
+                float ulx = normalize(Float.parseFloat(zone.getAttributeValue("ulx")), page.imageWidth);
+                float uly = normalize(Float.parseFloat(zone.getAttributeValue("uly")), page.imageHeight);
+                float lrx = normalize(Float.parseFloat(zone.getAttributeValue("lrx")), page.imageWidth);
+                float lry = normalize(Float.parseFloat(zone.getAttributeValue("lry")), page.imageHeight);
                 String uuidZone = zone.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
+                if(!uuidZone.substring(0, 5).equals(Vertaktoid.MEI_ZONE_ID_PREFIX)) {
+                    uuidZone = Vertaktoid.MEI_ZONE_ID_PREFIX + uuidZone;
+                }
                 Measure measure = findMeasureFor(uuidZone, document.movements);
                 if(measure != null) {
                     measure.left = ulx;
@@ -273,6 +282,12 @@ class MEIHelper {
             page.sortMeasures();
         }
         return true;
+    }
+
+    private static int normalize(float value, int max) {
+        if(value <= 0) return 0;
+        if(value >= max) return max;
+        return Math.round(value);
     }
 
     private static Measure findMeasureFor(String uuidZone, ArrayList<Movement> movements) {

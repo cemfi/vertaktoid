@@ -8,6 +8,8 @@
     <string name="dialog_goto_titel">Go To Page</string>
     <string name="dialog_settings_horover_label">Horizontal overlapping:</string>
     <string name="dialog_settings_titel">Settings</string>
+    <string name="dialog_settings_percents">percents of page width</string>
+    <string name="dialog_settings_points">points</string>
     <string name="dialog_editmo_titel">Set Movement Anchor</string>
     <string name="dialog_editmo_movement_label">Select existing movement or create new one:</string>
     <string name="dialog_editmo_spinner_optdef">create new</string>
@@ -17,5 +19,6 @@
     <string name="dialog_editme_titel">Edit Measure</string>
     <string name="dialog_editme_name_label">Measure name:</string>
     <string name="dialog_editme_rest_label">Rest bars:</string>
+
 
 </resources>
