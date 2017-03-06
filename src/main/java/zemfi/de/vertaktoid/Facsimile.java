@@ -62,6 +62,8 @@ public class Facsimile implements Serializable {
                 return;
             }
         }
+        measure.movement = movements.get(0);
+        movements.get(0).measures.add(measure);
     }
 
     /**
@@ -71,6 +73,9 @@ public class Facsimile implements Serializable {
      * @param page target page
      */
     void resort(Movement movement, Page page) {
+        if(movement == null) {
+            return;
+        }
         movement.sortMeasures();
         movement.calculateSequenceNumbers();
         page.sortMeasures();
