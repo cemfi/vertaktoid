@@ -70,6 +70,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     private Rect measureNameRect = new Rect();
     private Rect movementNameRect = new Rect();
     private ArrayList<HSLColor> movementColors;
+    HSLColor fillColor;
     private float s = 100f;
     private float l = 30f;
     private float a = 1f;
@@ -445,8 +446,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                     document.movements.indexOf(measure.movement))));
             smallBoldText.setColor(HSLColor.toRGB(movementColors.get(
                     document.movements.indexOf(measure.movement))));
-            drawPaint.setColor(HSLColor.toRGB(movementColors.get(
-                    document.movements.indexOf(measure.movement))));
+
             PointF topLeft = transformCoordBitmapToTouch(measure.left, measure.top);
             PointF bottomRight = transformCoordBitmapToTouch(measure.right, measure.bottom);
             if (topLeft == null) {
@@ -454,7 +454,22 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 return;
             }
             drawPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
+
+            drawPaint.setStyle(Paint.Style.FILL);
+            fillColor = new HSLColor();
+            fillColor.a = 0.1f;
+            fillColor.h = movementColors.get(
+                    document.movements.indexOf(measure.movement)).h;
+            fillColor.s = s;
+            fillColor.l = l;
+            drawPaint.setColor(HSLColor.toARGB(fillColor));
             canvas.drawPath(drawPath, drawPaint);
+
+            drawPaint.setStyle(Paint.Style.STROKE);
+            drawPaint.setColor(HSLColor.toRGB(movementColors.get(
+                    document.movements.indexOf(measure.movement))));
+            canvas.drawPath(drawPath, drawPaint);
+
             drawPath.reset();
 
             whiteAlpha.setColor(0x55ffffff);
