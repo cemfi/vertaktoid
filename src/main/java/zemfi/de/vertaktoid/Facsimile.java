@@ -56,10 +56,12 @@ public class Facsimile implements Serializable {
         measure.page = page;
         page.measures.add(measure);
         for(int i = movements.size() - 1; i >= 0; i--) {
-            if(Measure.MEASURE_POSITION_COMPARATOR.compare(movements.get(i).measures.get(0), measure) < 0) {
-                measure.movement = movements.get(i);
-                movements.get(i).measures.add(measure);
-                return;
+            if(movements.get(i).measures.size() > 0) {
+                if (Measure.MEASURE_POSITION_COMPARATOR.compare(movements.get(i).measures.get(0), measure) < 0) {
+                    measure.movement = movements.get(i);
+                    movements.get(i).measures.add(measure);
+                    return;
+                }
             }
         }
         measure.movement = movements.get(0);
@@ -115,7 +117,6 @@ public class Facsimile implements Serializable {
 
         if(movements.size() == 0) {
             Movement movement = new Movement();
-            movement.number = 1;
             movements.add(movement);
         }
 
