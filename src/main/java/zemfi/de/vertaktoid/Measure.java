@@ -26,6 +26,10 @@ class Measure implements Comparable<Measure>, Serializable {
     Movement movement;
     // Reference to the parent page.
     Page page;
+
+    boolean lastAtSystem = false;
+    boolean lastAtPage = false;
+
     // Coordinates for representing rectangle
     float left = 0.0f;
     float right = 0.0f;

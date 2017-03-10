@@ -178,8 +178,13 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        path = savedInstanceState.getString("path");
+        try {
+            super.onRestoreInstanceState(savedInstanceState);
+            path = savedInstanceState.getString("path");
+        }
+        catch (Exception e) {
+
+        }
     }
 
     /**

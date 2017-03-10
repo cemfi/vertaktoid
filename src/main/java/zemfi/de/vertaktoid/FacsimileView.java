@@ -178,6 +178,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
             document = (Facsimile) bundle.getSerializable("document");
+            if(document == null) {
+                return;
+            }
             pageNumber.set(bundle.getInt("pageNumber"));
             currentMovementNumber = bundle.getInt("currentMovementNumber");
             horOverlapping = bundle.getInt("horOverlapping");

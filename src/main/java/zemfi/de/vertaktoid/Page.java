@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.io.File;
 import java.util.Collections;
+import java.util.UUID;
 
 import android.graphics.BitmapFactory;
 
@@ -20,6 +21,9 @@ public class Page implements Serializable {
     // Sequence number of the page.
     int number;
 
+    String surfaceUuid;
+    String graphicUuid;
+
     // Image dimensions.
     int imageWidth;
     int imageHeight;
@@ -30,6 +34,8 @@ public class Page implements Serializable {
      * @param number The sequence number.
      */
     public Page(File imageFile, int number) {
+        surfaceUuid = Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString();
+        graphicUuid = Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString();
         this.imageFile = imageFile;
         measures = new ArrayList<>();
         this.number = number;

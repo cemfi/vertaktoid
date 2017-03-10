@@ -249,4 +249,41 @@ public class Facsimile implements Serializable {
             return f1.getName().compareTo(f2.getName());
         }
     };
+
+    void calculateBreaks() {
+        for(int i = 0; i < movements.size(); i++)
+        {
+            Movement curMovement = movements.get(i);
+            Movement nextMovement = null;
+            if(i < movements.size() - 1) {
+                nextMovement = movements.get(i + 1);
+            }
+            for(int j = 0; j < curMovement.measures.size(); j++) {
+                Measure curMeasure = curMovement.measures.get(j);
+                Measure nexMeasure = null;
+                if(j < curMovement.measures.size() - 1) {
+                    nexMeasure = curMovement.measures.get(j + 1);
+                } else if(nextMovement != null) {
+                    nexMeasure = nextMovement.measures.get(0);
+                }
+
+                if(nexMeasure != null) {
+                    float yIsectFactor = (Math.min(curMeasure.bottom, nexMeasure.bottom) - Math.max(curMeasure.top, nexMeasure.top)) /
+                            Math.min(curMeasure.bottom - nexMeasure.top, curMeasure.bottom - nexMeasure.top);
+                    if (yIsectFactor > 0.5 && nexMeasure.top > curMeasure.top) {
+                        curMeasure.lastAtSystem = true;
+                    } else {
+                        curMeasure.lastAtSystem = false;
+                    }
+                }
+                curMeasure.lastAtPage = false;
+            }
+        }
+        for(Page page : pages) {
+            if(page.measures.size() > 0) {
+                page.measures.get(page.measures.size() - 1).lastAtPage = true;
+                page.measures.get(page.measures.size() - 1).lastAtSystem = false;
+            }
+        }
+    }
 }

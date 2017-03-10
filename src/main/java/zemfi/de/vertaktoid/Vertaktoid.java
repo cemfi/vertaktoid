@@ -19,8 +19,10 @@ public class Vertaktoid extends Application implements Serializable {
     public final static String MEI_NS = "http://www.music-encoding.org/ns/mei";
 
     public final static String MEI_ZONE_ID_PREFIX = "zone_";
-
     public final static String MEI_MEASURE_ID_PREFIX = "measure_";
+    public final static String MEI_MDIV_ID_PREFIX = "page_";
+    public final static String MEI_GRAPHIC_ID_PREFIX = "graphic_";
+    public final static String MEI_SURFACE_ID_PREFIX = "surface_";
 
     public void onCreate() {
         super.onCreate();

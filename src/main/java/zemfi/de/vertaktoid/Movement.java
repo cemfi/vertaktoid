@@ -3,6 +3,7 @@ package zemfi.de.vertaktoid;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.UUID;
 
 /**
  * Represents the movement in musical notation. Movement can be arranged on the multiple facsimile pages.
@@ -16,11 +17,12 @@ public class Movement implements Serializable {
     int number;
     // Label for movement.
     String label = "";
-
+    String mdivUuid;
     /**
      * The constructor.
      */
     Movement() {
+        mdivUuid = Vertaktoid.MEI_MDIV_ID_PREFIX + UUID.randomUUID().toString();
         measures = new ArrayList<>();
     }
 
