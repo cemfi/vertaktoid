@@ -1,5 +1,8 @@
 package zemfi.de.vertaktoid;
 
+import android.graphics.PointF;
+import android.widget.ArrayAdapter;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -250,7 +253,22 @@ public class Facsimile implements Serializable {
         }
     };
 
+    private float[] getSystemPositions(ArrayList<Measure> measures){
+        float top = Float.MAX_VALUE;
+        float bottom = Float.MIN_VALUE;
+        for(Measure measure : measures) {
+            if(top > measure.top) {
+                top = measure.top;
+            }
+            if(bottom < measure.bottom) {
+                bottom = measure.bottom;
+            }
+        }
+        return new float[]{top, bottom};
+    }
+
     void calculateBreaks() {
+        ArrayList<Measure> predecessors = new ArrayList<>();
         for(int i = 0; i < movements.size(); i++)
         {
             Movement curMovement = movements.get(i);
@@ -260,18 +278,23 @@ public class Facsimile implements Serializable {
             }
             for(int j = 0; j < curMovement.measures.size(); j++) {
                 Measure curMeasure = curMovement.measures.get(j);
+                predecessors.add(curMeasure);
                 Measure nexMeasure = null;
                 if(j < curMovement.measures.size() - 1) {
                     nexMeasure = curMovement.measures.get(j + 1);
                 } else if(nextMovement != null) {
-                    nexMeasure = nextMovement.measures.get(0);
+                    if(nextMovement.measures.size() > 1) {
+                        nexMeasure = nextMovement.measures.get(0);
+                    }
                 }
 
                 if(nexMeasure != null) {
-                    float yIsectFactor = (Math.min(curMeasure.bottom, nexMeasure.bottom) - Math.max(curMeasure.top, nexMeasure.top)) /
-                            Math.min(curMeasure.bottom - nexMeasure.top, curMeasure.bottom - nexMeasure.top);
-                    if (yIsectFactor > 0.5 && nexMeasure.top > curMeasure.top) {
+                    float[] systemPositions = getSystemPositions(predecessors);
+                    float yIsectFactor = (Math.min(systemPositions[1], nexMeasure.bottom) - Math.max(systemPositions[0], nexMeasure.top)) /
+                            Math.min(systemPositions[1] - systemPositions[0], nexMeasure.bottom  - nexMeasure.top);
+                    if (yIsectFactor < 0.5 && nexMeasure.top > systemPositions[0]) {
                         curMeasure.lastAtSystem = true;
+                        predecessors.clear();
                     } else {
                         curMeasure.lastAtSystem = false;
                     }

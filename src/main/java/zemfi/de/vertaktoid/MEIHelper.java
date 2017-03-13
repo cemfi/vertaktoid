@@ -136,9 +136,11 @@ class MEIHelper {
             a = new Attribute("height", "" + page.imageHeight);
             graphic.addAttribute(a);
 
+            ArrayList<Element> existingZones = new ArrayList<>();
             Elements zones = surface.getChildElements("zone", Vertaktoid.MEI_NS);
             for(Measure measure : page.measures) {
                 Element zone = findElementByUiid(zones, measure.zoneUuid);
+                existingZones.add(zone);
                 if(zone == null) {
                     zone = new Element("zone", Vertaktoid.MEI_NS);
                     surface.appendChild(zone);
@@ -158,10 +160,18 @@ class MEIHelper {
                 zone.addAttribute(a);
 
             }
+
+            for(int j = 0; j < zones.size(); j++) {
+                if(!existingZones.contains(zones.get(j))) {
+                    surface.removeChild(zones.get(j));
+                }
+            }
         }
 
+        ArrayList<Element> exitstingMdivs = new ArrayList<>();
         for(Movement movement : document.movements) {
             Element mdiv = findElementByUiid(mdivs, movement.mdivUuid);
+            exitstingMdivs.add(mdiv);
             if(mdiv == null) {
                 mdiv = new Element("mdiv", Vertaktoid.MEI_NS);
                 body.appendChild(mdiv);
@@ -234,6 +244,12 @@ class MEIHelper {
                 if(!corrMeasureElems.contains(mElems.get(i))) {
                     section.removeChild(mElems.get(i));
                 }
+            }
+        }
+
+        for(int i = 0; i < mdivs.size(); i++) {
+            if(!exitstingMdivs.contains(mdivs.get(i))) {
+                body.removeChild(mdivs.get(i));
             }
         }
 

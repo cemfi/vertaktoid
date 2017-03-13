@@ -112,7 +112,11 @@ class Measure implements Comparable<Measure>, Serializable {
     static final Comparator<Measure> MEASURE_NUMBER_COMPARATOR = new Comparator<Measure>() {
         @Override
         public int compare(Measure m1, Measure m2) {
-            return m1.compareTo(m2);
+            if(m1.movement == m2.movement) {
+                return m1.compareTo(m2);
+            } else {
+                return m1.movement.number - m2.movement.number;
+            }
         }
     };
 
