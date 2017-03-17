@@ -223,6 +223,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
     }
 
     public void adjustPageNavigation() {
+        if(document == null) {
+            return;
+        }
         if(pageNumber.get() < document.pages.size() - 1) {
             menu.findItem(R.id.action_plus).setIcon(R.drawable.arrowright_on);
         } else {
