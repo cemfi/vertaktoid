@@ -8,31 +8,43 @@
         <item
             android:id="@+id/action_brush"
             android:title="Erase"
-            android:icon="@drawable/brushon"
+            android:icon="@drawable/brush_on"
             app:showAsAction="always" />
 
         <item
             android:id="@+id/action_cut"
             android:title="Cut"
-            android:icon="@drawable/cutoff"
+            android:icon="@drawable/cut_off"
             app:showAsAction="always" />
 
         <item
             android:id="@+id/action_erase"
             android:title="Erase"
-            android:icon="@drawable/eraseroff"
+            android:icon="@drawable/eraser_off"
             app:showAsAction="always" />
 
         <item
             android:id="@+id/action_type"
             android:title="Type"
-            android:icon="@drawable/textboxoff"
+            android:icon="@drawable/textbox_off"
             app:showAsAction="always" />
 
         <item
             android:id="@+id/action_movement"
             android:title="Movement"
-            android:icon="@drawable/movementoff"
+            android:icon="@drawable/movement_off"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_undo"
+            android:title="Undo"
+            android:icon="@drawable/undo_on"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_redo"
+            android:title="Redo"
+            android:icon="@drawable/redo_on"
             app:showAsAction="always" />
 
         <item
@@ -52,7 +64,7 @@
         <item
             android:id="@+id/action_minus"
             android:title="Left"
-            android:icon="@drawable/arrowleft"
+            android:icon="@drawable/arrowleft_on"
             app:showAsAction="always" />
 
         <item
@@ -64,7 +76,7 @@
         <item
             android:id="@+id/action_plus"
             android:title="Right"
-            android:icon="@drawable/arrowright"
+            android:icon="@drawable/arrowright_on"
             app:showAsAction="always" />
     </group>
 </menu>

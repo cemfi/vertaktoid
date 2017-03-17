@@ -29,6 +29,18 @@
             android:layout_height="wrap_content"
             android:text="@string/dialog_settings_percents" />
     </RadioGroup>
+    <TextView
+        android:id="@+id/dialog_settings_undosize_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:labelFor="@+id/dialog_settings_undosize_input"
+        android:layout_marginStart="10dp"/>
+    <EditText
+        android:id="@+id/dialog_settings_undosize_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"/>
     <LinearLayout
         style="?android:attr/buttonBarStyle"
         android:orientation="horizontal"

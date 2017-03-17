@@ -42,7 +42,15 @@ class MEIHelper {
         return null;
     }
 
+    /**
+     * Exports data in MEI file. The initial structure of MEI file will be kept so far as possible.
+     * The comments will be lost.
+     * @param meiFile The path to file.
+     * @param document The data to be saved.
+     * @return true if no exceptions.
+     */
     static boolean writeMEI(File meiFile, Facsimile document) {
+        boolean returnValue = true;
         document.calculateBreaks();
         if(meiDocument == null) {
             meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
@@ -93,7 +101,6 @@ class MEIHelper {
         Elements mdivs = body.getChildElements("mdiv", Vertaktoid.MEI_NS);
 
         Attribute a;
-        boolean returnValue = true;
 
         for(int i = 0; i < document.pages.size(); i++) {
             Page page = document.pages.get(i);

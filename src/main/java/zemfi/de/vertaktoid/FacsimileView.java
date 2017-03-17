@@ -15,13 +15,15 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.InputType;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
-import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ArrayAdapter;
@@ -39,6 +41,7 @@ import java.util.ArrayList;
 
 public class FacsimileView extends SubsamplingScaleImageView {
 
+    CommandManager commandManager;
 
     /**
      * Constructor
@@ -48,6 +51,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public FacsimileView(Context context, AttributeSet attr) {
         super(context, attr);
         init();
+        commandManager = new CommandManager();
     }
 
     /**
@@ -57,6 +61,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public FacsimileView(Context context) {
         super(context);
         init();
+        commandManager = new CommandManager();
     }
 
     //drawing path
@@ -84,7 +89,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public final ObservableField<String> currentPath = new ObservableField<>();
     public final ObservableInt maxPageNumber = new ObservableInt(0);
     public boolean needToSave = false;
-    public enum Action {DRAW, ERASE, TYPE, CUT, MOVEMENT}
+    public enum Action {DRAW, ERASE, ADJUST_MEASURE, CUT, ADJUST_MOVEMENT}
     Action nextAction = Action.DRAW;
     float downX = 0.0f;
     float downY = 0.0f;
@@ -166,6 +171,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
         bundle.putInt("pageNumber", pageNumber.get());
         bundle.putInt("currentMovementNumber", currentMovementNumber);
         bundle.putInt("horOverlapping", horOverlapping);
+        bundle.putSerializable("history", commandManager);
         return bundle;
     }
 
@@ -189,6 +195,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getPath());
             HSLColorsGenerator.resetHueToDefault();
+            commandManager = (CommandManager) bundle.getSerializable("history");
             return;
         }
 
@@ -247,6 +254,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public  void gotoClicked(){
         resetState();
         final Dialog gotoDialog = new Dialog(getContext());
+        Window window = gotoDialog.getWindow();
+        WindowManager.LayoutParams wlp = window.getAttributes();
+        wlp.gravity = Gravity.TOP;
+        window.setAttributes(wlp);
         gotoDialog.setContentView(R.layout.dialog_goto);
         gotoDialog.setTitle(R.string.dialog_goto_titel);
         TextView gotoPageLabel = (TextView) gotoDialog.findViewById(R.id.dialog_goto_page_label);
@@ -292,6 +303,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public void settingsClicked() {
         resetState();
         final Dialog settingsDialog = new Dialog(getContext());
+        Window window = settingsDialog.getWindow();
+        WindowManager.LayoutParams wlp = window.getAttributes();
+        wlp.gravity = Gravity.TOP;
+        window.setAttributes(wlp);
         settingsDialog.setContentView(R.layout.dialog_settings);
         settingsDialog.setTitle(R.string.dialog_settings_titel);
         TextView settingsHoroverLabel = (TextView) settingsDialog.findViewById(R.id.dialog_settings_horover_label);
@@ -308,25 +323,34 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 settingsDialog.cancel();
             }
         });
+        TextView settingsUndosizeLabel = (TextView) settingsDialog.findViewById(R.id.dialog_settings_undosize_label);
+        settingsUndosizeLabel.setText(R.string.dialog_settings_undosize_label);
+        final EditText settingsUndosizeInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_undosize_input);
+        settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
+        settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
 
         Button gotoButtonPositive = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_positive);
         gotoButtonPositive.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
-
-                    if(settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_points) {
-                        horOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
+                    String historyMaxSize = settingsUndosizeInput.getText().toString();
+                    if(!historyMaxSize.equals("")) {
+                        commandManager.setHistoryMaxSize(Integer.parseInt(settingsUndosizeInput.getText().toString()));
                     }
-                    else if(settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_percents) {
-                        float percent = Float.parseFloat(settingsHoroverInput.getText().toString());
-                        if(percent > 100) {
-                            percent = percent % 100;
+                    String horover = settingsHoroverInput.getText().toString();
+                    if(!horover.equals("")) {
+                        if (settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_points) {
+                            horOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
+                        } else if (settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_percents) {
+                            float percent = Float.parseFloat(settingsHoroverInput.getText().toString());
+                            if (percent > 100) {
+                                percent = percent % 100;
+                            }
+                            horOverlapping = Math.round(document.pages.get(pageNumber.get()).imageWidth * percent / 100);
+                        } else {
+                            horOverlapping = 0;
                         }
-                        horOverlapping = Math.round(document.pages.get(pageNumber.get()).imageWidth * percent / 100);
-                    }
-                    else {
-                        horOverlapping = 0;
                     }
                 }
                 catch (NumberFormatException e) {
@@ -445,6 +469,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
         Page page = document.pages.get(pageNumber.get());
         for (i = 0; i < page.measures.size(); i++) {
             Measure measure = page.measures.get(i);
+            int index = document.movements.indexOf(measure.movement);
+            if(index < 0) {
+                document.movements.add(0, measure.movement);
+            }
             largeBoldText.setColor(HSLColor.toRGB(movementColors.get(
                     document.movements.indexOf(measure.movement))));
             smallBoldText.setColor(HSLColor.toRGB(movementColors.get(
@@ -538,7 +566,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
      */
     public void typeClicked() {
         resetState();
-        nextAction = Action.TYPE;
+        nextAction = Action.ADJUST_MEASURE;
     }
 
     /**
@@ -552,9 +580,19 @@ public class FacsimileView extends SubsamplingScaleImageView {
     /**
      * Menu entry "movement" clicked.
      */
-    public  void movementClicked(){
+    public void movementClicked(){
         resetState();
-        nextAction = Action.MOVEMENT;
+        nextAction = Action.ADJUST_MOVEMENT;
+    }
+
+    public void undoClicked() {
+        commandManager.undo();
+        invalidate();
+    }
+
+    public void redoClicked() {
+        commandManager.redo();
+        invalidate();
     }
 
     /**
@@ -574,6 +612,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        Window window;
+        WindowManager.LayoutParams wlp;
         if(document == null) {
 
             return false;
@@ -593,17 +633,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 switch (nextAction) {
                     case ERASE:
                         if(measures.size() > 0) {
-                            document.removeMeasures(measures);
-                            ArrayList<Movement> changedMovements = new ArrayList<>();
-                            for (Measure me : measures) {
-                                if (!changedMovements.contains(me.movement)) {
-                                    changedMovements.add(me.movement);
-                                }
-                            }
-
-                            for (Movement movement : changedMovements) {
-                                document.resort(movement, currentPage);
-                            }
+                            commandManager.processRemoveMeasuresCommand(measures, document);
                             invalidate();
                         }
                         break;
@@ -617,10 +647,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                     bitmapCoord.x + horOverlapping, measure.bottom);
                             Measure mright = new Measure(bitmapCoord.x - horOverlapping, measure.top,
                                     measure.right, measure.bottom);
-                            document.removeMeasureAt(bitmapCoord.x, bitmapCoord.y, currentPage);
-                            document.addMeasure(mleft, measure.movement, currentPage);
-                            document.addMeasure(mright, measure.movement, currentPage);
-                            document.resort(measure.movement, currentPage);
+                            commandManager.processCutMeasureCommand(document, measure, mleft, mright);
                             // do not continue
                         }
                         break;
@@ -646,7 +673,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
             case MotionEvent.ACTION_MOVE:
                 switch (nextAction) {
                     case ERASE:
-                        if(document.removeMeasuresAt(bitmapCoord.x, bitmapCoord.y, lastPoint.x, lastPoint.y, currentPage)) {
+                        ArrayList<Measure> toRemove = currentPage.getMeasuresAtSegment
+                                (bitmapCoord.x, bitmapCoord.y, lastPoint.x, lastPoint.y);
+                        if(toRemove.size() > 0) {
+                            commandManager.processRemoveMeasuresCommand(toRemove, document);
                             invalidate();
                         }
                         break;
@@ -670,25 +700,14 @@ public class FacsimileView extends SubsamplingScaleImageView {
                     switch (nextAction) {
                         case ERASE:
                             if (measures.size() > 0) {
-                                document.removeMeasures(measures);
-                                ArrayList<Movement> changedMovements = new ArrayList<>();
-                                for (Measure me : measures) {
-                                    if (!changedMovements.contains(me.movement)) {
-                                        changedMovements.add(me.movement);
-                                    }
-                                }
-
-                                for (Movement movement : changedMovements) {
-                                    document.resort(movement, currentPage);
-                                }
+                                commandManager.processRemoveMeasuresCommand(measures, document);
                                 invalidate();
                             }
-                            document.cleanMovements();
                             if(currentMovementNumber >= document.movements.size()) {
                                 currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
                             }
                             break;
-                        case MOVEMENT:
+                        case ADJUST_MOVEMENT:
                             final ArrayList<Measure> measuresToMove = new ArrayList<>();
                             if(measure != null) {
                                 Movement currentMov = measure.movement;
@@ -698,6 +717,10 @@ public class FacsimileView extends SubsamplingScaleImageView {
                             }
 
                             final Dialog editMODialog = new Dialog(getContext());
+                            window = editMODialog.getWindow();
+                            wlp = window.getAttributes();
+                            wlp.gravity = Gravity.TOP;
+                            window.setAttributes(wlp);
                             editMODialog.setContentView(R.layout.dialog_editmo);
                             editMODialog.setTitle(R.string.dialog_editmo_titel);
                             TextView editMOMovementLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_movement_label);
@@ -731,62 +754,22 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                 public void onClick(View v) {
                                     String option = editMOMovementInput.getSelectedItem().toString();
                                     String labelStr = editMOLabelInput.getText().toString();
-                                    if(option.equals(getResources().getString(R.string.dialog_editmo_spinner_optelse))) {
-                                        if(measure != null && !labelStr.equals("")) {
-                                            measure.movement.label = labelStr;
-                                        }
-                                    }
-                                    else if(option.equals(getResources().getString(R.string.dialog_editmo_spinner_optdef))) {
-                                        Movement newMovement = new Movement();
-                                        newMovement.number = document.movements.get
-                                                (document.movements.size() - 1).number + 1;
-                                        newMovement.label = labelStr;
-                                        document.movements.add(newMovement);
-                                        currentMovementNumber = document.movements.indexOf(newMovement);
-                                        if(measure != null) {
-                                            for(Measure measure : measuresToMove) {
-                                                measure.changeMovement(newMovement);
-                                            }
-                                            document.resort(measure.movement, measure.page);
-                                            document.cleanMovements();
-                                            if(currentMovementNumber >= document.movements.size()) {
-                                                currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
-                                            }
-                                        }
-                                    }
-                                    else {
-                                        Movement newMovement = null;
-                                        for(Movement movement : document.movements) {
-                                            if(movement.getName().equals(option)) {
-                                                newMovement = movement;
-                                                break;
-                                            }
-                                        }
-                                        if(newMovement != null) {
-                                            if(!labelStr.equals("")) {
-                                                newMovement.label = labelStr;
-                                            }
-                                            currentMovementNumber = document.movements.indexOf(newMovement);
-                                            if(measure != null) {
-                                                for(Measure measure : measuresToMove) {
-                                                    measure.changeMovement(newMovement);
-                                                }
-                                                document.resort(measure.movement, measure.page);
-                                                document.cleanMovements();
-                                                if(currentMovementNumber >= document.movements.size()) {
-                                                    currentMovementNumber = document.movements.get(document.movements.size() - 1).number;
-                                                }
-                                            }
-                                        }
-                                    }
+                                    commandManager.processAdjustMovementCommand(document, measure, option, labelStr,
+                                            getResources().getString(R.string.dialog_editmo_spinner_optelse),
+                                            getResources().getString(R.string.dialog_editmo_spinner_optdef));
+                                    currentMovementNumber = document.movements.indexOf(measure.movement);
                                     editMODialog.dismiss();
                                 }
                             });
                             editMODialog.show();
                             break;
-                        case TYPE:
+                        case ADJUST_MEASURE:
                             if (currentPage.getMeasureAt(bitmapCoord.x, bitmapCoord.y) != null) {
                                 final Dialog editMEDialog = new Dialog(getContext());
+                                window = editMEDialog.getWindow();
+                                wlp = window.getAttributes();
+                                wlp.gravity = Gravity.TOP;
+                                window.setAttributes(wlp);
                                 editMEDialog.setContentView(R.layout.dialog_editme);
                                 editMEDialog.setTitle(R.string.dialog_editme_titel);
                                 TextView editMENameLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_name_label);
@@ -812,16 +795,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                 editMEButtonPositive.setOnClickListener(new OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        String text = editMENameInput.getText().toString();
-                                        measure.manualSequenceNumber = text.equals("") ? null : text;
-                                        try {
-                                            measure.rest = Integer.parseInt(editMERestInput.getText().toString());
-                                        }
-                                        catch (NumberFormatException e) {
-                                            measure.rest = 0;
-                                        }
-                                        measure.movement.calculateSequenceNumbers();
-                                        measure.page.sortMeasures();
+                                        String manualSequenceNumber = editMENameInput.getText().toString();
+                                        String rest = editMERestInput.getText().toString();
+                                        commandManager.processAdjustMeasureCommand(measure, manualSequenceNumber, rest);
                                         editMEDialog.dismiss();
                                         invalidate();
                                     }
@@ -846,8 +822,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                     if(currentMovementNumber > document.movements.size() - 1) {
                                         currentMovementNumber = document.movements.size() - 1;
                                     }
-                                    document.addMeasure(newMeasure, currentPage);
-                                    document.resort(newMeasure.movement, newMeasure.page);
+                                    commandManager.processCreateMeasureCommand(newMeasure, document, currentPage);
                                     invalidate();
                                 }
                                 pointPath = new ArrayList<>();
@@ -881,13 +856,13 @@ public class FacsimileView extends SubsamplingScaleImageView {
         for (int i = 0; i < menu.size(); i++) {
             // Set default icons
             if (menu.getItem(i).getItemId() == R.id.action_erase) {
-                menu.getItem(i).setIcon(R.drawable.eraseroff);
+                menu.getItem(i).setIcon(R.drawable.eraser_off);
             } else if (menu.getItem(i).getItemId() == R.id.action_type) {
-                menu.getItem(i).setIcon(R.drawable.textboxoff);
+                menu.getItem(i).setIcon(R.drawable.textbox_off);
             } else if (menu.getItem(i).getItemId() == R.id.action_cut) {
-                menu.getItem(i).setIcon(R.drawable.cutoff);
+                menu.getItem(i).setIcon(R.drawable.cut_off);
             } else if (menu.getItem(i).getItemId() == R.id.action_brush) {
-                menu.getItem(i).setIcon(R.drawable.brushon);
+                menu.getItem(i).setIcon(R.drawable.brush_on);
             }
         }
     }

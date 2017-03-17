@@ -250,19 +250,19 @@ public class MainActivity extends AppCompatActivity {
                 // Set default icons
                 switch (mainMenu.getItem(i).getItemId()) {
                     case R.id.action_erase:
-                        mainMenu.getItem(i).setIcon(R.drawable.eraseroff);
+                        mainMenu.getItem(i).setIcon(R.drawable.eraser_off);
                         break;
                     case R.id.action_type:
-                        mainMenu.getItem(i).setIcon(R.drawable.textboxoff);
+                        mainMenu.getItem(i).setIcon(R.drawable.textbox_off);
                         break;
                     case R.id.action_brush:
-                        mainMenu.getItem(i).setIcon(R.drawable.brushoff);
+                        mainMenu.getItem(i).setIcon(R.drawable.brush_off);
                         break;
                     case R.id.action_cut:
-                        mainMenu.getItem(i).setIcon(R.drawable.cutoff);
+                        mainMenu.getItem(i).setIcon(R.drawable.cut_off);
                         break;
                     case R.id.action_movement:
-                        mainMenu.getItem(i).setIcon(R.drawable.movementoff);
+                        mainMenu.getItem(i).setIcon(R.drawable.movement_off);
                         break;
                 }
             }
@@ -271,15 +271,15 @@ public class MainActivity extends AppCompatActivity {
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
         switch (id) {
             case R.id.action_erase:
-                item.setIcon(R.drawable.eraseron);
+                item.setIcon(R.drawable.eraser_on);
                 view.eraseClicked();
                 return true;
             case R.id.action_type:
-                item.setIcon(R.drawable.textboxon);
+                item.setIcon(R.drawable.textbox_on);
                 view.typeClicked();
                 return true;
             case R.id.action_brush:
-                item.setIcon(R.drawable.brushon);
+                item.setIcon(R.drawable.brush_on);
                 view.brushClicked();
                 return true;
             case R.id.action_open:
@@ -293,18 +293,24 @@ public class MainActivity extends AppCompatActivity {
                 view.prevPageClicked();
                 break;
             case R.id.action_cut:
-                item.setIcon(R.drawable.cuton);
+                item.setIcon(R.drawable.cut_on);
                 view.cutClicked();
                 break;
             case R.id.action_goto:
                 view.gotoClicked();
                 break;
             case R.id.action_movement:
-                item.setIcon(R.drawable.movementon);
+                item.setIcon(R.drawable.movement_on);
                 view.movementClicked();
                 break;
             case R.id.action_settings:
                 view.settingsClicked();
+                break;
+            case R.id.action_undo:
+                view.undoClicked();
+                break;
+            case R.id.action_redo:
+                view.redoClicked();
                 break;
         }
 

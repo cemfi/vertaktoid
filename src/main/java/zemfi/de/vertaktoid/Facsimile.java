@@ -167,62 +167,6 @@ public class Facsimile implements Serializable {
     }
 
     /**
-     * Removes the first found measure that intersect the giving point coordinates at the target page.
-     * @param x x coordinate
-     * @param y y coordinate
-     * @param page target page
-     * @return true if some measure was removed
-     */
-    boolean removeMeasureAt(float x, float y, Page page) {
-        Measure toRemove = page.getMeasureAt(x, y);
-        if(toRemove != null) {
-            removeMeasure(toRemove);
-            return true;
-        }
-        return  false;
-    }
-
-    /**
-     * Removes all found measures that intersect the giving point coordinates at the target page.
-     * @param x x coordinate
-     * @param y y coordinate
-     * @param page target page
-     * @return true if some measure was removed
-     */
-    boolean removeMeasuresAt(float x, float y, Page page) {
-        ArrayList<Measure> toRemove = page.getMeasuresAt(x, y);
-        if (toRemove.size() > 0) {
-            for (Measure measure : toRemove) {
-                removeMeasure(measure);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Removes all found measures that intersect the line from start point to end point at the target page.
-     * @param startx x coordinate for start point
-     * @param starty y coordinate for start point
-     * @param endx x coordinate for end point
-     * @param endy y coordinate for end point
-     * @param page target page
-     * @return true if some measure was removed
-     */
-    boolean removeMeasuresAt(float startx, float starty, float endx, float endy, Page page) {
-        ArrayList<Measure> toRemove = new ArrayList<>();
-        boolean result = false;
-        for(Measure measure : page.measures) {
-            if(measure.containsSegment(startx, starty, endx, endy)) {
-                toRemove.add(measure);
-                result = true;
-            }
-        }
-        removeMeasures(toRemove);
-        return result;
-    }
-
-    /**
      * Export the MEI to default file. Creates the file if not exists.
      * @return true if the MEI output was properly saved
      */
@@ -253,6 +197,11 @@ public class Facsimile implements Serializable {
         }
     };
 
+    /**
+     * Calculates the top and bottom positions of whole system.
+     * @param measures measures in system
+     * @return positions in the form {top, bottom}
+     */
     private float[] getSystemPositions(ArrayList<Measure> measures){
         float top = Float.MAX_VALUE;
         float bottom = Float.MIN_VALUE;
@@ -267,6 +216,10 @@ public class Facsimile implements Serializable {
         return new float[]{top, bottom};
     }
 
+    /**
+     * Finds the system and page breaks. The results will be stored in the corresponding measures
+     * via boolean attributes "lastAtSystem" and "lastAtPage".
+     */
     void calculateBreaks() {
         ArrayList<Measure> predecessors = new ArrayList<>();
         for(int i = 0; i < movements.size(); i++)

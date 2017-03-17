@@ -42,6 +42,12 @@ public class Page implements Serializable {
         calculateDimensions();
     }
 
+    public Page() {
+        surfaceUuid = Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString();
+        graphicUuid = Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString();
+        measures = new ArrayList<>();
+    }
+
     /**
      * Sorts the measures on the page by their sequence numbers.
      */
@@ -82,13 +88,23 @@ public class Page implements Serializable {
         return result;
     }
 
+    ArrayList<Measure> getMeasuresAtSegment(float startx, float starty, float endx, float endy) {
+        ArrayList<Measure> toRemove = new ArrayList<>();
+        for(Measure measure : measures) {
+            if(measure.containsSegment(startx, starty, endx, endy)) {
+                toRemove.add(measure);
+            }
+        }
+        return toRemove;
+    }
+
     /**
      * Removes measure from page.
      * @param measure
      */
     void removeMeasure(Measure measure) {
         measures.remove(measure);
-        measure.page = null;
+        //measure.page = null;
     }
 
     /**

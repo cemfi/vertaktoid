@@ -1,0 +1,68 @@
+package zemfi.de.vertaktoid;
+
+
+import java.io.Serializable;
+import java.util.ArrayList;
+
+public class RemoveMeasuresCommand implements ICommand, Serializable {
+    private Facsimile facsimile;
+    private ArrayList<Measure> measures;
+
+    RemoveMeasuresCommand(ArrayList<Measure> measures, Facsimile facsimile) {
+        this.facsimile = facsimile;
+        this.measures = measures;
+    }
+
+    public RemoveMeasuresCommand() {
+    }
+
+    public Facsimile getFacsimile() {
+        return facsimile;
+    }
+
+    public void setFacsimile(Facsimile facsimile) {
+        this.facsimile = facsimile;
+    }
+
+    public ArrayList<Measure> getMeasures() {
+        return measures;
+    }
+
+    public void setMeasures(ArrayList<Measure> measures) {
+        this.measures = measures;
+    }
+
+    @Override
+    public void execute(){
+        if(measures.size() > 0) {
+            facsimile.removeMeasures(measures);
+            ArrayList<Movement> changedMovements = new ArrayList<>();
+            for (Measure measure : measures) {
+                if (!changedMovements.contains(measure.movement)) {
+                    changedMovements.add(measure.movement);
+                }
+            }
+
+            for (Movement movement : changedMovements) {
+                facsimile.resort(movement, measures.get(0).page);
+            }
+            facsimile.cleanMovements();
+        }
+    }
+
+    @Override
+    public void unexecute(){
+        if(measures.size() > 0) {
+            ArrayList<Movement> changedMovements = new ArrayList<>();
+            for (Measure measure : measures) {
+                if (!changedMovements.contains(measure.movement)) {
+                    changedMovements.add(measure.movement);
+                }
+                facsimile.addMeasure(measure, measure.movement, measure.page);
+            }
+            for (Movement movement : changedMovements) {
+                facsimile.resort(movement, measures.get(0).page);
+            }
+        }
+    }
+}

@@ -24,6 +24,8 @@ public class Vertaktoid extends Application implements Serializable {
     public final static String MEI_GRAPHIC_ID_PREFIX = "graphic_";
     public final static String MEI_SURFACE_ID_PREFIX = "surface_";
 
+    public final static int DEFAULT_UNDOREDO_STACK_SIZE = 50;
+
     public void onCreate() {
         super.onCreate();
     }
