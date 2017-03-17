@@ -57,18 +57,26 @@ public class CutMeasureCommand implements ICommand, Serializable {
     }
 
     @Override
-    public void execute() {
-        facsimile.removeMeasure(oldMeasure);
-        facsimile.addMeasure(leftMeasure, oldMeasure.movement, oldMeasure.page);
-        facsimile.addMeasure(rightMeasure, oldMeasure.movement, oldMeasure.page);
-        facsimile.resort(oldMeasure.movement, oldMeasure.page);
+    public int execute() {
+        if(oldMeasure != null) {
+            facsimile.removeMeasure(oldMeasure);
+            facsimile.addMeasure(leftMeasure, oldMeasure.movement, oldMeasure.page);
+            facsimile.addMeasure(rightMeasure, oldMeasure.movement, oldMeasure.page);
+            facsimile.resort(oldMeasure.movement, oldMeasure.page);
+            return facsimile.pages.indexOf(oldMeasure.page);
+        }
+        return -1;
     }
 
     @Override
-    public void unexecute() {
-        facsimile.removeMeasure(leftMeasure);
-        facsimile.removeMeasure(rightMeasure);
-        facsimile.addMeasure(oldMeasure, oldMeasure.movement, oldMeasure.page);
-        facsimile.resort(oldMeasure.movement, oldMeasure.page);
+    public int unexecute() {
+        if(oldMeasure != null) {
+            facsimile.removeMeasure(leftMeasure);
+            facsimile.removeMeasure(rightMeasure);
+            facsimile.addMeasure(oldMeasure, oldMeasure.movement, oldMeasure.page);
+            facsimile.resort(oldMeasure.movement, oldMeasure.page);
+            return facsimile.pages.indexOf(oldMeasure.page);
+        }
+        return -1;
     }
 }

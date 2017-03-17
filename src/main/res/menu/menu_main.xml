@@ -38,13 +38,13 @@
         <item
             android:id="@+id/action_undo"
             android:title="Undo"
-            android:icon="@drawable/undo_on"
+            android:icon="@drawable/undo_off"
             app:showAsAction="always" />
 
         <item
             android:id="@+id/action_redo"
             android:title="Redo"
-            android:icon="@drawable/redo_on"
+            android:icon="@drawable/redo_off"
             app:showAsAction="always" />
 
         <item

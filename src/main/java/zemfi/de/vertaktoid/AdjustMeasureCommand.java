@@ -8,13 +8,15 @@ import java.io.Serializable;
 
 public class AdjustMeasureCommand implements ICommand, Serializable {
 
+    private Facsimile facsimile;
     private Measure measure;
     private String manualSequenceNumber;
     private String rest;
     private String oldManualSequenceNumber;
     private int oldRest;
 
-    public AdjustMeasureCommand(Measure measure, String manualSequenceNumber, String rest) {
+    public AdjustMeasureCommand(Facsimile facsimile, Measure measure, String manualSequenceNumber, String rest) {
+        this.facsimile = facsimile;
         this.measure = measure;
         this.manualSequenceNumber = manualSequenceNumber;
         this.rest = rest;
@@ -22,6 +24,14 @@ public class AdjustMeasureCommand implements ICommand, Serializable {
 
     public AdjustMeasureCommand() {
 
+    }
+
+    public Facsimile getFacsimile() {
+        return facsimile;
+    }
+
+    public void setFacsimile(Facsimile facsimile) {
+        this.facsimile = facsimile;
     }
 
     public Measure getMeasure() {
@@ -49,26 +59,33 @@ public class AdjustMeasureCommand implements ICommand, Serializable {
     }
 
     @Override
-    public void execute() {
-        oldRest = measure.rest;
-        oldManualSequenceNumber = measure.manualSequenceNumber;
-        measure.manualSequenceNumber = manualSequenceNumber.equals("") ? null : manualSequenceNumber;
-        try {
+    public int execute() {
+        if(measure != null) {
+            oldRest = measure.rest;
+            oldManualSequenceNumber = measure.manualSequenceNumber;
+            measure.manualSequenceNumber = manualSequenceNumber.equals("") ? null : manualSequenceNumber;
+            try {
 
-            measure.rest = Integer.parseInt(rest);
+                measure.rest = Integer.parseInt(rest);
+            } catch (NumberFormatException e) {
+                measure.rest = 0;
+            }
+            measure.movement.calculateSequenceNumbers();
+            measure.page.sortMeasures();
+            return facsimile.pages.indexOf(measure.page);
         }
-        catch (NumberFormatException e) {
-            measure.rest = 0;
-        }
-        measure.movement.calculateSequenceNumbers();
-        measure.page.sortMeasures();
+        return -1;
     }
 
     @Override
-    public void unexecute() {
-        measure.manualSequenceNumber = oldManualSequenceNumber;
-        measure.rest = oldRest;
-        measure.movement.calculateSequenceNumbers();
-        measure.page.sortMeasures();
+    public int unexecute() {
+        if(measure != null) {
+            measure.manualSequenceNumber = oldManualSequenceNumber;
+            measure.rest = oldRest;
+            measure.movement.calculateSequenceNumbers();
+            measure.page.sortMeasures();
+            return facsimile.pages.indexOf(measure.page);
+        }
+        return -1;
     }
 }

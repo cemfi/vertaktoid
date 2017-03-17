@@ -33,19 +33,23 @@ public class RemoveMeasureCommand implements ICommand, Serializable {
     }
 
     @Override
-    public void execute() {
+    public int execute() {
         if(measure != null) {
             facsimile.removeMeasure(measure);
             facsimile.resort(measure.movement, measure.page);
             facsimile.cleanMovements();
+            return facsimile.pages.indexOf(measure.page);
         }
+        return -1;
     }
 
     @Override
-    public void unexecute() {
+    public int unexecute() {
         if (measure != null) {
             facsimile.addMeasure(measure, measure.movement, measure.page);
             facsimile.resort(measure.movement, measure.page);
+            return facsimile.pages.indexOf(measure.page);
         }
+        return -1;
     }
 }

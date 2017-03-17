@@ -59,7 +59,7 @@ public class CreateMeasureCommand implements ICommand, Serializable {
     }
 
     @Override
-    public void execute() {
+    public int execute() {
         if (movement != null) {
             facsimile.addMeasure(measure, movement, page);
             facsimile.resort(movement, page);
@@ -69,12 +69,13 @@ public class CreateMeasureCommand implements ICommand, Serializable {
             movement = measure.movement;
             facsimile.resort(movement, page);
         }
+        return facsimile.pages.indexOf(measure.page);
     }
-
     @Override
-    public void unexecute(){
+    public int unexecute(){
         facsimile.removeMeasure(measure);
         facsimile.resort(movement, page);
         facsimile.cleanMovements();
+        return facsimile.pages.indexOf(measure.page);
     }
 }

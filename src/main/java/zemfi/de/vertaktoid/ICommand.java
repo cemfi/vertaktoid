@@ -1,6 +1,6 @@
 package zemfi.de.vertaktoid;
 
 public interface ICommand {
-    void execute();
-    void unexecute();
+    int execute();
+    int unexecute();
 }

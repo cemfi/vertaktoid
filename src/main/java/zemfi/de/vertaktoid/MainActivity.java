@@ -131,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
-
     }
 
     /**
@@ -229,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
 
         FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
         view.setMenu(menu);
-
+        view.adjustPageNavigation();
         return true;
     }
 

@@ -88,7 +88,7 @@ public class AdjustMovementCommand implements ICommand, Serializable {
     }
 
     @Override
-    public void execute() {
+    public int execute() {
         if (userOption.equals(optionDef)) {
             if (targetMeasure != null && !newLabel.equals("")) {
                 oldLabel = targetMeasure.movement.label;
@@ -130,10 +130,15 @@ public class AdjustMovementCommand implements ICommand, Serializable {
                 facsimile.cleanMovements();
             }
         }
+        if(targetMeasure != null) {
+            return facsimile.pages.indexOf(targetMeasure.page);
+        } else {
+            return -1;
+        }
     }
 
     @Override
-    public void unexecute() {
+    public int unexecute() {
         if (userOption.equals(optionDef)) {
             if (targetMeasure != null && !newLabel.equals("")) {
                 targetMeasure.movement.label = oldLabel;
@@ -161,6 +166,11 @@ public class AdjustMovementCommand implements ICommand, Serializable {
                 facsimile.resort(targetMeasure.movement, targetMeasure.page);
                 facsimile.cleanMovements();
             }
+        }
+        if(targetMeasure != null) {
+            return facsimile.pages.indexOf(targetMeasure.page);
+        } else {
+            return -1;
         }
     }
 }

@@ -118,7 +118,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
         drawPaint.setStyle(Paint.Style.STROKE);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
-
         pageNumber.set(0);
 
         setOnHoverListener(new View.OnHoverListener() {
@@ -155,7 +154,6 @@ public class FacsimileView extends SubsamplingScaleImageView {
             }
 
         });
-
     }
 
 
@@ -191,11 +189,11 @@ public class FacsimileView extends SubsamplingScaleImageView {
             currentMovementNumber = bundle.getInt("currentMovementNumber");
             horOverlapping = bundle.getInt("horOverlapping");
             setPage(pageNumber.get());
-            super.onRestoreInstanceState(bundle.getParcelable("instanceState"));
+            commandManager = (CommandManager) bundle.getSerializable("history");
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getPath());
             HSLColorsGenerator.resetHueToDefault();
-            commandManager = (CommandManager) bundle.getSerializable("history");
+            super.onRestoreInstanceState(bundle.getParcelable("instanceState"));
             return;
         }
 
@@ -219,8 +217,34 @@ public class FacsimileView extends SubsamplingScaleImageView {
             return;
         }
         if (page >= 0 && page < document.pages.size()) {
-            this.pageNumber.set(page);
+            pageNumber.set(page);
             setImage(findImageForPage(pageNumber.get()));
+        }
+    }
+
+    public void adjustPageNavigation() {
+        if(pageNumber.get() < document.pages.size() - 1) {
+            menu.findItem(R.id.action_plus).setIcon(R.drawable.arrowright_on);
+        } else {
+            menu.findItem(R.id.action_plus).setIcon(R.drawable.arrowright_off);
+        }
+        if(pageNumber.get() > 0) {
+            menu.findItem(R.id.action_minus).setIcon(R.drawable.arrowleft_on);
+        } else {
+            menu.findItem(R.id.action_minus).setIcon(R.drawable.arrowleft_off);
+        }
+    }
+
+    public void adjustHistoryNavigation() {
+        if(commandManager.getUndoStackSize() > 0) {
+            menu.findItem(R.id.action_undo).setIcon(R.drawable.undo_on);
+        } else {
+            menu.findItem(R.id.action_undo).setIcon(R.drawable.undo_off);
+        }
+        if(commandManager.getRedoStackSize() > 0) {
+            menu.findItem(R.id.action_redo).setIcon(R.drawable.redo_on);
+        } else {
+            menu.findItem(R.id.action_redo).setIcon(R.drawable.redo_off);
         }
     }
 
@@ -233,6 +257,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
             pageNumber.set(newPageNumber);
             clean();
             setPage(newPageNumber);
+            adjustPageNavigation();
         }
     }
 
@@ -245,6 +270,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
             pageNumber.set(newPageNumber);
             clean();
             setPage(newPageNumber);
+            adjustPageNavigation();
         }
     }
 
@@ -288,6 +314,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 catch (NumberFormatException e) {
 
                 }
+                adjustPageNavigation();
                 invalidate();
                 gotoDialog.dismiss();
             }
@@ -586,12 +613,24 @@ public class FacsimileView extends SubsamplingScaleImageView {
     }
 
     public void undoClicked() {
-        commandManager.undo();
+        int pageIndex = commandManager.undo();
+        if(pageIndex != -1 && pageIndex != pageNumber.get()) {
+            pageNumber.set(pageIndex);
+            clean();
+            setPage(pageIndex);
+        }
+        adjustHistoryNavigation();
         invalidate();
     }
 
     public void redoClicked() {
-        commandManager.redo();
+        int pageIndex = commandManager.redo();
+        if(pageIndex != -1 && pageIndex != pageNumber.get()) {
+            pageNumber.set(pageIndex);
+            clean();
+            setPage(pageIndex);
+        }
+        adjustHistoryNavigation();
         invalidate();
     }
 
@@ -797,7 +836,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                     public void onClick(View v) {
                                         String manualSequenceNumber = editMENameInput.getText().toString();
                                         String rest = editMERestInput.getText().toString();
-                                        commandManager.processAdjustMeasureCommand(measure, manualSequenceNumber, rest);
+                                        commandManager.processAdjustMeasureCommand(document, measure, manualSequenceNumber, rest);
                                         editMEDialog.dismiss();
                                         invalidate();
                                     }
@@ -832,7 +871,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                     }
                 }
         } // end switch
-
+        adjustHistoryNavigation();
         lastPoint = transformCoordTouchToBitmap(touchX, touchY);
         needToSave = true;
         return true;

@@ -58,6 +58,6 @@ public class HSLColorsGenerator {
      * Reset the hue to a value equals negative golden ratio.
      * The next generates color start than from hue equals 0.
      */
-    public static void resetHueToDefault() { h = -_golden_ratio_conjugate;}
-
+    public static void resetHueToDefault() {
+        h = -_golden_ratio_conjugate;}
 }

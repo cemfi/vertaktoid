@@ -14,6 +14,14 @@ public class CommandManager implements Serializable {
         redoCommands = new SizedStack<>(historyMaxSize);
     }
 
+    public int getUndoStackSize() {
+        return undoCommands.size();
+    }
+
+    public int getRedoStackSize() {
+        return redoCommands.size();
+    }
+
     public int getHistoryMaxSize() {
         return historyMaxSize;
     }
@@ -26,40 +34,48 @@ public class CommandManager implements Serializable {
         redoCommands.setMaxSize(historyMaxSize);
     }
 
-    public void redo(int levels) {
+    public int redo(int levels) {
+        int index = -1;
         for(int i = 0; i < levels; levels++) {
             if(redoCommands.size() > 0) {
                 ICommand command = redoCommands.pop();
-                command.execute();
+                index = command.execute();
                 undoCommands.push(command);
             }
         }
+        return index;
     }
 
-    public void redo() {
+    public int redo() {
+        int index = -1;
         if(redoCommands.size() > 0) {
             ICommand command = redoCommands.pop();
-            command.execute();
+            index = command.execute();
             undoCommands.push(command);
         }
+        return index;
     }
 
-    public void undo(int levels) {
+    public int undo(int levels) {
+        int index = -1;
         for(int i = 0; i < levels; levels++) {
             if(undoCommands.size() > 0) {
                 ICommand command = undoCommands.pop();
-                command.unexecute();
+                index = command.unexecute();
                 redoCommands.push(command);
             }
         }
+        return index;
     }
 
-    public void undo() {
+    public int undo() {
+        int index = -1;
         if(undoCommands.size() > 0) {
             ICommand command = undoCommands.pop();
-            command.unexecute();
+            index = command.unexecute();
             redoCommands.push(command);
         }
+        return index;
     }
 
 
@@ -100,9 +116,9 @@ public class CommandManager implements Serializable {
         redoCommands.clear();
     }
 
-    public void processAdjustMeasureCommand(Measure measure, String manualSequenceNumber,
-                                            String rest) {
-        ICommand command = new AdjustMeasureCommand(measure, manualSequenceNumber, rest);
+    public void processAdjustMeasureCommand(Facsimile facsimile, Measure measure,
+                                            String manualSequenceNumber, String rest) {
+        ICommand command = new AdjustMeasureCommand(facsimile, measure, manualSequenceNumber, rest);
         command.execute();
         undoCommands.push(command);
         redoCommands.clear();

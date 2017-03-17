@@ -33,7 +33,7 @@ public class RemoveMeasuresCommand implements ICommand, Serializable {
     }
 
     @Override
-    public void execute(){
+    public int execute(){
         if(measures.size() > 0) {
             facsimile.removeMeasures(measures);
             ArrayList<Movement> changedMovements = new ArrayList<>();
@@ -47,11 +47,13 @@ public class RemoveMeasuresCommand implements ICommand, Serializable {
                 facsimile.resort(movement, measures.get(0).page);
             }
             facsimile.cleanMovements();
+            return facsimile.pages.indexOf(measures.get(0).page);
         }
+        return -1;
     }
 
     @Override
-    public void unexecute(){
+    public int unexecute(){
         if(measures.size() > 0) {
             ArrayList<Movement> changedMovements = new ArrayList<>();
             for (Measure measure : measures) {
@@ -63,6 +65,8 @@ public class RemoveMeasuresCommand implements ICommand, Serializable {
             for (Movement movement : changedMovements) {
                 facsimile.resort(movement, measures.get(0).page);
             }
+            return facsimile.pages.indexOf(measures.get(0).page);
         }
+        return -1;
     }
 }
