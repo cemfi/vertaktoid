@@ -536,15 +536,7 @@ class MeasureElementPair {
             = new Comparator<MeasureElementPair>() {
         @Override
         public int compare(MeasureElementPair e1, MeasureElementPair e2) {
-            String n1 = e1.getElement().getAttributeValue("n");
-            String n2 = e2.getElement().getAttributeValue("n");
-            try {
-                int in1 = Integer.parseInt(n1);
-                int in2 = Integer.parseInt(n2);
-                return in1 - in2;
-            } catch (NumberFormatException e) {
-                return n1.compareTo(n2);
-            }
+            return e1.getMeasure().sequenceNumber - e2.getMeasure().sequenceNumber;
         }
     };
 }

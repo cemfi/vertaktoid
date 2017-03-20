@@ -235,8 +235,9 @@ public class Facsimile implements Serializable {
                 Measure nexMeasure = null;
                 if(j < curMovement.measures.size() - 1) {
                     nexMeasure = curMovement.measures.get(j + 1);
-                } else if(nextMovement != null) {
-                    if(nextMovement.measures.size() > 1) {
+                } else if(nextMovement != null)
+                {
+                    if(nextMovement.measures.size() > 0) {
                         nexMeasure = nextMovement.measures.get(0);
                     }
                 }
