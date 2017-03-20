@@ -801,6 +801,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                             getResources().getString(R.string.dialog_editmo_spinner_optdef));
                                     currentMovementNumber = document.movements.indexOf(measure.movement);
                                     editMODialog.dismiss();
+                                    adjustHistoryNavigation();
+                                    invalidate();
                                 }
                             });
                             editMODialog.show();
@@ -841,6 +843,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                         String rest = editMERestInput.getText().toString();
                                         commandManager.processAdjustMeasureCommand(document, measure, manualSequenceNumber, rest);
                                         editMEDialog.dismiss();
+                                        adjustHistoryNavigation();
                                         invalidate();
                                     }
                                 });
