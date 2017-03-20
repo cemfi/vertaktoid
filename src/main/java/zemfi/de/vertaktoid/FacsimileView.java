@@ -70,7 +70,7 @@ public class FacsimileView extends SubsamplingScaleImageView {
     private Paint drawPaint;
     private Paint largeBoldText = new Paint();
     private Paint smallBoldText = new Paint();
-    private Paint whiteAlpha = new Paint();
+    //private Paint whiteAlpha = new Paint();
     private Rect pageNameRect = new Rect();
     private Rect measureNameRect = new Rect();
     private Rect movementNameRect = new Rect();
@@ -533,8 +533,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
 
             drawPath.reset();
 
-            whiteAlpha.setColor(0x55ffffff);
-            whiteAlpha.setStyle(Paint.Style.FILL);
+            /*whiteAlpha.setColor(0x55ffffff);
+            whiteAlpha.setStyle(Paint.Style.FILL);*/
 
             String measureLabel = measure.manualSequenceNumber != null ?
                     "" + measure.manualSequenceNumber : "" + measure.sequenceNumber;
@@ -841,6 +841,9 @@ public class FacsimileView extends SubsamplingScaleImageView {
                                     public void onClick(View v) {
                                         String manualSequenceNumber = editMENameInput.getText().toString();
                                         String rest = editMERestInput.getText().toString();
+                                        if(rest.equals("")) {
+                                            rest = "" + measure.rest;
+                                        }
                                         commandManager.processAdjustMeasureCommand(document, measure, manualSequenceNumber, rest);
                                         editMEDialog.dismiss();
                                         adjustHistoryNavigation();
