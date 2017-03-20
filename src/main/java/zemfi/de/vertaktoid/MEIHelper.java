@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.UUID;
 
 import nu.xom.*;
@@ -217,15 +219,14 @@ class MEIHelper {
             for (int i = 0; i < pbs.size(); i++) {
                 section.removeChild(pbs.get(i));
             }
-            ArrayList<Element> corrMeasureElems = new ArrayList<>();
+            ArrayList<MeasureElementPair> corrMeasureElems = new ArrayList<>();
             Elements measureElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
             for(Measure measure : movement.measures) {
                 Element measureElem = findElementByUiid(measureElems, measure.measureUuid);
                 if(measureElem == null) {
                     measureElem = new Element("measure", Vertaktoid.MEI_NS);
-                    section.appendChild(measureElem);
                 }
-                corrMeasureElems.add(measureElem);
+                corrMeasureElems.add(new MeasureElementPair(measure, measureElem));
 
                 a = new Attribute("n", measure.manualSequenceNumber == null ?
                         String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
@@ -235,7 +236,14 @@ class MEIHelper {
                 measureElem.addAttribute(a);
                 a = new Attribute("facs", "#" + measure.zoneUuid);
                 measureElem.addAttribute(a);
+            }
+            section.removeChildren();
+            Collections.sort(corrMeasureElems, MeasureElementPair.MEASURE_ELEMENT_PAIR_COMPARATOR);
 
+            for(int i = 0; i < corrMeasureElems.size(); i++) {
+                Element measureElem = corrMeasureElems.get(i).getElement();
+                Measure measure = corrMeasureElems.get(i).getMeasure();
+                section.appendChild(measureElem);
                 if(measure.lastAtPage) {
                     Element pb = new Element("pb", Vertaktoid.MEI_NS);
                     section.insertChild(pb, section.indexOf(measureElem) + 1);
@@ -243,13 +251,6 @@ class MEIHelper {
                 if(measure.lastAtSystem) {
                     Element sb = new Element("sb", Vertaktoid.MEI_NS);
                     section.insertChild(sb, section.indexOf(measureElem) + 1);
-                }
-            }
-
-            Elements mElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
-            for(int i = 0; i < mElems.size(); i++) {
-                if(!corrMeasureElems.contains(mElems.get(i))) {
-                    section.removeChild(mElems.get(i));
                 }
             }
         }
@@ -504,4 +505,46 @@ class MEIHelper {
         }
         return null;
     }
+}
+
+class MeasureElementPair {
+    private Measure measure;
+    private Element element;
+
+    MeasureElementPair(Measure measure, Element element) {
+        this.measure = measure;
+        this.element = element;
+    }
+
+    Measure getMeasure() {
+        return measure;
+    }
+
+    void setMeasure(Measure measure) {
+        this.measure = measure;
+    }
+
+    Element getElement() {
+        return element;
+    }
+
+    void setElement(Element element) {
+        this.element = element;
+    }
+
+    final static Comparator<MeasureElementPair> MEASURE_ELEMENT_PAIR_COMPARATOR
+            = new Comparator<MeasureElementPair>() {
+        @Override
+        public int compare(MeasureElementPair e1, MeasureElementPair e2) {
+            String n1 = e1.getElement().getAttributeValue("n");
+            String n2 = e2.getElement().getAttributeValue("n");
+            try {
+                int in1 = Integer.parseInt(n1);
+                int in2 = Integer.parseInt(n2);
+                return in1 - in2;
+            } catch (NumberFormatException e) {
+                return n1.compareTo(n2);
+            }
+        }
+    };
 }

@@ -245,7 +245,7 @@ public class Facsimile implements Serializable {
                     float[] systemPositions = getSystemPositions(predecessors);
                     float yIsectFactor = (Math.min(systemPositions[1], nexMeasure.bottom) - Math.max(systemPositions[0], nexMeasure.top)) /
                             Math.min(systemPositions[1] - systemPositions[0], nexMeasure.bottom  - nexMeasure.top);
-                    if (yIsectFactor < 0.5 && nexMeasure.top > systemPositions[0]) {
+                    if (yIsectFactor < 0.5) {
                         curMeasure.lastAtSystem = true;
                         predecessors.clear();
                     } else {

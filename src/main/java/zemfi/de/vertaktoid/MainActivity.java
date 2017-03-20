@@ -244,7 +244,8 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
 
         int id = item.getItemId();
-        if (id != R.id.action_plus && id != R.id.action_minus && id != R.id.action_goto) {
+        if (id != R.id.action_plus && id != R.id.action_minus && id != R.id.action_goto &&
+                id != R.id.action_undo && id != R.id.action_redo) {
             for (int i = 0; i < mainMenu.size(); i++) {
                 // Set default icons
                 switch (mainMenu.getItem(i).getItemId()) {
