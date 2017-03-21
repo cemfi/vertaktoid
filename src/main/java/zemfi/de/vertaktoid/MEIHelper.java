@@ -19,12 +19,6 @@ import nu.xom.*;
 
 class MEIHelper {
 
-    /**
-     * Write the existing data to an file in MEI format.
-     * @param meiFile The target MEI file.
-     * @param document The facsimile.
-     * @return true if properly saved.
-     */
     static Document meiDocument;
 
     static void clearDocument() {
