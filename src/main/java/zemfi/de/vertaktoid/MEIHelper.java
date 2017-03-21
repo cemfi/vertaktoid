@@ -27,6 +27,10 @@ class MEIHelper {
      */
     static Document meiDocument;
 
+    static void clearDocument() {
+        meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
+    }
+
     static Element findElementByUiid(Elements elements, String uuid) {
         for(int i = 0; i < elements.size(); i++) {
             Element element = elements.get(i);
@@ -505,38 +509,4 @@ class MEIHelper {
         }
         return null;
     }
-}
-
-class MeasureElementPair {
-    private Measure measure;
-    private Element element;
-
-    MeasureElementPair(Measure measure, Element element) {
-        this.measure = measure;
-        this.element = element;
-    }
-
-    Measure getMeasure() {
-        return measure;
-    }
-
-    void setMeasure(Measure measure) {
-        this.measure = measure;
-    }
-
-    Element getElement() {
-        return element;
-    }
-
-    void setElement(Element element) {
-        this.element = element;
-    }
-
-    final static Comparator<MeasureElementPair> MEASURE_ELEMENT_PAIR_COMPARATOR
-            = new Comparator<MeasureElementPair>() {
-        @Override
-        public int compare(MeasureElementPair e1, MeasureElementPair e2) {
-            return e1.getMeasure().sequenceNumber - e2.getMeasure().sequenceNumber;
-        }
-    };
 }

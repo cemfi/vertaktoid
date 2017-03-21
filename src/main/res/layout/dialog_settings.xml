@@ -9,6 +9,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
         android:labelFor="@+id/dialog_settings_horover_input"
+        android:text="@string/dialog_settings_horover_label"
         android:layout_marginStart="10dp"/>
     <EditText
         android:id="@+id/dialog_settings_horover_input"
@@ -19,7 +20,7 @@
         android:id="@+id/dialog_settings_horover_type"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal">
         <RadioButton android:id="@+id/dialog_settings_horover_type_points"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -33,14 +34,37 @@
         android:id="@+id/dialog_settings_undosize_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:labelFor="@+id/dialog_settings_undosize_input"
+        android:text="@string/dialog_settings_undosize_label"
         android:layout_marginStart="10dp"/>
     <EditText
         android:id="@+id/dialog_settings_undosize_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"/>
+    <TextView
+        android:id="@+id/dialog_settings_corner_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:labelFor="@+id/dialog_settings_corner_type"
+        android:text="@string/dialog_settings_corner_label"
+        android:layout_marginStart="10dp"/>
+    <RadioGroup
+        android:id="@+id/dialog_settings_corner_type"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton android:id="@+id/dialog_settings_corner_type_straight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_settings_corner_straight" />
+        <RadioButton android:id="@+id/dialog_settings_corner_type_rounded"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_settings_corner_rounded" />
+    </RadioGroup>
     <LinearLayout
         style="?android:attr/buttonBarStyle"
         android:orientation="horizontal"

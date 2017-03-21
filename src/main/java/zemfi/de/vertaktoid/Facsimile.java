@@ -160,6 +160,9 @@ public class Facsimile implements Serializable {
             }
         }
         else {
+            pages.clear();
+            movements.clear();
+            MEIHelper.clearDocument();
             for (int i = 0; i < images.size(); i++) {
                 pages.add(new Page(images.get(i), i + 1));
             }

@@ -90,6 +90,8 @@ public class FacsimileView extends SubsamplingScaleImageView {
     public final ObservableInt maxPageNumber = new ObservableInt(0);
     public boolean needToSave = false;
     public enum Action {DRAW, ERASE, ADJUST_MEASURE, CUT, ADJUST_MOVEMENT}
+    private enum CornerTypes {ROUNDED, STRAIGHT}
+    private CornerTypes cornerType = CornerTypes.STRAIGHT;
     Action nextAction = Action.DRAW;
     float downX = 0.0f;
     float downY = 0.0f;
@@ -339,25 +341,28 @@ public class FacsimileView extends SubsamplingScaleImageView {
         window.setAttributes(wlp);
         settingsDialog.setContentView(R.layout.dialog_settings);
         settingsDialog.setTitle(R.string.dialog_settings_titel);
-        TextView settingsHoroverLabel = (TextView) settingsDialog.findViewById(R.id.dialog_settings_horover_label);
-        settingsHoroverLabel.setText(R.string.dialog_settings_horover_label);
         final EditText settingsHoroverInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_horover_input);
         settingsHoroverInput.setHint("" + horOverlapping);
         settingsHoroverInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         final RadioGroup settingsHoroverType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_horover_type);
         settingsHoroverType.check(R.id.dialog_settings_horover_type_points);
+        final EditText settingsUndosizeInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_undosize_input);
+        settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
+        settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        final RadioGroup settingsCornerType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_corner_type);
+        if(cornerType == CornerTypes.STRAIGHT) {
+            settingsCornerType.check(R.id.dialog_settings_corner_type_straight);
+        } else if(cornerType == CornerTypes.ROUNDED) {
+            settingsCornerType.check(R.id.dialog_settings_corner_type_rounded);
+        }
         Button gotoButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
+
         gotoButtonNegative.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 settingsDialog.cancel();
             }
         });
-        TextView settingsUndosizeLabel = (TextView) settingsDialog.findViewById(R.id.dialog_settings_undosize_label);
-        settingsUndosizeLabel.setText(R.string.dialog_settings_undosize_label);
-        final EditText settingsUndosizeInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_undosize_input);
-        settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
-        settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
 
         Button gotoButtonPositive = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_positive);
         gotoButtonPositive.setOnClickListener(new OnClickListener() {
@@ -381,6 +386,11 @@ public class FacsimileView extends SubsamplingScaleImageView {
                         } else {
                             horOverlapping = 0;
                         }
+                    }
+                    if(settingsCornerType.getCheckedRadioButtonId() == R.id.dialog_settings_corner_type_straight) {
+                        cornerType = CornerTypes.STRAIGHT;
+                    } else if(settingsCornerType.getCheckedRadioButtonId() == R.id.dialog_settings_corner_type_rounded) {
+                        cornerType = CornerTypes.ROUNDED;
                     }
                 }
                 catch (NumberFormatException e) {
@@ -514,7 +524,12 @@ public class FacsimileView extends SubsamplingScaleImageView {
                 // still loading image
                 return;
             }
-            drawPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
+
+            if(cornerType == CornerTypes.ROUNDED) {
+                drawPath.addRoundRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, 15f, 15f, Path.Direction.CW);
+            } else if(cornerType == CornerTypes.STRAIGHT) {
+                drawPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
+            }
 
             drawPaint.setStyle(Paint.Style.FILL);
             fillColor = new HSLColor();
