@@ -61,10 +61,14 @@ buildscript {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'com.android.support:design:22.2.1'
     compile 'com.davemorrissey.labs:subsampling-scale-image-view:3.5.0'
-    compile files('libs/xom-1.2.10.jar')
+    compile('com.io7m.xom:xom:1.2.10'){
+        exclude module: 'xalan'
+        exclude module: 'xercesImpl'
+        exclude module: 'xml-apis'
+    }
 }

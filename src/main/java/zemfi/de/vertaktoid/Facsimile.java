@@ -166,6 +166,8 @@ public class Facsimile implements Serializable {
             for (int i = 0; i < images.size(); i++) {
                 pages.add(new Page(images.get(i), i + 1));
             }
+            Movement movement = new Movement();
+            movements.add(movement);
         }
     }
 
