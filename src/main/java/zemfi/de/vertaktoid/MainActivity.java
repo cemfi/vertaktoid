@@ -33,6 +33,10 @@ import java.io.IOException;
 import java.util.Date;
 
 import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
+import zemfi.de.vertaktoid.helpers.Status;
+import zemfi.de.vertaktoid.helpers.StatusStrings;
+import zemfi.de.vertaktoid.model.Facsimile;
+
 import android.databinding.DataBindingUtil;
 
 public class MainActivity extends AppCompatActivity {

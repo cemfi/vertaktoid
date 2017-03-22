@@ -1,4 +1,4 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.helpers;
 
 /**
  * Status values binding helper.

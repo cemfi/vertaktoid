@@ -1,4 +1,4 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.mei;
 
 import android.util.Log;
 
@@ -11,20 +11,22 @@ import java.util.Collections;
 import java.util.UUID;
 
 import nu.xom.*;
+import zemfi.de.vertaktoid.Vertaktoid;
+import zemfi.de.vertaktoid.model.*;
 
 /**
  * MEI input\output routines.
  */
 
-class MEIHelper {
+public class MEIHelper {
 
-    static Document meiDocument;
+    public static Document meiDocument;
 
-    static void clearDocument() {
+    public static void clearDocument() {
         meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
     }
 
-    static Element findElementByUiid(Elements elements, String uuid) {
+    public static Element findElementByUiid(Elements elements, String uuid) {
         for(int i = 0; i < elements.size(); i++) {
             Element element = elements.get(i);
             if(element.getAttribute("id", "http://www.w3.org/XML/1998/namespace") != null) {
@@ -48,7 +50,7 @@ class MEIHelper {
      * @param document The data to be saved.
      * @return true if no exceptions.
      */
-    static boolean writeMEI(File meiFile, Facsimile document) {
+    public static boolean writeMEI(File meiFile, Facsimile document) {
         boolean returnValue = true;
         document.calculateBreaks();
         if(meiDocument == null) {
@@ -293,7 +295,7 @@ class MEIHelper {
      * @param document The facsimile.
      * @return true if properly readed.
      */
-    static boolean readMEI(File meiFile, Facsimile document) {
+    public static boolean readMEI(File meiFile, Facsimile document) {
         File dir = meiFile.getParentFile();
         Attribute a;
 

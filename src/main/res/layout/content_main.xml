@@ -2,17 +2,17 @@
 <layout>
     <data>
         <import type="zemfi.de.vertaktoid.FacsimileView"/>
-        <import type="zemfi.de.vertaktoid.Facsimile"/>
-        <import type="zemfi.de.vertaktoid.Page"/>
-        <import type="zemfi.de.vertaktoid.BindingUtils"/>
-        <import type="zemfi.de.vertaktoid.Status"/>
+        <import type="zemfi.de.vertaktoid.model.Facsimile"/>
+        <import type="zemfi.de.vertaktoid.model.Page"/>
+        <import type="zemfi.de.vertaktoid.helpers.BindingUtils"/>
+        <import type="zemfi.de.vertaktoid.helpers.Status"/>
         <import type="android.text.format.DateFormat"/>
         <variable
             name="fview"
             type="zemfi.de.vertaktoid.FacsimileView"/>
         <variable
             name="cstatus"
-            type="zemfi.de.vertaktoid.Status"/>
+            type="zemfi.de.vertaktoid.helpers.Status"/>
 
     </data>
 

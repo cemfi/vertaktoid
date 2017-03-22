@@ -1,4 +1,4 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.helpers;
 
 import android.graphics.Color;
 
@@ -14,10 +14,10 @@ import android.graphics.Color;
 
 public class HSLColor extends Color {
 
-    float h = 0f;
-    float s = 0f;
-    float l = 0f;
-    float a = 1f;
+    public float h = 0f;
+    public float s = 0f;
+    public float l = 0f;
+    public float a = 1f;
 
     /**
      * Constructor. Creates new color in HSLA scheme.

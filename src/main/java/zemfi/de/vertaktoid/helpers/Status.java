@@ -1,9 +1,11 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.helpers;
 
 import android.databinding.BaseObservable;
 import android.databinding.Bindable;
 
 import java.util.Date;
+
+import zemfi.de.vertaktoid.BR;
 
 /**
  * Represents bindable status that will be displayed after regular actions.

@@ -34,6 +34,14 @@ import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import java.io.File;
 import java.util.ArrayList;
 
+import zemfi.de.vertaktoid.commands.CommandManager;
+import zemfi.de.vertaktoid.helpers.HSLColor;
+import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
+import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Movement;
+import zemfi.de.vertaktoid.model.Page;
+
 /**
  * Contains the presentation and user interaction functions. Directs the UI layouts.
  * Extends the SubsamplingScaleImageView class.

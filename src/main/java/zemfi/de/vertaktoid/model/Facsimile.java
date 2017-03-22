@@ -1,7 +1,4 @@
-package zemfi.de.vertaktoid;
-
-import android.graphics.PointF;
-import android.widget.ArrayAdapter;
+package zemfi.de.vertaktoid.model;
 
 import java.io.File;
 import java.io.Serializable;
@@ -9,19 +6,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import zemfi.de.vertaktoid.mei.MEIHelper;
+import zemfi.de.vertaktoid.Vertaktoid;
+
 /**
  * Represents a scanned music source. Consists from pages. Contains movements.
  */
 
 public class Facsimile implements Serializable {
-    ArrayList<Page> pages;
-    ArrayList<Movement> movements;
-    File dir;
+    public ArrayList<Page> pages;
+    public ArrayList<Movement> movements;
+    public File dir;
 
     /**
      * Standard constructor
      */
-    Facsimile() {
+    public Facsimile() {
         pages = new ArrayList<>();
         movements = new ArrayList<>();
         Movement movement = new Movement();
@@ -33,7 +33,7 @@ public class Facsimile implements Serializable {
      * Calculates the whole number of measures in movements.
      * @return number of measures.
      */
-    int measuresCount() {
+    public int measuresCount() {
         int count = 0;
         for(Movement movement : movements) {
             count += movement.measures.size();
@@ -48,14 +48,14 @@ public class Facsimile implements Serializable {
      * @param movement target movement
      * @param page target page
      */
-    void addMeasure(Measure measure, Movement movement, Page page) {
+    public void addMeasure(Measure measure, Movement movement, Page page) {
         measure.movement = movement;
         measure.page = page;
         movement.measures.add(measure);
         page.measures.add(measure);
     }
 
-    void addMeasure(Measure measure, Page page) {
+    public void addMeasure(Measure measure, Page page) {
         measure.page = page;
         page.measures.add(measure);
         for(int i = movements.size() - 1; i >= 0; i--) {
@@ -77,7 +77,7 @@ public class Facsimile implements Serializable {
      * @param movement target movement
      * @param page target page
      */
-    void resort(Movement movement, Page page) {
+    public void resort(Movement movement, Page page) {
         if(movement == null) {
             return;
         }
@@ -90,7 +90,7 @@ public class Facsimile implements Serializable {
      * Removes the measure from corresponding movement and page.
      * @param measure measure
      */
-    void removeMeasure(Measure measure) {
+    public void removeMeasure(Measure measure) {
         measure.movement.removeMeasure(measure);
         measure.page.removeMeasure(measure);
     }
@@ -99,7 +99,7 @@ public class Facsimile implements Serializable {
      * Removes a list of measures from the corresponding movements and pages.
      * @param measures list of measures
      */
-    void removeMeasures(ArrayList<Measure> measures) {
+    public void removeMeasures(ArrayList<Measure> measures) {
         for(Measure measure : measures) {
             measure.movement.removeMeasure(measure);
             measure.page.removeMeasure(measure);
@@ -109,7 +109,7 @@ public class Facsimile implements Serializable {
     /**
      * Finds and removes movements without measures.
      */
-    void cleanMovements() {
+    public void cleanMovements() {
         ArrayList<Movement> toRemove = new ArrayList<>();
         for (Movement movement : movements) {
             if(movement.measures.size() == 0) {
@@ -132,7 +132,7 @@ public class Facsimile implements Serializable {
      * Loads scanned music source and reads the MEI file if exists.
      * @param dir reference to directory
      */
-    void openDirectory(File dir) {
+    public void openDirectory(File dir) {
         this.dir = dir;
         File files[] = dir.listFiles();
         ArrayList<File> images = new ArrayList<>();
@@ -175,7 +175,7 @@ public class Facsimile implements Serializable {
      * Export the MEI to default file. Creates the file if not exists.
      * @return true if the MEI output was properly saved
      */
-    boolean saveToDisk() {
+    public boolean saveToDisk() {
         File meiFile = new File(dir.getAbsolutePath() + "/" + Vertaktoid.DEFAULT_MEI_FILENAME);
         return MEIHelper.writeMEI(meiFile, this);
 
@@ -187,7 +187,7 @@ public class Facsimile implements Serializable {
      * @param filename name of file
      * @return true if the MEI output was properly saved
      */
-    boolean saveToDisk(String path, String filename) {
+    public boolean saveToDisk(String path, String filename) {
         File meiFile = new File(path + "/" + filename);
         return MEIHelper.writeMEI(meiFile, this);
     }
@@ -225,7 +225,7 @@ public class Facsimile implements Serializable {
      * Finds the system and page breaks. The results will be stored in the corresponding measures
      * via boolean attributes "lastAtSystem" and "lastAtPage".
      */
-    void calculateBreaks() {
+    public void calculateBreaks() {
         ArrayList<Measure> predecessors = new ArrayList<>();
         for(int i = 0; i < movements.size(); i++)
         {

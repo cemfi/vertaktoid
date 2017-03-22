@@ -1,4 +1,4 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import android.graphics.BitmapFactory;
+import zemfi.de.vertaktoid.Vertaktoid;
 
 /**
  * Represents the single facsimile page. Contains reference to the image file.
@@ -15,18 +16,18 @@ import android.graphics.BitmapFactory;
 
 public class Page implements Serializable {
     // Related movements.
-    ArrayList<Measure> measures;
+    public ArrayList<Measure> measures;
     // Image file.
-    File imageFile;
+    public File imageFile;
     // Sequence number of the page.
-    int number;
+    public int number;
 
-    String surfaceUuid;
-    String graphicUuid;
+    public String surfaceUuid;
+    public String graphicUuid;
 
     // Image dimensions.
-    int imageWidth;
-    int imageHeight;
+    public int imageWidth;
+    public int imageHeight;
 
     /**
      * The constructor.
@@ -51,7 +52,7 @@ public class Page implements Serializable {
     /**
      * Sorts the measures on the page by their sequence numbers.
      */
-    void sortMeasures() {
+    public void sortMeasures() {
         Collections.sort(measures, Measure.MEASURE_NUMBER_COMPARATOR);
     }
 
@@ -61,7 +62,7 @@ public class Page implements Serializable {
      * @param y The y coordinate of point.
      * @return The measure.
      */
-    Measure getMeasureAt(float x, float y) {
+    public Measure getMeasureAt(float x, float y) {
         for (Measure measure : measures) {
             if (measure.containsPoint(x, y)) {
                 return measure;
@@ -77,7 +78,7 @@ public class Page implements Serializable {
      * @param y The y coordinate of point.
      * @return The list of measures.
      */
-    ArrayList<Measure> getMeasuresAt(float x, float y) {
+    public ArrayList<Measure> getMeasuresAt(float x, float y) {
         ArrayList<Measure> result = new ArrayList<>();
         for (Measure measure : measures) {
             if (measure.containsPoint(x, y)) {
@@ -88,7 +89,7 @@ public class Page implements Serializable {
         return result;
     }
 
-    ArrayList<Measure> getMeasuresAtSegment(float startx, float starty, float endx, float endy) {
+    public ArrayList<Measure> getMeasuresAtSegment(float startx, float starty, float endx, float endy) {
         ArrayList<Measure> toRemove = new ArrayList<>();
         for(Measure measure : measures) {
             if(measure.containsSegment(startx, starty, endx, endy)) {
@@ -102,7 +103,7 @@ public class Page implements Serializable {
      * Removes measure from page.
      * @param measure
      */
-    void removeMeasure(Measure measure) {
+    public void removeMeasure(Measure measure) {
         measures.remove(measure);
         //measure.page = null;
     }
@@ -111,7 +112,7 @@ public class Page implements Serializable {
      * Removes a list of measures from page.
      * @param measures
      */
-    void removeMeasures(ArrayList<Measure> measures) {
+    public void removeMeasures(ArrayList<Measure> measures) {
         for(Measure measure : measures) {
             removeMeasure(measure);
         }

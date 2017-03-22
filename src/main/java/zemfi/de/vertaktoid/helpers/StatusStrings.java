@@ -1,4 +1,4 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.helpers;
 
 import java.util.HashMap;
 import java.util.Map;

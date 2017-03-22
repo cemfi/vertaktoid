@@ -1,40 +1,42 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.model;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.UUID;
+
+import zemfi.de.vertaktoid.Vertaktoid;
 
 /**
  * Represents the measure in music notation.
  * Contains the coordinates for graphical presentation and semantic properties.
  */
 
-class Measure implements Comparable<Measure>, Serializable {
+public class Measure implements Comparable<Measure>, Serializable {
 
     // Automatically calculated sequence number of measure.
-    int sequenceNumber = -1;
+    public int sequenceNumber = -1;
     // Manually created name of measure. Is a string.
     // If the string contains number, the humber will be used as sequence number.
-    String manualSequenceNumber = null;
+    public String manualSequenceNumber = null;
     // Rest value (musical pause).
-    int rest = 0;
+    public int rest = 0;
     // Id of referenced zone element in MEI.
-    String zoneUuid = null;
+    public String zoneUuid = null;
     // Id of referenced measure element in MEI.
-    String measureUuid = null;
+    public String measureUuid = null;
     // Reference to the parent movement.
-    Movement movement;
+    public Movement movement;
     // Reference to the parent page.
-    Page page;
+    public Page page;
 
-    boolean lastAtSystem = false;
-    boolean lastAtPage = false;
+    public boolean lastAtSystem = false;
+    public boolean lastAtPage = false;
 
     // Coordinates for representing rectangle
-    float left = 0.0f;
-    float right = 0.0f;
-    float top = 0.0f;
-    float bottom = 0.0f;
+    public float left = 0.0f;
+    public float right = 0.0f;
+    public float top = 0.0f;
+    public float bottom = 0.0f;
 
     /**
      * The constructor.
@@ -43,7 +45,7 @@ class Measure implements Comparable<Measure>, Serializable {
      * @param right The end x coordinate.
      * @param bottom The end y coordinate.
      */
-    Measure(float left, float top, float right, float bottom) {
+    public Measure(float left, float top, float right, float bottom) {
         zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
         this.left = left;
@@ -55,7 +57,7 @@ class Measure implements Comparable<Measure>, Serializable {
     /**
      * The constructor.
      */
-    Measure() {
+    public Measure() {
         zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
     }
@@ -66,7 +68,7 @@ class Measure implements Comparable<Measure>, Serializable {
      * @param y The y coordinate of the giving point.
      * @return true if the point inside the measure is.
      */
-    boolean containsPoint(float x, float y) {
+    public boolean containsPoint(float x, float y) {
         return x >= left && x <= right && y >= top && y <= bottom;
     }
 
@@ -123,7 +125,7 @@ class Measure implements Comparable<Measure>, Serializable {
     /**
      * Compare the measures by their position at the facsimile.
      */
-    static final Comparator<Measure> MEASURE_POSITION_COMPARATOR = new Comparator<Measure>() {
+    public static final Comparator<Measure> MEASURE_POSITION_COMPARATOR = new Comparator<Measure>() {
         @Override
         public int compare(Measure m1, Measure m2) {
             if(m1.page.number == m2.page.number) {

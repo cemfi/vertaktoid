@@ -1,4 +1,4 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.commands;
 
 public interface ICommand {
     int execute();

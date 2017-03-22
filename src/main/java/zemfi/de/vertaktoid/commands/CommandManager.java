@@ -1,7 +1,14 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.commands;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+
+import zemfi.de.vertaktoid.Vertaktoid;
+import zemfi.de.vertaktoid.helpers.SizedStack;
+import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Movement;
+import zemfi.de.vertaktoid.model.Page;
 
 
 public class CommandManager implements Serializable {
@@ -9,7 +16,7 @@ public class CommandManager implements Serializable {
     private SizedStack<ICommand> undoCommands;
     private SizedStack<ICommand> redoCommands;
 
-    CommandManager() {
+    public CommandManager() {
         undoCommands = new SizedStack<>(historyMaxSize);
         redoCommands = new SizedStack<>(historyMaxSize);
     }

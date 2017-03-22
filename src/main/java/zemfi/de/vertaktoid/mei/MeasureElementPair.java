@@ -1,8 +1,9 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.mei;
 
 import java.util.Comparator;
 
 import nu.xom.Element;
+import zemfi.de.vertaktoid.model.Measure;
 
 class MeasureElementPair {
     private Measure measure;

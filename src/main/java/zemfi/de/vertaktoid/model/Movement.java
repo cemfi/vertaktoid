@@ -1,9 +1,11 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
+
+import zemfi.de.vertaktoid.Vertaktoid;
 
 /**
  * Represents the movement in musical notation. Movement can be arranged on the multiple facsimile pages.
@@ -12,16 +14,16 @@ import java.util.UUID;
 
 public class Movement implements Serializable {
     // The contained measures.
-    ArrayList<Measure> measures;
+    public ArrayList<Measure> measures;
     // Number of movement on the facsimile.
-    int number;
+    public int number;
     // Label for movement.
-    String label = "";
-    String mdivUuid;
+    public String label = "";
+    public String mdivUuid;
     /**
      * The constructor.
      */
-    Movement() {
+    public Movement() {
         mdivUuid = Vertaktoid.MEI_MDIV_ID_PREFIX + UUID.randomUUID().toString();
         measures = new ArrayList<>();
     }
@@ -29,7 +31,7 @@ public class Movement implements Serializable {
     /**
      * Sorts the measures in the movement by their position on the pages.
      */
-    void sortMeasures() {
+    public void sortMeasures() {
         Collections.sort(measures, Measure.MEASURE_POSITION_COMPARATOR);
     }
 
@@ -37,7 +39,7 @@ public class Movement implements Serializable {
      * Calculates the sequence numbers of the measures.
      * The algorithm will try to parse the manualSequenceNumbers to obtain a number.
      */
-    void calculateSequenceNumbers() {
+    public void calculateSequenceNumbers() {
         if(measures.size() == 0) return;
         Measure measure;
         int num = 1;
@@ -81,7 +83,7 @@ public class Movement implements Serializable {
      * Removes a measure from the movement.
      * @param measure The measure.
      */
-    void removeMeasure(Measure measure) {
+    public void removeMeasure(Measure measure) {
         measures.remove(measure);
         calculateSequenceNumbers();
     }
@@ -90,7 +92,7 @@ public class Movement implements Serializable {
      * Removes measures from the movement.
      * @param measures The measures.
      */
-    void removeMeasures(ArrayList<Measure> measures) {
+    public void removeMeasures(ArrayList<Measure> measures) {
         int index = measures.size();
         for (Measure measure : measures) {
             measures.remove(measure);
@@ -103,7 +105,7 @@ public class Movement implements Serializable {
      * Gets a string name for the movement. It gets a label or default string created by its number.
      * @return
      */
-    String getName() {
+    public String getName() {
         if(!label.equals("")) return label;
         else return "Movement " + number;
     }

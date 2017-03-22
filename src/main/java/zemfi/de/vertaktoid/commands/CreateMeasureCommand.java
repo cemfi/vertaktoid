@@ -1,6 +1,12 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.commands;
 
 import java.io.Serializable;
+
+import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Movement;
+import zemfi.de.vertaktoid.model.Page;
+
 
 public class CreateMeasureCommand implements ICommand, Serializable {
     private Measure measure;

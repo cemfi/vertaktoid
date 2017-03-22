@@ -1,6 +1,10 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.commands;
 
 import java.io.Serializable;
+
+import zemfi.de.vertaktoid.commands.ICommand;
+import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
 
 /**
  * Created by eugen on 16.03.17.

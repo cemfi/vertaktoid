@@ -1,8 +1,12 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.commands;
 
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Movement;
+
 
 public class RemoveMeasuresCommand implements ICommand, Serializable {
     private Facsimile facsimile;

@@ -1,7 +1,12 @@
-package zemfi.de.vertaktoid;
+package zemfi.de.vertaktoid.commands;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+
+import zemfi.de.vertaktoid.commands.ICommand;
+import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Movement;
 
 public class AdjustMovementCommand implements ICommand, Serializable {
     private Measure targetMeasure;
@@ -12,7 +17,7 @@ public class AdjustMovementCommand implements ICommand, Serializable {
     private String userOption;
     private String newLabel;
     private String oldLabel;
-    private  Movement targetMovement;
+    private Movement targetMovement;
     private Movement oldMovement;
     private int oldMovementIndex;
 
