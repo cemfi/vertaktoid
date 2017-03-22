@@ -9,5 +9,4 @@ Vertaktoid is an open source application and will be published under LGPL 3.0 li
 	<li>Android 5.0 (Lollipop)</li>
 	<li>Stylus</li>
 	<li>At least 10" screen size</li>
-	<li>You will need the <a href="http://www.cafeconleche.org/XOM/xom-1.2.10.jar">XCOM library</a> in the libs directory (path ./libs/)</li>
 </ul>
