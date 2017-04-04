@@ -20,7 +20,8 @@
 
     </data>
 
-    <android.support.design.widget.CoordinatorLayout
+    <zemfi.de.vertaktoid.FacsimileView
+        android:id="@+id/facsimile_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
@@ -43,6 +44,6 @@
         <include bind:fview="@{fview}" bind:cstatus="@{cstatus}" layout="@layout/content_main" />
 
 
-    </android.support.design.widget.CoordinatorLayout>
+    </zemfi.de.vertaktoid.FacsimileView>
 
 </layout>

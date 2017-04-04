@@ -25,8 +25,8 @@
         tools:context=".MainActivity"
         tools:showIn="@layout/activity_main">
 
-        <zemfi.de.vertaktoid.FacsimileView
-            android:id="@+id/custom_view"
+        <zemfi.de.vertaktoid.CustomViewPager
+            android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@+id/toolbar_bottom" />

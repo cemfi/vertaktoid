@@ -1,6 +1,5 @@
 package zemfi.de.vertaktoid;
 
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -15,14 +14,12 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-
-import com.davemorrissey.labs.subscaleview.ImageSource;
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
 import java.io.File;
 import android.text.format.DateFormat;
@@ -55,12 +52,16 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private CustomViewPager viewPager;
+    private Toolbar toolbar;
+    private FacsimileView facsimileView;
+
     /**
      * Creates temporary MEI file.
      * The file name will be set to current datetime plus ".mei" extension.
      */
     protected void saveTemporaryMEI() {
-        FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
         if(view.needToSave) {
             Date saveDate = new Date();
             String filename = "" + DateFormat.format("dd-MM-yyyy_kk-mm-ss", saveDate) + ".mei";
@@ -94,29 +95,19 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        viewPager = (CustomViewPager) findViewById(R.id.view_pager);
+        viewPager.setOffscreenPageLimit(1);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        SubsamplingScaleImageView view = (SubsamplingScaleImageView) findViewById(R.id.custom_view);
-        view.setMinimumDpi(40);
-        FacsimileView facsimileView = (FacsimileView) findViewById(R.id.custom_view);
+        facsimileView = (FacsimileView) findViewById(R.id.facsimile_view);
 
         SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
         path = prefs.getString("zemfi.de.vertaktoid.path", "");
 
         if(!path.equals("")) {
-            Facsimile facsimile = new Facsimile();
-            File dir = new File(path);
-            prepareApplicationFiles(dir);
-            facsimile.openDirectory(dir);
-
-            facsimileView.setFacsimile(facsimile);
-            status.setDate(new Date());
-            status.setAction(StatusStrings.ActionId.LOADED);
-            status.setStatus(StatusStrings.StatusId.SUCCESS);
+            loadFacsimile(path);
         } else {
-            view.setImage(ImageSource.resource(R.drawable.handel));
+            //view.setImage(ImageSource.resource(R.drawable.handel));
         }
 
         binding.setFview(facsimileView);
@@ -124,17 +115,43 @@ public class MainActivity extends AppCompatActivity {
         status.setAction(StatusStrings.ActionId.STARTED);
         binding.setCstatus(status);
 
-        Intent intent = getIntent();
-        String action = intent.getAction();
-
-        if (action != null) {
-            if (action.compareTo(Intent.ACTION_VIEW) == 0) {
-                String scheme = intent.getScheme();
-                ContentResolver resolver = getContentResolver();
-            }
-        }
-
         tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
+    }
+
+    private void loadFacsimile(String path) {
+        Facsimile facsimile = new Facsimile();
+        File dir = new File(path);
+        prepareApplicationFiles(dir);
+        facsimile.openDirectory(dir);
+
+        facsimileView.setFacsimile(facsimile);
+        viewPager.setAdapter(new CustomPagerAdapter(facsimileView));
+        viewPager.clearOnPageChangeListeners();
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                facsimileView.pageNumber.set(position);
+                facsimileView.refresh();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
+        SharedPreferences.Editor mEditor = prefs.edit();
+        mEditor.putString("zemfi.de.vertaktoid.path", path).apply();
+
+        status.setDate(new Date());
+        status.setAction(StatusStrings.ActionId.LOADED);
+        status.setStatus(StatusStrings.StatusId.SUCCESS);
     }
 
     /**
@@ -195,10 +212,10 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onResume() {
-        FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
-        if(view.document != null) {
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        /*if(view.document != null) {
             view.setImage(view.findImageForPage(view.pageNumber.get()));
-        }
+        }*/
         super.onResume();
     }
 
@@ -207,14 +224,14 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onPause() {
-        FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
         if (view.getFacsimile() != null) {
             boolean result = view.getFacsimile().saveToDisk();
             status.setDate(new Date());
             status.setAction(StatusStrings.ActionId.SAVED);
             if(result) status.setStatus(StatusStrings.StatusId.SUCCESS);
             else status.setStatus(StatusStrings.StatusId.FAIL);
-            view.recycle();
+            viewPager.recycle();
         }
         super.onPause();
     }
@@ -229,10 +246,7 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the ActionId bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         mainMenu = menu;
-
-        FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
-        view.setMenu(menu);
-        view.adjustPageNavigation();
+        facsimileView.setMenu(menu);
         return true;
     }
 
@@ -248,8 +262,7 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
 
         int id = item.getItemId();
-        if (id != R.id.action_plus && id != R.id.action_minus && id != R.id.action_goto &&
-                id != R.id.action_undo && id != R.id.action_redo) {
+        if (id != R.id.action_goto && id != R.id.action_undo && id != R.id.action_redo) {
             for (int i = 0; i < mainMenu.size(); i++) {
                 // Set default icons
                 switch (mainMenu.getItem(i).getItemId()) {
@@ -272,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
         switch (id) {
             case R.id.action_erase:
                 item.setIcon(R.drawable.eraser_on);
@@ -289,12 +302,6 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_open:
                 actionOpen();
                 view.resetMenu();
-                break;
-            case R.id.action_plus:
-                view.nextPageClicked();
-                break;
-            case R.id.action_minus:
-                view.prevPageClicked();
                 break;
             case R.id.action_cut:
                 item.setIcon(R.drawable.cut_on);
@@ -357,22 +364,7 @@ public class MainActivity extends AppCompatActivity {
                         dir = new File(jpgFile.getParent());
                         path = dir.getAbsolutePath();
                     }
-                    //Log.v("path: ", path);
-
-                    Facsimile facsimile = new Facsimile();
-                    prepareApplicationFiles(dir);
-                    facsimile.openDirectory(dir);
-
-                    FacsimileView view = (FacsimileView) findViewById(R.id.custom_view);
-                    view.setFacsimile(facsimile);
-                    status.setDate(new Date());
-                    status.setAction(StatusStrings.ActionId.LOADED);
-                    status.setStatus(StatusStrings.StatusId.SUCCESS);
-                    view.setOnClickListener(null);
-
-                    SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
-                    SharedPreferences.Editor mEditor = prefs.edit();
-                    mEditor.putString("zemfi.de.vertaktoid.path", path).apply();
+                    loadFacsimile(path);
                 }
                 else {
                     status.setDate(new Date());
