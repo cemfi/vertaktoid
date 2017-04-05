@@ -64,7 +64,7 @@ public class Page implements Serializable {
      */
     public Measure getMeasureAt(float x, float y) {
         for (Measure measure : measures) {
-            if (measure.containsPoint(x, y)) {
+            if (measure.zone.containsPoint(x, y)) {
                 return measure;
             }
 
@@ -81,7 +81,7 @@ public class Page implements Serializable {
     public ArrayList<Measure> getMeasuresAt(float x, float y) {
         ArrayList<Measure> result = new ArrayList<>();
         for (Measure measure : measures) {
-            if (measure.containsPoint(x, y)) {
+            if (measure.zone.containsPoint(x, y)) {
                 result.add(measure);
             }
 
@@ -92,7 +92,7 @@ public class Page implements Serializable {
     public ArrayList<Measure> getMeasuresAtSegment(float startx, float starty, float endx, float endy) {
         ArrayList<Measure> toRemove = new ArrayList<>();
         for(Measure measure : measures) {
-            if(measure.containsSegment(startx, starty, endx, endy)) {
+            if(measure.zone.containsSegment(startx, starty, endx, endy)) {
                 toRemove.add(measure);
             }
         }

@@ -17,6 +17,8 @@ public class Facsimile implements Serializable {
     public ArrayList<Page> pages;
     public ArrayList<Movement> movements;
     public File dir;
+    public MEIType meiType = MEIType.CANONICAL;
+    public enum MEIType {CANONICAL, EXTENDED, POLYGONAL};
 
     /**
      * Standard constructor
@@ -211,11 +213,11 @@ public class Facsimile implements Serializable {
         float top = Float.MAX_VALUE;
         float bottom = Float.MIN_VALUE;
         for(Measure measure : measures) {
-            if(top > measure.top) {
-                top = measure.top;
+            if(top > measure.zone.getBoundTop()) {
+                top = measure.zone.getBoundTop();
             }
-            if(bottom < measure.bottom) {
-                bottom = measure.bottom;
+            if(bottom < measure.zone.getBoundBottom()) {
+                bottom = measure.zone.getBoundBottom();
             }
         }
         return new float[]{top, bottom};
@@ -249,8 +251,8 @@ public class Facsimile implements Serializable {
 
                 if(nexMeasure != null) {
                     float[] systemPositions = getSystemPositions(predecessors);
-                    float yIsectFactor = (Math.min(systemPositions[1], nexMeasure.bottom) - Math.max(systemPositions[0], nexMeasure.top)) /
-                            Math.min(systemPositions[1] - systemPositions[0], nexMeasure.bottom  - nexMeasure.top);
+                    float yIsectFactor = (Math.min(systemPositions[1], nexMeasure.zone.getBoundBottom()) - Math.max(systemPositions[0], nexMeasure.zone.getBoundTop())) /
+                            Math.min(systemPositions[1] - systemPositions[0], nexMeasure.zone.getBoundBottom()  - nexMeasure.zone.getBoundTop());
                     if (yIsectFactor < 0.5) {
                         curMeasure.lastAtSystem = true;
                         predecessors.clear();

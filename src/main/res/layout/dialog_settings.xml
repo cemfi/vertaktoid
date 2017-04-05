@@ -65,6 +65,32 @@
             android:layout_height="wrap_content"
             android:text="@string/dialog_settings_corner_rounded" />
     </RadioGroup>
+    <TextView
+        android:id="@+id/dialog_settings_mei_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:labelFor="@+id/dialog_settings_mei_type"
+        android:text="@string/dialog_settings_mei_label"
+        android:layout_marginStart="10dp"/>
+    <RadioGroup
+        android:id="@+id/dialog_settings_mei_type"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton android:id="@+id/dialog_settings_mei_type_canonical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_settings_mei_canonical" />
+        <RadioButton android:id="@+id/dialog_settings_mei_type_extended"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_settings_mei_extended" />
+        <RadioButton android:id="@+id/dialog_settings_mei_type_polygonal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_settings_mei_polygonal" />
+    </RadioGroup>
     <LinearLayout
         style="?android:attr/buttonBarStyle"
         android:orientation="horizontal"

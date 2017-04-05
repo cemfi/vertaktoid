@@ -23,4 +23,8 @@
     <string name="dialog_editme_titel">Edit Measure</string>
     <string name="dialog_editme_name_label">Measure name:</string>
     <string name="dialog_editme_rest_label">Rest bars:</string>
+    <string name="dialog_settings_mei_label">MEI output type:</string>
+    <string name="dialog_settings_mei_canonical">canonical</string>
+    <string name="dialog_settings_mei_extended">extended</string>
+    <string name="dialog_settings_mei_polygonal">polygonal</string>
 </resources>

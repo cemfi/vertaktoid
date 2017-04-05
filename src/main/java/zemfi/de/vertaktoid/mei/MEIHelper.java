@@ -8,6 +8,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import nu.xom.*;
@@ -147,25 +148,36 @@ public class MEIHelper {
             ArrayList<Element> existingZones = new ArrayList<>();
             Elements zones = surface.getChildElements("zone", Vertaktoid.MEI_NS);
             for(Measure measure : page.measures) {
-                Element zone = findElementByUiid(zones, measure.zoneUuid);
+                Element zone = findElementByUiid(zones, measure.zone.zoneUuid);
                 existingZones.add(zone);
                 if(zone == null) {
                     zone = new Element("zone", Vertaktoid.MEI_NS);
                     surface.appendChild(zone);
                 }
-                a = new Attribute("id", measure.zoneUuid);
+                zone.removeChildren();
+                a = new Attribute("id", measure.zone.zoneUuid);
                 a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
                 zone.addAttribute(a);
                 a = new Attribute("type", "measure");
                 zone.addAttribute(a);
-                a = new Attribute("ulx", "" + normalize(measure.left, page.imageWidth));
+                a = new Attribute("ulx", "" + normalize(measure.zone.getBoundLeft(), page.imageWidth));
                 zone.addAttribute(a);
-                a = new Attribute("uly", "" + normalize(measure.top, page.imageHeight));
+                a = new Attribute("uly", "" + normalize(measure.zone.getBoundTop(), page.imageHeight));
                 zone.addAttribute(a);
-                a = new Attribute("lrx", "" + normalize(measure.right, page.imageWidth));
+                a = new Attribute("lrx", "" + normalize(measure.zone.getBoundRight(), page.imageWidth));
                 zone.addAttribute(a);
-                a = new Attribute("lry", "" + normalize(measure.bottom, page.imageHeight));
+                a = new Attribute("lry", "" + normalize(measure.zone.getBoundBottom(), page.imageHeight));
                 zone.addAttribute(a);
+                if(document.meiType == Facsimile.MEIType.POLYGONAL) {
+                    for(float[] vertex : measure.zone.getVertices()) {
+                        Element point = new Element("point", Vertaktoid.MEI_NS);
+                        a = new Attribute("x","" + vertex[0]);
+                        point.addAttribute(a);
+                        a = new Attribute("y","" + vertex[1]);
+                        point.addAttribute(a);
+                        zone.appendChild(point);
+                    }
+                }
 
             }
 
@@ -233,7 +245,7 @@ public class MEIHelper {
                 a = new Attribute("id", measure.measureUuid);
                 a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
                 measureElem.addAttribute(a);
-                a = new Attribute("facs", "#" + measure.zoneUuid);
+                a = new Attribute("facs", "#" + measure.zone.zoneUuid);
                 measureElem.addAttribute(a);
             }
             section.removeChildren();
@@ -373,13 +385,13 @@ public class MEIHelper {
                     measure.manualSequenceNumber = name;
                     a = element.getAttribute("facs");
                     if(a != null) {
-                        measure.zoneUuid = element.getAttributeValue("facs");
-                        if (measure.zoneUuid.startsWith("#")) {
-                            measure.zoneUuid = measure.zoneUuid.substring(1);
+                        measure.zone.zoneUuid = element.getAttributeValue("facs");
+                        if (measure.zone.zoneUuid.startsWith("#")) {
+                            measure.zone.zoneUuid = measure.zone.zoneUuid.substring(1);
                         }
-                        if (measure.zoneUuid.substring(0, 1).matches("\\d")) {
-                            measure.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + measure.zoneUuid;
-                            a.setValue("#" + measure.zoneUuid);
+                        if (measure.zone.zoneUuid.substring(0, 1).matches("\\d")) {
+                            measure.zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + measure.zone.zoneUuid;
+                            a.setValue("#" + measure.zone.zoneUuid);
                         }
                     }
                     a = element.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
@@ -454,6 +466,14 @@ public class MEIHelper {
                 float uly = normalize(Float.parseFloat(zone.getAttributeValue("uly")), page.imageHeight);
                 float lrx = normalize(Float.parseFloat(zone.getAttributeValue("lrx")), page.imageWidth);
                 float lry = normalize(Float.parseFloat(zone.getAttributeValue("lry")), page.imageHeight);
+                List<float[]> vertices = new ArrayList<>();
+                Elements points = zone.getChildElements("point", Vertaktoid.MEI_NS);
+                for(int l = 0; l < points.size(); l++) {
+                    Element point = points.get(l);
+                    float x = normalize(Float.parseFloat(point.getAttributeValue("x")), page.imageWidth);
+                    float y = normalize(Float.parseFloat(point.getAttributeValue("y")), page.imageWidth);
+                    vertices.add(new float[]{x, y});
+                }
                 a = zone.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
                 if(a != null) {
                     if(a.getValue().substring(0, 1).matches("\\d")) {
@@ -467,11 +487,19 @@ public class MEIHelper {
                 String uuidZone = zone.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
 
                 Measure measure = findMeasureFor(uuidZone, document.movements);
+                document.meiType = Facsimile.MEIType.CANONICAL;
                 if(measure != null) {
-                    measure.left = ulx;
-                    measure.top = uly;
-                    measure.right = lrx;
-                    measure.bottom = lry;
+                    if(vertices.size() > 1) {
+                        measure.zone.setVertices(vertices);
+                        document.meiType = Facsimile.MEIType.POLYGONAL;
+                    } else {
+                        vertices.clear();
+                        vertices.add(new float[]{ulx, uly});
+                        vertices.add(new float[]{ulx, lry});
+                        vertices.add(new float[]{lrx, lry});
+                        vertices.add(new float[]{lrx, uly});
+                        measure.zone.setVertices(vertices);
+                    }
                     measure.page = page;
                     page.measures.add(measure);
                 }
@@ -497,7 +525,7 @@ public class MEIHelper {
     private static Measure findMeasureFor(String uuidZone, ArrayList<Movement> movements) {
         for(Movement movement : movements) {
             for (Measure measure : movement.measures) {
-                if(measure.zoneUuid.equals(uuidZone)) {
+                if(measure.zone.zoneUuid.equals(uuidZone)) {
                     return measure;
                 }
             }

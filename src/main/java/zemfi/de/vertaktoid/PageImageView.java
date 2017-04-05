@@ -8,6 +8,7 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Parcelable;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -25,6 +26,7 @@ import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
@@ -33,17 +35,14 @@ import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
 import zemfi.de.vertaktoid.model.Page;
 
-/**
- * Created by eugen on 27.03.17.
- */
-
 public class PageImageView extends SubsamplingScaleImageView {
 
     private final FacsimileView facsimileView;
     private Facsimile facsimile;
     private final PageView pageView;
     private final Page page;
-    private Path drawPath;
+    private Path boundingPath;
+    private Path verticesPath;
     private ArrayList<PointF> pointPath;
     private Paint drawPaint;
     private Paint largeBoldText = new Paint();
@@ -51,7 +50,7 @@ public class PageImageView extends SubsamplingScaleImageView {
     private Rect pageNameRect = new Rect();
     private Rect measureNameRect = new Rect();
     private Rect movementNameRect = new Rect();
-    private ArrayList<HSLColor> movementColors;
+
     HSLColor fillColor;
     private float s = 100f;
     private float l = 30f;
@@ -62,10 +61,10 @@ public class PageImageView extends SubsamplingScaleImageView {
     Path polygonHoverPath;
     float downX = 0.0f;
     float downY = 0.0f;
-    float leftMost = -1.0f;
-    float topMost = -1.0f;
-    float rightMost = -1.0f;
-    float bottomMost = -1.0f;
+    //float leftMost = -1.0f;
+    //float topMost = -1.0f;
+    //float rightMost = -1.0f;
+    //float bottomMost = -1.0f;
     PointF firstPoint;
     PointF lastPolygonPoint;
     PointF lastPoint = null; // in bitmap coordinates
@@ -86,12 +85,12 @@ public class PageImageView extends SubsamplingScaleImageView {
     /**
      * Initialization
      */
-    private void init() {
+    public void init() {
         setImage(findImageForPage());
         this.setMinimumDpi(80);
-        movementColors = new ArrayList<>();
         grayPath = new Path();
-        drawPath = new Path();
+        boundingPath = new Path();
+        verticesPath = new Path();
         pointPath = new ArrayList<>();
         polygonHoverPath = new Path();
         drawPaint = new Paint();
@@ -181,8 +180,7 @@ public class PageImageView extends SubsamplingScaleImageView {
         smallBoldText.setTextSize(36);
         smallBoldText.setFakeBoldText(true);
 
-        int colorsToGenerate = facsimile.movements.size() - movementColors.size();
-        movementColors.addAll(HSLColorsGenerator.generateColorSet(colorsToGenerate, s, l, a));
+        facsimileView.generateColors();
 
         if (!page.imageFile.exists()) {
             largeBoldText.getTextBounds(page.imageFile.getName(), 0,
@@ -193,47 +191,55 @@ public class PageImageView extends SubsamplingScaleImageView {
         }
 
         int i;
-        drawPath.reset();;
+
         for (i = 0; i < page.measures.size(); i++) {
+            boundingPath.reset();
+            verticesPath.reset();
             Measure measure = page.measures.get(i);
             int index = facsimile.movements.indexOf(measure.movement);
             if(index < 0) {
                 facsimile.movements.add(0, measure.movement);
             }
-            largeBoldText.setColor(HSLColor.toRGB(movementColors.get(
+            largeBoldText.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement))));
-            smallBoldText.setColor(HSLColor.toRGB(movementColors.get(
+            smallBoldText.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement))));
 
-            PointF topLeft = transformCoordBitmapToTouch(measure.left, measure.top);
-            PointF bottomRight = transformCoordBitmapToTouch(measure.right, measure.bottom);
+            PointF topLeft = transformCoordBitmapToTouch(measure.zone.getBoundLeft(), measure.zone.getBoundTop());
+            PointF bottomRight = transformCoordBitmapToTouch(measure.zone.getBoundRight(), measure.zone.getBoundBottom());
             if (topLeft == null) {
                 // still loading image
                 return;
             }
 
             if(facsimileView.cornerType == FacsimileView.CornerTypes.ROUNDED) {
-                drawPath.addRoundRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, 15f, 15f, Path.Direction.CW);
+                boundingPath.addRoundRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, 15f, 15f, Path.Direction.CW);
             } else if(facsimileView.cornerType == FacsimileView.CornerTypes.STRAIGHT) {
-                drawPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
+                boundingPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
             }
-
+            List<float[]> vertices = measure.zone.getVertices();
+            final PointF fp = transformCoordBitmapToTouch(vertices.get(0)[0], vertices.get(0)[1]);
+            verticesPath.moveTo(fp.x, fp.y);
+            for(int j = 1; j < vertices.size(); j++) {
+                final PointF cp = transformCoordBitmapToTouch(vertices.get(j)[0], vertices.get(j)[1]);
+                verticesPath.lineTo(cp.x, cp.y);
+            }
+            verticesPath.lineTo(fp.x, fp.y);
             drawPaint.setStyle(Paint.Style.FILL);
             fillColor = new HSLColor();
             fillColor.a = 0.1f;
-            fillColor.h = movementColors.get(
+            fillColor.h = facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement)).h;
             fillColor.s = s;
             fillColor.l = l;
             drawPaint.setColor(HSLColor.toARGB(fillColor));
-            canvas.drawPath(drawPath, drawPaint);
-
+            canvas.drawPath(boundingPath, drawPaint);
             drawPaint.setStyle(Paint.Style.STROKE);
-            drawPaint.setColor(HSLColor.toRGB(movementColors.get(
+            drawPaint.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement))));
-            canvas.drawPath(drawPath, drawPaint);
+            canvas.drawPath(verticesPath, drawPaint);
 
-            drawPath.reset();
+            boundingPath.reset();
 
             String measureLabel = measure.manualSequenceNumber != null ?
                     "" + measure.manualSequenceNumber : "" + measure.sequenceNumber;
@@ -259,19 +265,19 @@ public class PageImageView extends SubsamplingScaleImageView {
             }
         }
 
-        drawPath.reset();
+        verticesPath.reset();
         for (i = 0; i < pointPath.size(); i++) {
             PointF bitmapCoord = pointPath.get(i);
             PointF touchCoord = transformCoordBitmapToTouch(bitmapCoord.x, bitmapCoord.y);
             if (i == 0) {
-                drawPath.addCircle(touchCoord.x, touchCoord.y, 10, Path.Direction.CW);
-                drawPath.moveTo(touchCoord.x, touchCoord.y);
+                verticesPath.addCircle(touchCoord.x, touchCoord.y, 10, Path.Direction.CW);
+                verticesPath.moveTo(touchCoord.x, touchCoord.y);
             } else {
-                drawPath.lineTo(touchCoord.x, touchCoord.y);
+                verticesPath.lineTo(touchCoord.x, touchCoord.y);
             }
         }
-        canvas.drawPath(drawPath, drawPaint);
-        canvas.drawPath(polygonHoverPath, drawPaint);
+        canvas.drawPath(verticesPath, drawPaint);
+        //canvas.drawPath(polygonHoverPath, drawPaint);
     }
 
     /**
@@ -314,10 +320,16 @@ public class PageImageView extends SubsamplingScaleImageView {
                             facsimileView.resetMenu();
                             // continue and handle the ActionId as a click in brush state
                         } else {
-                            Measure mleft = new Measure(measure.left, measure.top,
-                                    bitmapCoord.x + horOverlapping, measure.bottom);
-                            Measure mright = new Measure(bitmapCoord.x - horOverlapping, measure.top,
-                                    measure.right, measure.bottom);
+                            Measure mleft = new Measure();
+                            Measure mright = new Measure();
+                            List<float[]> verticesLeft = new ArrayList<>();
+                            verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundTop()});
+                            verticesLeft.add(new float[]{bitmapCoord.x + horOverlapping, measure.zone.getBoundBottom()});
+                            List<float[]> verticesRight = new ArrayList<>();
+                            verticesRight.add(new float[]{bitmapCoord.x - horOverlapping, measure.zone.getBoundTop()});
+                            verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundBottom()});
+                            mleft.zone.setVertices(verticesLeft);
+                            mright.zone.setVertices(verticesRight);
                             facsimileView.commandManager.processCutMeasureCommand(facsimile, measure, mleft, mright);
                         }
                         break;
@@ -326,10 +338,10 @@ public class PageImageView extends SubsamplingScaleImageView {
                             pointPath = new ArrayList<>();
                             firstPoint = bitmapCoord;
                             pointPath.add(bitmapCoord);
-                            leftMost = bitmapCoord.x;
-                            rightMost = bitmapCoord.x;
-                            topMost = bitmapCoord.y;
-                            bottomMost = bitmapCoord.y;
+                            //leftMost = bitmapCoord.x;
+                            //rightMost = bitmapCoord.x;
+                            //topMost = bitmapCoord.y;
+                            //bottomMost = bitmapCoord.y;
                             facsimileView.isFirstPoint = false;
                             lastPolygonPoint = bitmapCoord;
                             trackLength = 0.0f;
@@ -353,10 +365,10 @@ public class PageImageView extends SubsamplingScaleImageView {
                     case DRAW:
                         if (!facsimileView.isFirstPoint) {
                             trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
-                            leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
-                            rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
-                            topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
-                            bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
+                            //leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
+                            //rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
+                            //topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
+                            //bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
                             pointPath.add(bitmapCoord);
                             lastPolygonPoint = bitmapCoord;
                             invalidate();
@@ -483,18 +495,27 @@ public class PageImageView extends SubsamplingScaleImageView {
                         break;
                     case DRAW:
                         trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
-                        leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
-                        rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
-                        topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
-                        bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
+                        //leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
+                        //rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
+                        //topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
+                        //bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
                         pointPath.add(bitmapCoord);
                         lastPolygonPoint = new PointF(touchX, touchY);
                         PointF firstPointInTouch = transformCoordBitmapToTouch(firstPoint.x, firstPoint.y); // due to scrolling this may be another position than initially stored in firstPoint
-                        double distance = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
-                        if (distance < 20.0f && trackLength > 100.0f) {
-                            if ((rightMost - leftMost > 50) && (bottomMost - topMost > 50)) {
-                                Measure newMeasure = new Measure(leftMost, topMost, rightMost, bottomMost);
-                                if(facsimileView.currentMovementNumber > facsimile.movements.size() - 1) {
+                        double distanceToFirstPoint = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
+                        if (distanceToFirstPoint < 20.0f && trackLength > 100.0f) {
+                            Measure newMeasure = new Measure();
+                            List<float[]> vertices = new ArrayList<>();
+                            for(PointF vertex: pointPath) {
+                                vertices.add(new float[]{vertex.x, vertex.y});
+                            }
+                            newMeasure.zone.setVertices(vertices);
+                            if(facsimile.meiType == Facsimile.MEIType.CANONICAL) {
+                                newMeasure.zone.convertToCanonical();
+                            }
+                            if(newMeasure.zone.getBoundRight() - newMeasure.zone.getBoundLeft() > 50 &&
+                                    newMeasure.zone.getBoundBottom() - newMeasure.zone.getBoundTop() > 50) {
+                                if (facsimileView.currentMovementNumber > facsimile.movements.size() - 1) {
                                     facsimileView.currentMovementNumber = facsimile.movements.size() - 1;
                                 }
                                 facsimileView.commandManager.processCreateMeasureCommand(newMeasure, facsimile, page);

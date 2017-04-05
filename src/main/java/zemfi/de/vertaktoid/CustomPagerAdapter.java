@@ -66,4 +66,10 @@ public class CustomPagerAdapter extends PagerAdapter {
         }
     }
 
+    public void restore() {
+        for(PageView pageView : cashedViews) {
+            pageView.restore();
+        }
+    }
+
 }

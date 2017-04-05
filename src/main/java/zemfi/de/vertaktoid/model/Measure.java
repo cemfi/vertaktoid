@@ -13,6 +13,7 @@ import zemfi.de.vertaktoid.Vertaktoid;
 
 public class Measure implements Comparable<Measure>, Serializable {
 
+    public final Zone zone;
     // Automatically calculated sequence number of measure.
     public int sequenceNumber = -1;
     // Manually created name of measure. Is a string.
@@ -21,7 +22,7 @@ public class Measure implements Comparable<Measure>, Serializable {
     // Rest value (musical pause).
     public int rest = 0;
     // Id of referenced zone element in MEI.
-    public String zoneUuid = null;
+    //public String zoneUuid = null;
     // Id of referenced measure element in MEI.
     public String measureUuid = null;
     // Reference to the parent movement.
@@ -32,62 +33,13 @@ public class Measure implements Comparable<Measure>, Serializable {
     public boolean lastAtSystem = false;
     public boolean lastAtPage = false;
 
-    // Coordinates for representing rectangle
-    public float left = 0.0f;
-    public float right = 0.0f;
-    public float top = 0.0f;
-    public float bottom = 0.0f;
-
-    /**
-     * The constructor.
-     * @param left The start x coordinate.
-     * @param top The start y coordinate.
-     * @param right The end x coordinate.
-     * @param bottom The end y coordinate.
-     */
-    public Measure(float left, float top, float right, float bottom) {
-        zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + UUID.randomUUID().toString();
-        measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
-        this.left = left;
-        this.right = right;
-        this.top = top;
-        this.bottom = bottom;
-    }
-
     /**
      * The constructor.
      */
     public Measure() {
-        zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
+        zone = new Zone();
+        zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
-    }
-
-    /**
-     * Checks if the measure contains a point.
-     * @param x The x coordinate of the giving point.
-     * @param y The y coordinate of the giving point.
-     * @return true if the point inside the measure is.
-     */
-    public boolean containsPoint(float x, float y) {
-        return x >= left && x <= right && y >= top && y <= bottom;
-    }
-
-    /**
-     * Checks if the measure contains a segment defined with two points.
-     * @param p1x The x coordinate of point 1.
-     * @param p1y The y coordinate of point 1.
-     * @param p2x the x coordinate of point 2.
-     * @param p2y The y coordinate of point 2.
-     * @return true if the segment inside the measure is.
-     */
-    public boolean containsSegment(float p1x, float p1y, float p2x, float p2y) {
-        boolean insideY = p1y >= top && p2y >= top && p1y <= bottom && p2y <= bottom;
-        if (!insideY) {
-            return false;
-        }
-        float smallerX = Math.min(p1x, p2x);
-        float largerX = Math.max(p1x, p2x);
-        return largerX > left && smallerX < right;
     }
 
     /**
@@ -129,21 +81,7 @@ public class Measure implements Comparable<Measure>, Serializable {
         @Override
         public int compare(Measure m1, Measure m2) {
             if(m1.page.number == m2.page.number) {
-                if (m1.left == m2.left && m1.top == m2.top) {
-                    return 0;
-                }
-                if (m1.top < m2.top && m1.left < m2.left) {
-                    return -1;
-                }
-                if (m1.top > m2.top && m1.left > m2.left) {
-                    return 1;
-                }
-                float yIsectFactor = (Math.min(m1.bottom, m2.bottom) - Math.max(m1.top, m2.top)) /
-                        Math.min(m1.bottom - m1.top, m2.bottom - m2.top);
-                if (yIsectFactor < 0.5) {
-                    return (int) (m2.left - m1.left);
-                }
-                return (int) (m1.left - m2.left);
+               return m1.zone.compareTo(m2.zone);
             }
             else return m1.page.number - m2.page.number;
         }

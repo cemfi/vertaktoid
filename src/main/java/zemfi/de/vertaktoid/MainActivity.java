@@ -213,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        viewPager.restore();
         /*if(view.document != null) {
             view.setImage(view.findImageForPage(view.pageNumber.get()));
         }*/

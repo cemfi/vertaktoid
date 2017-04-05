@@ -24,6 +24,7 @@ import android.widget.TextView;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import zemfi.de.vertaktoid.commands.CommandManager;
 import zemfi.de.vertaktoid.helpers.HSLColor;
@@ -50,6 +51,12 @@ public class FacsimileView extends CoordinatorLayout {
     public FacsimileView(Context context, AttributeSet attr) {
         super(context, attr);
         commandManager = new CommandManager();
+        movementColors = new ArrayList<>();
+    }
+
+    public void generateColors() {
+        int colorsToGenerate = document.movements.size() - movementColors.size();
+        movementColors.addAll(HSLColorsGenerator.generateColorSet(colorsToGenerate, s, l, a));
     }
 
     /**
@@ -76,7 +83,7 @@ public class FacsimileView extends CoordinatorLayout {
     public CornerTypes cornerType = CornerTypes.STRAIGHT;
     public Action nextAction = Action.DRAW;
     public boolean isFirstPoint = true;
-
+    public ArrayList<HSLColor> movementColors;
 
 
     /**
@@ -115,6 +122,7 @@ public class FacsimileView extends CoordinatorLayout {
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getName());
             HSLColorsGenerator.resetHueToDefault();
+            //refresh();
             super.onRestoreInstanceState(bundle.getParcelable("instanceState"));
             return;
         }
@@ -221,6 +229,14 @@ public class FacsimileView extends CoordinatorLayout {
         } else if(cornerType == CornerTypes.ROUNDED) {
             settingsCornerType.check(R.id.dialog_settings_corner_type_rounded);
         }
+        final RadioGroup settingsMEIType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_mei_type);
+        if(document.meiType == Facsimile.MEIType.CANONICAL) {
+            settingsMEIType.check(R.id.dialog_settings_mei_type_canonical);
+        } else if(document.meiType == Facsimile.MEIType.EXTENDED) {
+            settingsMEIType.check(R.id.dialog_settings_mei_type_extended);
+        } else if(document.meiType == Facsimile.MEIType.POLYGONAL) {
+            settingsMEIType.check(R.id.dialog_settings_mei_type_polygonal);
+        }
         Button gotoButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
 
         gotoButtonNegative.setOnClickListener(new OnClickListener() {
@@ -258,8 +274,17 @@ public class FacsimileView extends CoordinatorLayout {
                     } else if(settingsCornerType.getCheckedRadioButtonId() == R.id.dialog_settings_corner_type_rounded) {
                         cornerType = CornerTypes.ROUNDED;
                     }
+                    if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_canonical) {
+                        document.meiType = Facsimile.MEIType.CANONICAL;
+                    } else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_extended) {
+                        document.meiType = Facsimile.MEIType.EXTENDED;
+                    }
+                    else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_polygonal) {
+                        document.meiType = Facsimile.MEIType.POLYGONAL;
+                    }
                 }
                 catch (NumberFormatException e) {
+                    // do nothing
                 }
                 invalidate();
                 settingsDialog.dismiss();
@@ -294,6 +319,7 @@ public class FacsimileView extends CoordinatorLayout {
      * @param facsimile facsimile
      */
     public void setFacsimile(Facsimile facsimile) {
+        movementColors = new ArrayList<>();
         this.document = facsimile;
         pageNumber.set(0);
         currentMovementNumber = document.movements.size() - 1;
