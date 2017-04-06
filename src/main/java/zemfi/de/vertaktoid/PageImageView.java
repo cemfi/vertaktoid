@@ -495,10 +495,6 @@ public class PageImageView extends SubsamplingScaleImageView {
                         break;
                     case DRAW:
                         trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
-                        //leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
-                        //rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
-                        //topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
-                        //bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
                         pointPath.add(bitmapCoord);
                         lastPolygonPoint = new PointF(touchX, touchY);
                         PointF firstPointInTouch = transformCoordBitmapToTouch(firstPoint.x, firstPoint.y); // due to scrolling this may be another position than initially stored in firstPoint
@@ -510,8 +506,16 @@ public class PageImageView extends SubsamplingScaleImageView {
                                 vertices.add(new float[]{vertex.x, vertex.y});
                             }
                             newMeasure.zone.setVertices(vertices);
-                            if(facsimile.meiType == Facsimile.MEIType.CANONICAL) {
-                                newMeasure.zone.convertToCanonical();
+                            switch (facsimile.meiType) {
+                                case CANONICAL:
+                                    newMeasure.zone.convertToCanonical();
+                                    break;
+                                case EXTENDED:
+                                    newMeasure.zone.convertToExtended();
+                                    break;
+                                case POLYGONAL:
+                                    newMeasure.zone.convertToPolygonal();
+                                    break;
                             }
                             if(newMeasure.zone.getBoundRight() - newMeasure.zone.getBoundLeft() > 50 &&
                                     newMeasure.zone.getBoundBottom() - newMeasure.zone.getBoundTop() > 50) {

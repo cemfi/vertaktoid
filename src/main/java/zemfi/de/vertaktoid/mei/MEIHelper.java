@@ -171,9 +171,9 @@ public class MEIHelper {
                 if(document.meiType == Facsimile.MEIType.POLYGONAL) {
                     for(float[] vertex : measure.zone.getVertices()) {
                         Element point = new Element("point", Vertaktoid.MEI_NS);
-                        a = new Attribute("x","" + vertex[0]);
+                        a = new Attribute("x","" + normalize(vertex[0], page.imageWidth));
                         point.addAttribute(a);
-                        a = new Attribute("y","" + vertex[1]);
+                        a = new Attribute("y","" + normalize(vertex[1], page.imageHeight));
                         point.addAttribute(a);
                         zone.appendChild(point);
                     }
