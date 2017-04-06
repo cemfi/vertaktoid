@@ -56,15 +56,10 @@ public class PageImageView extends SubsamplingScaleImageView {
     private float l = 30f;
     private float a = 1f;
     private float currentBrushSize = 5;
-    public int horOverlapping = 0;
     Path grayPath;
     Path polygonHoverPath;
     float downX = 0.0f;
     float downY = 0.0f;
-    //float leftMost = -1.0f;
-    //float topMost = -1.0f;
-    //float rightMost = -1.0f;
-    //float bottomMost = -1.0f;
     PointF firstPoint;
     PointF lastPolygonPoint;
     PointF lastPoint = null; // in bitmap coordinates
@@ -320,17 +315,23 @@ public class PageImageView extends SubsamplingScaleImageView {
                             facsimileView.resetMenu();
                             // continue and handle the ActionId as a click in brush state
                         } else {
-                            Measure mleft = new Measure();
-                            Measure mright = new Measure();
-                            List<float[]> verticesLeft = new ArrayList<>();
-                            verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundTop()});
-                            verticesLeft.add(new float[]{bitmapCoord.x + horOverlapping, measure.zone.getBoundBottom()});
-                            List<float[]> verticesRight = new ArrayList<>();
-                            verticesRight.add(new float[]{bitmapCoord.x - horOverlapping, measure.zone.getBoundTop()});
-                            verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundBottom()});
-                            mleft.zone.setVertices(verticesLeft);
-                            mright.zone.setVertices(verticesRight);
-                            facsimileView.commandManager.processCutMeasureCommand(facsimile, measure, mleft, mright);
+                            if(facsimile.meiType != Facsimile.MEIType.POLYGONAL) {
+                                Measure mleft = new Measure();
+                                Measure mright = new Measure();
+                                List<float[]> verticesLeft = new ArrayList<>();
+                                verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundTop()});
+                                verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundBottom()});
+                                verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundBottom()});
+                                verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundTop()});
+                                List<float[]> verticesRight = new ArrayList<>();
+                                verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundTop()});
+                                verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundBottom()});
+                                verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundBottom()});
+                                verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundTop()});
+                                mleft.zone.setVertices(verticesLeft);
+                                mright.zone.setVertices(verticesRight);
+                                facsimileView.commandManager.processCutMeasureCommand(facsimile, measure, mleft, mright);
+                            }
                         }
                         break;
                     case DRAW:

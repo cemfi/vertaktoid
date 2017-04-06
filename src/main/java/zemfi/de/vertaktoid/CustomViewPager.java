@@ -34,6 +34,9 @@ public class CustomViewPager extends ViewPager {
     }
 
     public void restore(){
-        ((CustomPagerAdapter)getAdapter()).restore();
+        CustomPagerAdapter adapter = ((CustomPagerAdapter)getAdapter());
+        if(adapter != null) {
+            ((CustomPagerAdapter) getAdapter()).restore();
+        }
     }
 }
