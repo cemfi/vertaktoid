@@ -66,6 +66,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'com.android.support:design:22.2.1'
     compile 'com.davemorrissey.labs:subsampling-scale-image-view:3.5.0'
+    compile 'com.goebl:simplify:1.0.0'
     compile('com.io7m.xom:xom:1.2.10'){
         exclude module: 'xalan'
         exclude module: 'xercesImpl'

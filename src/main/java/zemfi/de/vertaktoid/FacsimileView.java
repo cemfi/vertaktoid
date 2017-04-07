@@ -4,35 +4,26 @@ import android.app.Dialog;
 import android.content.Context;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.view.ViewPager;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import com.davemorrissey.labs.subscaleview.ImageSource;
-
-import java.io.File;
 import java.util.ArrayList;
 
 import zemfi.de.vertaktoid.commands.CommandManager;
 import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
 import zemfi.de.vertaktoid.model.Facsimile;
-import zemfi.de.vertaktoid.model.Measure;
-import zemfi.de.vertaktoid.model.Movement;
-import zemfi.de.vertaktoid.model.Page;
 
 /**
  * Contains the presentation and user interaction functions. Directs the UI layouts.
