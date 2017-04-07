@@ -315,7 +315,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                             facsimileView.resetMenu();
                             // continue and handle the ActionId as a click in brush state
                         } else {
-                            if(facsimile.meiType != Facsimile.MEIType.POLYGONAL) {
+                            if(facsimile.meiType == Facsimile.MEIType.CANONICAL) {
                                 Measure mleft = new Measure();
                                 Measure mright = new Measure();
                                 List<float[]> verticesLeft = new ArrayList<>();

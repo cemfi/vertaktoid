@@ -168,7 +168,7 @@ public class MEIHelper {
                 zone.addAttribute(a);
                 a = new Attribute("lry", "" + normalize(measure.zone.getBoundBottom(), page.imageHeight));
                 zone.addAttribute(a);
-                if(document.meiType == Facsimile.MEIType.POLYGONAL) {
+                if(document.meiType != Facsimile.MEIType.CANONICAL) {
                     for(float[] vertex : measure.zone.getVertices()) {
                         Element point = new Element("point", Vertaktoid.MEI_NS);
                         a = new Attribute("x","" + normalize(vertex[0], page.imageWidth));
