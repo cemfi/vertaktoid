@@ -1,10 +1,14 @@
 package zemfi.de.vertaktoid.model;
 
 
+import android.graphics.PointF;
+import com.goebl.simplify.PointExtractor;
+import com.goebl.simplify.Simplify;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 
 public class Zone implements Comparable<Zone>, Serializable {
     public String zoneUuid = null;
@@ -36,11 +40,41 @@ public class Zone implements Comparable<Zone>, Serializable {
     }
 
     public void convertToExtended() {
-        // TODO implement
+        convertToPolygonal();
+        List<PointF> verticesPF = new ArrayList<>();
+        for(float[] vertex: vertices) {
+            verticesPF.add(new PointF(vertex[0], vertex[1]));
+        }
+        PointF[] minBoundingBox = RotatingCalipers.getMinimumBoundingRectangle(verticesPF);
+        vertices.clear();
+        for(PointF point: minBoundingBox) {
+            vertices.add(new float[]{point.x, point.y});
+        }
     }
 
     public void convertToPolygonal() {
-        // TODO implement
+        PointF[] verticesPF = new PointF[vertices.size()];
+        for(int i = 0; i < vertices.size(); i++) {
+            verticesPF[i] = new PointF(vertices.get(i)[0], vertices.get(i)[1]);
+        }
+        Simplify<PointF> simplify = new Simplify<PointF>(new PointF[0],
+                new PointExtractor<PointF>() {
+                    @Override
+                    public double getX(PointF point) {
+                        return point.x;
+                    }
+
+                    @Override
+                    public double getY(PointF point) {
+                        return point.y;
+                    }
+                });
+
+        PointF[] simplifiedVertices = simplify.simplify((PointF[]) verticesPF, 20f, false);
+        vertices.clear();
+        for(PointF vertex: simplifiedVertices) {
+            vertices.add(new float[]{vertex.x, vertex.y});
+        }
     }
 
     public float getBoundLeft() {
