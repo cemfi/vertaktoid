@@ -8,7 +8,6 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Parcelable;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import zemfi.de.vertaktoid.helpers.HSLColor;
-import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
@@ -315,23 +313,29 @@ public class PageImageView extends SubsamplingScaleImageView {
                             facsimileView.resetMenu();
                             // continue and handle the ActionId as a click in brush state
                         } else {
-                            if(facsimile.meiType == Facsimile.MEIType.CANONICAL) {
-                                Measure mleft = new Measure();
-                                Measure mright = new Measure();
-                                List<float[]> verticesLeft = new ArrayList<>();
-                                verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundTop()});
-                                verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundBottom()});
-                                verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundBottom()});
-                                verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundTop()});
-                                List<float[]> verticesRight = new ArrayList<>();
-                                verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundTop()});
-                                verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundBottom()});
-                                verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundBottom()});
-                                verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundTop()});
-                                mleft.zone.setVertices(verticesLeft);
-                                mright.zone.setVertices(verticesRight);
-                                facsimileView.commandManager.processCutMeasureCommand(facsimile, measure, mleft, mright);
+                            Measure mleft = new Measure();
+                            Measure mright = new Measure();
+                            List<float[]> verticesLeft = new ArrayList<>();
+                            List<float[]> verticesRight = new ArrayList<>();
+                            switch (measure.zone.getAnnotationType()) {
+                                case ORTHOGONAL_BOX:
+                                    verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundTop()});
+                                    verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundBottom()});
+                                    verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundBottom()});
+                                    verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundTop()});
+                                    verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundTop()});
+                                    verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundBottom()});
+                                    verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundBottom()});
+                                    verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundTop()});
+                                    break;
+                                case ORIENTED_BOX:
+                                    break;
+                                case POLYGON:
+                                    break;
                             }
+                            mleft.zone.setVertices(verticesLeft);
+                            mright.zone.setVertices(verticesRight);
+                            facsimileView.commandManager.processCutMeasureCommand(facsimile, measure, mleft, mright);
                         }
                         break;
                     case DRAW:
@@ -339,10 +343,6 @@ public class PageImageView extends SubsamplingScaleImageView {
                             pointPath = new ArrayList<>();
                             firstPoint = bitmapCoord;
                             pointPath.add(bitmapCoord);
-                            //leftMost = bitmapCoord.x;
-                            //rightMost = bitmapCoord.x;
-                            //topMost = bitmapCoord.y;
-                            //bottomMost = bitmapCoord.y;
                             facsimileView.isFirstPoint = false;
                             lastPolygonPoint = bitmapCoord;
                             trackLength = 0.0f;
@@ -366,10 +366,6 @@ public class PageImageView extends SubsamplingScaleImageView {
                     case DRAW:
                         if (!facsimileView.isFirstPoint) {
                             trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
-                            //leftMost = bitmapCoord.x < leftMost ? bitmapCoord.x : leftMost;
-                            //rightMost = bitmapCoord.x > rightMost ? bitmapCoord.x : rightMost;
-                            //topMost = bitmapCoord.y < topMost ? bitmapCoord.y : topMost;
-                            //bottomMost = bitmapCoord.y > bottomMost ? bitmapCoord.y : bottomMost;
                             pointPath.add(bitmapCoord);
                             lastPolygonPoint = bitmapCoord;
                             invalidate();
@@ -507,15 +503,18 @@ public class PageImageView extends SubsamplingScaleImageView {
                                 vertices.add(new float[]{vertex.x, vertex.y});
                             }
                             newMeasure.zone.setVertices(vertices);
-                            switch (facsimile.meiType) {
-                                case CANONICAL:
+                            switch (facsimile.nextAnnotationsType) {
+                                case ORTHOGONAL_BOX:
                                     newMeasure.zone.convertToCanonical();
+                                    newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.ORTHOGONAL_BOX);
                                     break;
-                                case EXTENDED:
+                                case ORIENTED_BOX:
                                     newMeasure.zone.convertToExtended();
+                                    newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
                                     break;
-                                case POLYGONAL:
+                                case POLYGON:
                                     newMeasure.zone.convertToPolygonal();
+                                    newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.POLYGON);
                                     break;
                             }
                             if(newMeasure.zone.getBoundRight() - newMeasure.zone.getBoundLeft() > 50 &&

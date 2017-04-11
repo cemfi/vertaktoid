@@ -221,11 +221,11 @@ public class FacsimileView extends CoordinatorLayout {
             settingsCornerType.check(R.id.dialog_settings_corner_type_rounded);
         }
         final RadioGroup settingsMEIType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_mei_type);
-        if(document.meiType == Facsimile.MEIType.CANONICAL) {
+        if(document.nextAnnotationsType == Facsimile.AnnotationType.ORTHOGONAL_BOX) {
             settingsMEIType.check(R.id.dialog_settings_mei_type_canonical);
-        } else if(document.meiType == Facsimile.MEIType.EXTENDED) {
+        } else if(document.nextAnnotationsType == Facsimile.AnnotationType.ORIENTED_BOX) {
             settingsMEIType.check(R.id.dialog_settings_mei_type_extended);
-        } else if(document.meiType == Facsimile.MEIType.POLYGONAL) {
+        } else if(document.nextAnnotationsType == Facsimile.AnnotationType.POLYGON) {
             settingsMEIType.check(R.id.dialog_settings_mei_type_polygonal);
         }
         Button gotoButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
@@ -266,12 +266,12 @@ public class FacsimileView extends CoordinatorLayout {
                         cornerType = CornerTypes.ROUNDED;
                     }
                     if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_canonical) {
-                        document.meiType = Facsimile.MEIType.CANONICAL;
+                        document.nextAnnotationsType = Facsimile.AnnotationType.ORTHOGONAL_BOX;
                     } else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_extended) {
-                        document.meiType = Facsimile.MEIType.EXTENDED;
+                        document.nextAnnotationsType = Facsimile.AnnotationType.ORIENTED_BOX;
                     }
                     else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_polygonal) {
-                        document.meiType = Facsimile.MEIType.POLYGONAL;
+                        document.nextAnnotationsType = Facsimile.AnnotationType.POLYGON;
                     }
                 }
                 catch (NumberFormatException e) {
@@ -284,26 +284,6 @@ public class FacsimileView extends CoordinatorLayout {
 
         settingsDialog.show();
     }
-
-    /**
-     * Searches the image file of selected page in the opened directory. Shows dummy page if not found.
-     * @param pagenum page number
-     * @return image source
-     */
-    /*ImageSource findImageForPage(int pagenum) {
-        File appSubFolder = new File(document.dir, Vertaktoid.APP_SUBFOLDER);
-        File stubImg = new File(appSubFolder, Vertaktoid.NOT_FOUND_STUBIMG);
-        if(document.pages.size() < pagenum || pagenum < 0) {
-            return null;
-        }
-        if(!document.pages.get(pagenum).imageFile.exists()) {
-            return ImageSource.uri(Uri.fromFile(stubImg));
-        }
-        else {
-            return ImageSource.uri(Uri.fromFile(document.pages.get(pagenum).imageFile));
-        }
-    }*/
-
 
     /**
      * Sets the current facsimile

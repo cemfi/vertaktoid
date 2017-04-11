@@ -12,6 +12,7 @@ import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 
 public class Zone implements Comparable<Zone>, Serializable {
     public String zoneUuid = null;
+    private Facsimile.AnnotationType annotationType;
     private float boundLeft = Float.MAX_VALUE;
     private float boundRight = Float.MIN_VALUE;
     private float boundTop = Float.MIN_VALUE;
@@ -20,6 +21,20 @@ public class Zone implements Comparable<Zone>, Serializable {
 
     public Zone() {
         vertices = new ArrayList<>();
+        annotationType = Facsimile.AnnotationType.ORTHOGONAL_BOX;
+    }
+
+    public Zone(Facsimile.AnnotationType type) {
+        vertices = new ArrayList<>();
+        annotationType = type;
+    }
+
+    public Facsimile.AnnotationType getAnnotationType() {
+        return annotationType;
+    }
+
+    public void setAnnotationType(Facsimile.AnnotationType annotationType) {
+        this.annotationType = annotationType;
     }
 
     public List<float[]> getVertices() {
@@ -70,7 +85,7 @@ public class Zone implements Comparable<Zone>, Serializable {
                     }
                 });
 
-        PointF[] simplifiedVertices = simplify.simplify((PointF[]) verticesPF, 20f, false);
+        PointF[] simplifiedVertices = simplify.simplify((PointF[]) verticesPF, 30f, true);
         vertices.clear();
         for(PointF vertex: simplifiedVertices) {
             vertices.add(new float[]{vertex.x, vertex.y});

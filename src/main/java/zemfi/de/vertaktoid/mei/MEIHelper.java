@@ -168,7 +168,7 @@ public class MEIHelper {
                 zone.addAttribute(a);
                 a = new Attribute("lry", "" + normalize(measure.zone.getBoundBottom(), page.imageHeight));
                 zone.addAttribute(a);
-                if(document.meiType != Facsimile.MEIType.CANONICAL) {
+                if(measure.zone.getAnnotationType() != Facsimile.AnnotationType.ORTHOGONAL_BOX) {
                     for(float[] vertex : measure.zone.getVertices()) {
                         Element point = new Element("point", Vertaktoid.MEI_NS);
                         a = new Attribute("x","" + normalize(vertex[0], page.imageWidth));
@@ -487,18 +487,23 @@ public class MEIHelper {
                 String uuidZone = zone.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
 
                 Measure measure = findMeasureFor(uuidZone, document.movements);
-                document.meiType = Facsimile.MEIType.CANONICAL;
+                document.nextAnnotationsType = Facsimile.AnnotationType.ORTHOGONAL_BOX;
                 if(measure != null) {
-                    if(vertices.size() > 1) {
+                    if(vertices.size() == 4) {
                         measure.zone.setVertices(vertices);
-                        document.meiType = Facsimile.MEIType.POLYGONAL;
-                    } else {
+                        measure.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
+                    } else if(vertices.size() != 4 && vertices.size() > 0)  {
+                        measure.zone.setVertices(vertices);
+                        measure.zone.setAnnotationType(Facsimile.AnnotationType.POLYGON);
+                    }
+                    else {
                         vertices.clear();
                         vertices.add(new float[]{ulx, uly});
                         vertices.add(new float[]{ulx, lry});
                         vertices.add(new float[]{lrx, lry});
                         vertices.add(new float[]{lrx, uly});
                         measure.zone.setVertices(vertices);
+                        measure.zone.setAnnotationType(Facsimile.AnnotationType.ORTHOGONAL_BOX);
                     }
                     measure.page = page;
                     page.measures.add(measure);

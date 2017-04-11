@@ -17,8 +17,8 @@ public class Facsimile implements Serializable {
     public ArrayList<Page> pages;
     public ArrayList<Movement> movements;
     public File dir;
-    public MEIType meiType = MEIType.CANONICAL;
-    public enum MEIType {CANONICAL, EXTENDED, POLYGONAL};
+    public AnnotationType nextAnnotationsType = AnnotationType.ORTHOGONAL_BOX;
+    public enum AnnotationType {ORTHOGONAL_BOX, ORIENTED_BOX, POLYGON}
 
     /**
      * Standard constructor
