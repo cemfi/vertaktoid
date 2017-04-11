@@ -1,5 +1,8 @@
 package zemfi.de.vertaktoid.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +15,7 @@ import zemfi.de.vertaktoid.Vertaktoid;
  * On the one facsimile page can be multiple movements instead.
  */
 
-public class Movement implements Serializable {
+public class Movement implements Parcelable {
     // The contained measures.
     public ArrayList<Measure> measures;
     // Number of movement on the facsimile.
@@ -27,6 +30,25 @@ public class Movement implements Serializable {
         mdivUuid = Vertaktoid.MEI_MDIV_ID_PREFIX + UUID.randomUUID().toString();
         measures = new ArrayList<>();
     }
+
+    protected Movement(Parcel in) {
+        measures = in.createTypedArrayList(Measure.CREATOR);
+        number = in.readInt();
+        label = in.readString();
+        mdivUuid = in.readString();
+    }
+
+    public static final Creator<Movement> CREATOR = new Creator<Movement>() {
+        @Override
+        public Movement createFromParcel(Parcel in) {
+            return new Movement(in);
+        }
+
+        @Override
+        public Movement[] newArray(int size) {
+            return new Movement[size];
+        }
+    };
 
     /**
      * Sorts the measures in the movement by their position on the pages.
@@ -108,5 +130,18 @@ public class Movement implements Serializable {
     public String getName() {
         if(!label.equals("")) return label;
         else return "Movement " + number;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeTypedList(measures);
+        parcel.writeInt(number);
+        parcel.writeString(label);
+        parcel.writeString(mdivUuid);
     }
 }

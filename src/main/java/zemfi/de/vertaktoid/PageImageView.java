@@ -102,7 +102,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                             if (!facsimileView.isFirstPoint) {
                                 polygonHoverPath.reset();
                                 PointF lastPoint = pointPath.get(pointPath.size() - 1);
-                                PointF lastPointTouch = transformCoordBitmapToTouch(lastPoint.x, lastPoint.y);
+                                PointF lastPointTouch = sourceToViewCoord(lastPoint);
                                 polygonHoverPath.moveTo(lastPointTouch.x, lastPointTouch.y);
                                 polygonHoverPath.lineTo(event.getX(), event.getY());
                             }
@@ -112,7 +112,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                             if (!facsimileView.isFirstPoint) {
                                 polygonHoverPath.reset();
                                 PointF lastPoint = pointPath.get(pointPath.size() - 1);
-                                PointF lastPointTouch = transformCoordBitmapToTouch(lastPoint.x, lastPoint.y);
+                                PointF lastPointTouch = sourceToViewCoord(lastPoint);
                                 polygonHoverPath.moveTo(lastPointTouch.x, lastPointTouch.y);
                                 polygonHoverPath.lineTo(event.getX(), event.getY());
                             }
@@ -198,8 +198,8 @@ public class PageImageView extends SubsamplingScaleImageView {
             smallBoldText.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement))));
 
-            PointF topLeft = transformCoordBitmapToTouch(measure.zone.getBoundLeft(), measure.zone.getBoundTop());
-            PointF bottomRight = transformCoordBitmapToTouch(measure.zone.getBoundRight(), measure.zone.getBoundBottom());
+            PointF topLeft = sourceToViewCoord(measure.zone.getBoundLeft(), measure.zone.getBoundTop());
+            PointF bottomRight = sourceToViewCoord(measure.zone.getBoundRight(), measure.zone.getBoundBottom());
             if (topLeft == null) {
                 // still loading image
                 return;
@@ -210,11 +210,11 @@ public class PageImageView extends SubsamplingScaleImageView {
             } else if(facsimileView.cornerType == FacsimileView.CornerTypes.STRAIGHT) {
                 boundingPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
             }
-            List<float[]> vertices = measure.zone.getVertices();
-            final PointF fp = transformCoordBitmapToTouch(vertices.get(0)[0], vertices.get(0)[1]);
+            List<PointF> vertices = measure.zone.getVertices();
+            final PointF fp = sourceToViewCoord(vertices.get(0));
             verticesPath.moveTo(fp.x, fp.y);
             for(int j = 1; j < vertices.size(); j++) {
-                final PointF cp = transformCoordBitmapToTouch(vertices.get(j)[0], vertices.get(j)[1]);
+                final PointF cp = sourceToViewCoord(vertices.get(j));
                 verticesPath.lineTo(cp.x, cp.y);
             }
             verticesPath.lineTo(fp.x, fp.y);
@@ -261,7 +261,7 @@ public class PageImageView extends SubsamplingScaleImageView {
         verticesPath.reset();
         for (i = 0; i < pointPath.size(); i++) {
             PointF bitmapCoord = pointPath.get(i);
-            PointF touchCoord = transformCoordBitmapToTouch(bitmapCoord.x, bitmapCoord.y);
+            PointF touchCoord = sourceToViewCoord(bitmapCoord);
             if (i == 0) {
                 verticesPath.addCircle(touchCoord.x, touchCoord.y, 10, Path.Direction.CW);
                 verticesPath.moveTo(touchCoord.x, touchCoord.y);
@@ -294,7 +294,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             return super.onTouchEvent(event);
 
         }
-        PointF bitmapCoord = transformCoordTouchToBitmap(touchX, touchY);
+        PointF bitmapCoord = viewToSourceCoord(touchX, touchY);
         final ArrayList<Measure> measures = page.getMeasuresAt(bitmapCoord.x, bitmapCoord.y);
         final Measure measure = page.getMeasureAt(bitmapCoord.x, bitmapCoord.y);
         switch (event.getAction()) {
@@ -315,18 +315,18 @@ public class PageImageView extends SubsamplingScaleImageView {
                         } else {
                             Measure mleft = new Measure();
                             Measure mright = new Measure();
-                            List<float[]> verticesLeft = new ArrayList<>();
-                            List<float[]> verticesRight = new ArrayList<>();
+                            List<PointF> verticesLeft = new ArrayList<>();
+                            List<PointF> verticesRight = new ArrayList<>();
                             switch (measure.zone.getAnnotationType()) {
                                 case ORTHOGONAL_BOX:
-                                    verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundTop()});
-                                    verticesLeft.add(new float[]{measure.zone.getBoundLeft(), measure.zone.getBoundBottom()});
-                                    verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundBottom()});
-                                    verticesLeft.add(new float[]{bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundTop()});
-                                    verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundTop()});
-                                    verticesRight.add(new float[]{bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundBottom()});
-                                    verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundBottom()});
-                                    verticesRight.add(new float[]{measure.zone.getBoundRight(), measure.zone.getBoundTop()});
+                                    verticesLeft.add(new PointF(measure.zone.getBoundLeft(), measure.zone.getBoundTop()));
+                                    verticesLeft.add(new PointF(measure.zone.getBoundLeft(), measure.zone.getBoundBottom()));
+                                    verticesLeft.add(new PointF(bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundBottom()));
+                                    verticesLeft.add(new PointF(bitmapCoord.x + facsimileView.horOverlapping, measure.zone.getBoundTop()));
+                                    verticesRight.add(new PointF(bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundTop()));
+                                    verticesRight.add(new PointF(bitmapCoord.x - facsimileView.horOverlapping, measure.zone.getBoundBottom()));
+                                    verticesRight.add(new PointF(measure.zone.getBoundRight(), measure.zone.getBoundBottom()));
+                                    verticesRight.add(new PointF(measure.zone.getBoundRight(), measure.zone.getBoundTop()));
                                     break;
                                 case ORIENTED_BOX:
                                     break;
@@ -494,26 +494,22 @@ public class PageImageView extends SubsamplingScaleImageView {
                         trackLength += Math.abs(lastPolygonPoint.x - bitmapCoord.x) + Math.abs(lastPolygonPoint.y - bitmapCoord.y);
                         pointPath.add(bitmapCoord);
                         lastPolygonPoint = new PointF(touchX, touchY);
-                        PointF firstPointInTouch = transformCoordBitmapToTouch(firstPoint.x, firstPoint.y); // due to scrolling this may be another position than initially stored in firstPoint
+                        PointF firstPointInTouch = sourceToViewCoord(firstPoint); // due to scrolling this may be another position than initially stored in firstPoint
                         double distanceToFirstPoint = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
                         if (distanceToFirstPoint < 20.0f && trackLength > 100.0f) {
                             Measure newMeasure = new Measure();
-                            List<float[]> vertices = new ArrayList<>();
-                            for(PointF vertex: pointPath) {
-                                vertices.add(new float[]{vertex.x, vertex.y});
-                            }
-                            newMeasure.zone.setVertices(vertices);
+                            newMeasure.zone.setVertices(pointPath);
                             switch (facsimile.nextAnnotationsType) {
                                 case ORTHOGONAL_BOX:
-                                    newMeasure.zone.convertToCanonical();
+                                    newMeasure.zone.convertToOrthogonalBox();
                                     newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.ORTHOGONAL_BOX);
                                     break;
                                 case ORIENTED_BOX:
-                                    newMeasure.zone.convertToExtended();
+                                    newMeasure.zone.convertToOrientedBox();
                                     newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
                                     break;
                                 case POLYGON:
-                                    newMeasure.zone.convertToPolygonal();
+                                    newMeasure.zone.convertToPolygon();
                                     newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.POLYGON);
                                     break;
                             }
@@ -532,34 +528,8 @@ public class PageImageView extends SubsamplingScaleImageView {
                 }
         } // end switch
         facsimileView.adjustHistoryNavigation();
-        lastPoint = transformCoordTouchToBitmap(touchX, touchY);
+        lastPoint = viewToSourceCoord(touchX, touchY);
         facsimileView.needToSave = true;
         return true;
     } // end onTouchEvent
-
-    /**
-     * Transforms the coordinates from bitmap coordinate system to the touch coordinate system.
-     * @param x x coordinate
-     * @param y y coordinate
-     * @return point in touch coordinate system
-     */
-    PointF transformCoordBitmapToTouch(float x, float y) {
-        PointF point = new PointF();
-        point.x = x;
-        point.y = y;
-        return sourceToViewCoord(point);
-    }
-
-    /**
-     * Transforms the coordinates from touch coordinate system to the bitmap coordinate system.
-     * @param x x coordinate
-     * @param y y coordinate
-     * @return point in bitmap coordinate system
-     */
-    PointF transformCoordTouchToBitmap(float x, float y) {
-        PointF point = new PointF();
-        point.x = x;
-        point.y = y;
-        return viewToSourceCoord(point);
-    }
 }

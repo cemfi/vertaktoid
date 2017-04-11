@@ -1,5 +1,8 @@
 package zemfi.de.vertaktoid.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,11 +16,40 @@ import zemfi.de.vertaktoid.Vertaktoid;
  * Represents a scanned music source. Consists from pages. Contains movements.
  */
 
-public class Facsimile implements Serializable {
+public class Facsimile implements Parcelable {
     public ArrayList<Page> pages;
     public ArrayList<Movement> movements;
     public File dir;
     public AnnotationType nextAnnotationsType = AnnotationType.ORTHOGONAL_BOX;
+
+    protected Facsimile(Parcel in) {
+        pages = in.createTypedArrayList(Page.CREATOR);
+        movements = in.createTypedArrayList(Movement.CREATOR);
+    }
+
+    public static final Creator<Facsimile> CREATOR = new Creator<Facsimile>() {
+        @Override
+        public Facsimile createFromParcel(Parcel in) {
+            return new Facsimile(in);
+        }
+
+        @Override
+        public Facsimile[] newArray(int size) {
+            return new Facsimile[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeTypedList(pages);
+        parcel.writeTypedList(movements);
+    }
+
     public enum AnnotationType {ORTHOGONAL_BOX, ORIENTED_BOX, POLYGON}
 
     /**

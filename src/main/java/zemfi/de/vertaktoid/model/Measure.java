@@ -1,5 +1,8 @@
 package zemfi.de.vertaktoid.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.UUID;
@@ -11,7 +14,7 @@ import zemfi.de.vertaktoid.Vertaktoid;
  * Contains the coordinates for graphical presentation and semantic properties.
  */
 
-public class Measure implements Comparable<Measure>, Serializable {
+public class Measure implements Comparable<Measure>, Parcelable {
 
     public final Zone zone;
     // Automatically calculated sequence number of measure.
@@ -41,6 +44,28 @@ public class Measure implements Comparable<Measure>, Serializable {
         zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
     }
+
+    protected Measure(Parcel in) {
+        zone = in.readParcelable(Zone.class.getClassLoader());
+        sequenceNumber = in.readInt();
+        manualSequenceNumber = in.readString();
+        rest = in.readInt();
+        measureUuid = in.readString();
+        lastAtSystem = in.readByte() != 0;
+        lastAtPage = in.readByte() != 0;
+    }
+
+    public static final Creator<Measure> CREATOR = new Creator<Measure>() {
+        @Override
+        public Measure createFromParcel(Parcel in) {
+            return new Measure(in);
+        }
+
+        @Override
+        public Measure[] newArray(int size) {
+            return new Measure[size];
+        }
+    };
 
     /**
      * Change the parent movement to another. Removes the measure from old movement and adds it to new.
@@ -106,5 +131,21 @@ public class Measure implements Comparable<Measure>, Serializable {
     public int compareTo(Measure measure) {
         return this.sequenceNumber - measure.sequenceNumber;
 
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeParcelable(zone, i);
+        parcel.writeInt(sequenceNumber);
+        parcel.writeString(manualSequenceNumber);
+        parcel.writeInt(rest);
+        parcel.writeString(measureUuid);
+        parcel.writeByte((byte) (lastAtSystem ? 1 : 0));
+        parcel.writeByte((byte) (lastAtPage ? 1 : 0));
     }
 }

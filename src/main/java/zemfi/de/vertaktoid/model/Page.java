@@ -7,6 +7,9 @@ import java.util.Collections;
 import java.util.UUID;
 
 import android.graphics.BitmapFactory;
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import zemfi.de.vertaktoid.Vertaktoid;
 
 /**
@@ -14,7 +17,7 @@ import zemfi.de.vertaktoid.Vertaktoid;
  * Contains a set of related movements, that are arranged on this page.
  */
 
-public class Page implements Serializable {
+public class Page implements Parcelable {
     // Related movements.
     public ArrayList<Measure> measures;
     // Image file.
@@ -48,6 +51,27 @@ public class Page implements Serializable {
         graphicUuid = Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString();
         measures = new ArrayList<>();
     }
+
+    protected Page(Parcel in) {
+        measures = in.createTypedArrayList(Measure.CREATOR);
+        number = in.readInt();
+        surfaceUuid = in.readString();
+        graphicUuid = in.readString();
+        imageWidth = in.readInt();
+        imageHeight = in.readInt();
+    }
+
+    public static final Creator<Page> CREATOR = new Creator<Page>() {
+        @Override
+        public Page createFromParcel(Parcel in) {
+            return new Page(in);
+        }
+
+        @Override
+        public Page[] newArray(int size) {
+            return new Page[size];
+        }
+    };
 
     /**
      * Sorts the measures on the page by their sequence numbers.
@@ -135,5 +159,20 @@ public class Page implements Serializable {
             imageHeight = 0;
             imageWidth = 0;
         }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeTypedList(measures);
+        parcel.writeInt(number);
+        parcel.writeString(surfaceUuid);
+        parcel.writeString(graphicUuid);
+        parcel.writeInt(imageWidth);
+        parcel.writeInt(imageHeight);
     }
 }

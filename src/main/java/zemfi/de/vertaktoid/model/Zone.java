@@ -2,22 +2,26 @@ package zemfi.de.vertaktoid.model;
 
 
 import android.graphics.PointF;
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.goebl.simplify.PointExtractor;
 import com.goebl.simplify.Simplify;
-import java.io.Serializable;
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.List;
 import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 
-public class Zone implements Comparable<Zone>, Serializable {
+public class Zone implements Comparable<Zone>, Parcelable {
     public String zoneUuid = null;
     private Facsimile.AnnotationType annotationType;
     private float boundLeft = Float.MAX_VALUE;
     private float boundRight = Float.MIN_VALUE;
     private float boundTop = Float.MIN_VALUE;
     private float boundBottom = Float.MAX_VALUE;
-    private List<float[]> vertices;
+    private List<PointF> vertices;
 
     public Zone() {
         vertices = new ArrayList<>();
@@ -29,6 +33,27 @@ public class Zone implements Comparable<Zone>, Serializable {
         annotationType = type;
     }
 
+    protected Zone(Parcel in) {
+        zoneUuid = in.readString();
+        boundLeft = in.readFloat();
+        boundRight = in.readFloat();
+        boundTop = in.readFloat();
+        boundBottom = in.readFloat();
+        vertices = in.createTypedArrayList(PointF.CREATOR);
+    }
+
+    public static final Creator<Zone> CREATOR = new Creator<Zone>() {
+        @Override
+        public Zone createFromParcel(Parcel in) {
+            return new Zone(in);
+        }
+
+        @Override
+        public Zone[] newArray(int size) {
+            return new Zone[size];
+        }
+    };
+
     public Facsimile.AnnotationType getAnnotationType() {
         return annotationType;
     }
@@ -37,40 +62,33 @@ public class Zone implements Comparable<Zone>, Serializable {
         this.annotationType = annotationType;
     }
 
-    public List<float[]> getVertices() {
+    public List<PointF> getVertices() {
         return vertices;
     }
 
-    public void setVertices(List<float[]> vertices) {
+    public void setVertices(List<PointF> vertices) {
         this.vertices = vertices;
         calculateBoundingBox();
     }
 
-    public void convertToCanonical() {
+    public void convertToOrthogonalBox() {
         vertices.clear();
-        vertices.add(new float[]{boundLeft, boundTop});
-        vertices.add(new float[]{boundLeft, boundBottom});
-        vertices.add(new float[]{boundRight, boundBottom});
-        vertices.add(new float[]{boundRight, boundTop});
+        vertices.add(new PointF(boundLeft, boundTop));
+        vertices.add(new PointF(boundLeft, boundBottom));
+        vertices.add(new PointF(boundRight, boundBottom));
+        vertices.add(new PointF(boundRight, boundTop));
     }
 
-    public void convertToExtended() {
-        convertToPolygonal();
-        List<PointF> verticesPF = new ArrayList<>();
-        for(float[] vertex: vertices) {
-            verticesPF.add(new PointF(vertex[0], vertex[1]));
-        }
-        PointF[] minBoundingBox = RotatingCalipers.getMinimumBoundingRectangle(verticesPF);
-        vertices.clear();
-        for(PointF point: minBoundingBox) {
-            vertices.add(new float[]{point.x, point.y});
-        }
+    public void convertToOrientedBox() {
+        convertToPolygon();
+        PointF[] minBoundingBox = RotatingCalipers.getMinimumBoundingRectangle(vertices);
+        vertices = new ArrayList<PointF>(Arrays.asList(minBoundingBox));
     }
 
-    public void convertToPolygonal() {
-        PointF[] verticesPF = new PointF[vertices.size()];
+    public void convertToPolygon() {
+        PointF[] verticesArray = new PointF[vertices.size()];
         for(int i = 0; i < vertices.size(); i++) {
-            verticesPF[i] = new PointF(vertices.get(i)[0], vertices.get(i)[1]);
+            verticesArray[i] = vertices.get(i);
         }
         Simplify<PointF> simplify = new Simplify<PointF>(new PointF[0],
                 new PointExtractor<PointF>() {
@@ -85,11 +103,8 @@ public class Zone implements Comparable<Zone>, Serializable {
                     }
                 });
 
-        PointF[] simplifiedVertices = simplify.simplify((PointF[]) verticesPF, 30f, true);
-        vertices.clear();
-        for(PointF vertex: simplifiedVertices) {
-            vertices.add(new float[]{vertex.x, vertex.y});
-        }
+        PointF[] simplifiedVertices = simplify.simplify((PointF[]) verticesArray, 30f, true);
+        vertices = new ArrayList<PointF>(Arrays.asList(simplifiedVertices));
     }
 
     public float getBoundLeft() {
@@ -113,18 +128,18 @@ public class Zone implements Comparable<Zone>, Serializable {
         boundRight = Float.MIN_VALUE;
         boundTop = Float.MAX_VALUE;
         boundBottom = Float.MIN_VALUE;
-        for(float[] vertex : vertices) {
-            if(boundLeft > vertex[0]) {
-                boundLeft = vertex[0];
+        for(PointF vertex : vertices) {
+            if(boundLeft > vertex.x) {
+                boundLeft = vertex.x;
             }
-            if(boundRight < vertex[0]) {
-                boundRight = vertex[0];
+            if(boundRight < vertex.x) {
+                boundRight = vertex.x;
             }
-            if(boundTop > vertex[1]) {
-                boundTop = vertex[1];
+            if(boundTop > vertex.y) {
+                boundTop = vertex.y;
             }
-            if(boundBottom < vertex[1]) {
-                boundBottom = vertex[1];
+            if(boundBottom < vertex.y) {
+                boundBottom = vertex.y;
             }
         }
     }
@@ -174,5 +189,20 @@ public class Zone implements Comparable<Zone>, Serializable {
             return (int) (zone.boundLeft - this.boundLeft);
         }
         return (int) (this.boundLeft - zone.boundLeft);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(zoneUuid);
+        parcel.writeFloat(boundLeft);
+        parcel.writeFloat(boundRight);
+        parcel.writeFloat(boundTop);
+        parcel.writeFloat(boundBottom);
+        parcel.writeTypedList(vertices);
     }
 }

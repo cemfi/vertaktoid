@@ -85,7 +85,7 @@ public class FacsimileView extends CoordinatorLayout {
     public Parcelable onSaveInstanceState() {
         Bundle bundle = new Bundle();
         bundle.putParcelable("instanceState", super.onSaveInstanceState());
-        bundle.putSerializable("document", document);
+        bundle.putParcelable("document", document);
         bundle.putInt("pageNumber", pageNumber.get());
         bundle.putInt("currentMovementNumber", currentMovementNumber);
         bundle.putInt("horOverlapping", horOverlapping);
@@ -101,7 +101,7 @@ public class FacsimileView extends CoordinatorLayout {
     public void onRestoreInstanceState(Parcelable state) {
         if (state instanceof Bundle) {
             Bundle bundle = (Bundle) state;
-            document = (Facsimile) bundle.getSerializable("document");
+            document = (Facsimile) bundle.getParcelable("document");
             if(document == null) {
                 return;
             }
@@ -113,7 +113,6 @@ public class FacsimileView extends CoordinatorLayout {
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getName());
             HSLColorsGenerator.resetHueToDefault();
-            //refresh();
             super.onRestoreInstanceState(bundle.getParcelable("instanceState"));
             return;
         }
