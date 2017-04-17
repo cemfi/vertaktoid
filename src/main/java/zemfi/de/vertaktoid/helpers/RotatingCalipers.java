@@ -24,21 +24,20 @@ package zemfi.de.vertaktoid.helpers;
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-import android.graphics.PointF;
-import android.graphics.Point;
+import zemfi.de.vertaktoid.helpers.Point2D;
 import java.util.*;
 
 public final class RotatingCalipers {
 
     protected enum Corner { UPPER_RIGHT, UPPER_LEFT, LOWER_LEFT, LOWER_RIGHT }
 
-    public static double getArea(PointF[] rectangle) {
+    public static double getArea(Point2D[] rectangle) {
 
-        double deltaXAB = rectangle[0].x - rectangle[1].x;
-        double deltaYAB = rectangle[0].y - rectangle[1].y;
+        double deltaXAB = rectangle[0].x() - rectangle[1].x();
+        double deltaYAB = rectangle[0].y() - rectangle[1].y();
 
-        double deltaXBC = rectangle[1].x - rectangle[2].x;
-        double deltaYBC = rectangle[1].y - rectangle[2].y;
+        double deltaXBC = rectangle[1].x() - rectangle[2].x();
+        double deltaYBC = rectangle[1].y() - rectangle[2].y();
 
         double lengthAB = Math.sqrt((deltaXAB * deltaXAB) + (deltaYAB * deltaYAB));
         double lengthBC = Math.sqrt((deltaXBC * deltaXBC) + (deltaYBC * deltaYBC));
@@ -46,26 +45,26 @@ public final class RotatingCalipers {
         return lengthAB * lengthBC;
     }
 
-    public static List<PointF[]> getAllBoundingRectangles(int[] xs, int[] ys) throws IllegalArgumentException {
+    public static List<Point2D[]> getAllBoundingRectangles(int[] xs, int[] ys) throws IllegalArgumentException {
 
         if(xs.length != ys.length) {
             throw new IllegalArgumentException("xs and ys don't have the same size");
         }
 
-        List<PointF> points = new ArrayList<PointF>();
+        List<Point2D> points = new ArrayList<Point2D>();
 
         for(int i = 0; i < xs.length; i++) {
-            points.add(new PointF(xs[i], ys[i]));
+            points.add(new Point2D(xs[i], ys[i]));
         }
 
         return getAllBoundingRectangles(points);
     }
 
-    public static List<PointF[]> getAllBoundingRectangles(List<PointF> points) throws IllegalArgumentException {
+    public static List<Point2D[]> getAllBoundingRectangles(List<Point2D> points) throws IllegalArgumentException {
 
-        List<PointF[]> rectangles = new ArrayList<PointF[]>();
+        List<Point2D[]> rectangles = new ArrayList<Point2D[]>();
 
-        List<PointF> convexHull = GrahamScan.getConvexHull(points);
+        List<Point2D> convexHull = GrahamScan.getConvexHull(points);
 
         Caliper I = new Caliper(convexHull, getIndex(convexHull, Corner.UPPER_RIGHT), 90);
         Caliper J = new Caliper(convexHull, getIndex(convexHull, Corner.UPPER_LEFT), 180);
@@ -74,7 +73,7 @@ public final class RotatingCalipers {
 
         while(L.currentAngle < 90.0) {
 
-            rectangles.add(new PointF[]{
+            rectangles.add(new Point2D[]{
                     L.getIntersection(I),
                     I.getIntersection(J),
                     J.getIntersection(K),
@@ -92,16 +91,16 @@ public final class RotatingCalipers {
         return rectangles;
     }
 
-    public static PointF[] getMinimumBoundingRectangle(float[] xs, float[] ys) throws IllegalArgumentException {
+    public static Point2D[] getMinimumBoundingRectangle(double[] xs, double[] ys) throws IllegalArgumentException {
 
         if(xs.length != ys.length) {
             throw new IllegalArgumentException("xs and ys don't have the same size");
         }
 
-        List<PointF> points = new ArrayList<PointF>();
+        List<Point2D> points = new ArrayList<Point2D>();
 
         for(int i = 0; i < xs.length; i++) {
-            points.add(new PointF(xs[i], ys[i]));
+            points.add(new Point2D(xs[i], ys[i]));
         }
 
         return getMinimumBoundingRectangle(points);
@@ -109,14 +108,14 @@ public final class RotatingCalipers {
 
 
 
-    public static PointF[] getMinimumBoundingRectangle(List<PointF> points) throws IllegalArgumentException {
+    public static Point2D[] getMinimumBoundingRectangle(List<Point2D> points) throws IllegalArgumentException {
 
-        List<PointF[]> rectangles = getAllBoundingRectangles(points);
+        List<Point2D[]> rectangles = getAllBoundingRectangles(points);
 
-        PointF[] minimum = null;
+        Point2D[] minimum = null;
         double area = Long.MAX_VALUE;
 
-        for (PointF[] rectangle : rectangles) {
+        for (Point2D[] rectangle : rectangles) {
 
             double tempArea = getArea(rectangle);
 
@@ -150,28 +149,28 @@ public final class RotatingCalipers {
         }
     }
 
-    protected static int getIndex(List<PointF> convexHull, Corner corner) {
+    protected static int getIndex(List<Point2D> convexHull, Corner corner) {
 
         int index = 0;
-        PointF point = convexHull.get(index);
+        Point2D point = convexHull.get(index);
 
         for(int i = 1; i < convexHull.size() - 1; i++) {
 
-            PointF temp = convexHull.get(i);
+            Point2D temp = convexHull.get(i);
             boolean change = false;
 
             switch(corner) {
                 case UPPER_RIGHT:
-                    change = (temp.x > point.x || (temp.x == point.x && temp.y > point.y));
+                    change = (temp.x() > point.x() || (temp.x() == point.x() && temp.y() > point.y()));
                     break;
                 case UPPER_LEFT:
-                    change = (temp.y > point.y || (temp.y == point.y && temp.x < point.x));
+                    change = (temp.y() > point.y() || (temp.y() == point.y() && temp.x() < point.x()));
                     break;
                 case LOWER_LEFT:
-                    change = (temp.x < point.x || (temp.x == point.x && temp.y < point.y));
+                    change = (temp.x() < point.x() || (temp.x() == point.x() && temp.y() < point.y()));
                     break;
                 case LOWER_RIGHT:
-                    change = (temp.y < point.y || (temp.y == point.y && temp.x > point.x));
+                    change = (temp.y() < point.y() || (temp.y() == point.y() && temp.x() > point.x()));
                     break;
             }
 
@@ -188,11 +187,11 @@ public final class RotatingCalipers {
 
         final static double SIGMA = 0.00000000001;
 
-        final List<PointF> convexHull;
+        final List<Point2D> convexHull;
         int pointIndex;
         double currentAngle;
 
-        Caliper(List<PointF> convexHull, int pointIndex, double currentAngle) {
+        Caliper(List<Point2D> convexHull, int pointIndex, double currentAngle) {
             this.convexHull = convexHull;
             this.pointIndex = pointIndex;
             this.currentAngle = currentAngle;
@@ -200,11 +199,11 @@ public final class RotatingCalipers {
 
         double getAngleNextPoint() {
 
-            PointF p1 = convexHull.get(pointIndex);
-            PointF p2 = convexHull.get((pointIndex + 1) % convexHull.size());
+            Point2D p1 = convexHull.get(pointIndex);
+            Point2D p2 = convexHull.get((pointIndex + 1) % convexHull.size());
 
-            double deltaX = p2.x - p1.x;
-            double deltaY = p2.y - p1.y;
+            double deltaX = p2.x() - p1.x();
+            double deltaY = p2.y() - p1.y();
 
             double angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
 
@@ -213,9 +212,9 @@ public final class RotatingCalipers {
 
         double getConstant() {
 
-            PointF p = convexHull.get(pointIndex);
+            Point2D p = convexHull.get(pointIndex);
 
-            return p.y - (getSlope() * p.x);
+            return p.y() - (getSlope() * p.x());
         }
 
         double getDeltaAngleNextPoint() {
@@ -227,7 +226,7 @@ public final class RotatingCalipers {
             return angle < 0 ? 360 : angle;
         }
 
-        PointF getIntersection(Caliper that) {
+        Point2D getIntersection(Caliper that) {
 
             // the x-intercept of 'this' and 'that': x = ((c2 - c1) / (m1 - m2))
             double x;
@@ -235,10 +234,10 @@ public final class RotatingCalipers {
             double y;
 
             if(this.isVertical()) {
-                x = convexHull.get(pointIndex).x;
+                x = convexHull.get(pointIndex).x();
             }
             else if(this.isHorizontal()) {
-                x = that.convexHull.get(that.pointIndex).x;
+                x = that.convexHull.get(that.pointIndex).x();
             }
             else {
                 x = (that.getConstant() -  this.getConstant()) / (this.getSlope() - that.getSlope());
@@ -254,7 +253,7 @@ public final class RotatingCalipers {
                 y = (this.getSlope() * x) + this.getConstant();
             }
 
-            return new PointF((float) x, (float) y);
+            return new Point2D( x, y);
         }
 
         double getSlope() {
@@ -287,18 +286,18 @@ public final class RotatingCalipers {
 
         protected static enum Turn { CLOCKWISE, COUNTER_CLOCKWISE, COLLINEAR }
 
-        protected static boolean areAllCollinear(List<PointF> points) {
+        protected static boolean areAllCollinear(List<Point2D> points) {
 
             if(points.size() < 2) {
                 return true;
             }
 
-            final PointF a = points.get(0);
-            final PointF b = points.get(1);
+            final Point2D a = points.get(0);
+            final Point2D b = points.get(1);
 
             for(int i = 2; i < points.size(); i++) {
 
-                PointF c = points.get(i);
+                Point2D c = points.get(i);
 
                 if(getTurn(a, b, c) != Turn.COLLINEAR) {
                     return false;
@@ -308,9 +307,9 @@ public final class RotatingCalipers {
             return true;
         }
 
-        public static List<PointF> getConvexHull(List<PointF> points) throws IllegalArgumentException {
+        public static List<Point2D> getConvexHull(List<Point2D> points) throws IllegalArgumentException {
 
-            List<PointF> sorted = new ArrayList<PointF>(getSortedPointSet(points));
+            List<Point2D> sorted = new ArrayList<Point2D>(getSortedPointSet(points));
 
             if(sorted.size() < 3) {
                 throw new IllegalArgumentException("can only create a convex hull of 3 or more unique points");
@@ -320,15 +319,15 @@ public final class RotatingCalipers {
                 throw new IllegalArgumentException("cannot create a convex hull from collinear points");
             }
 
-            Stack<PointF> stack = new Stack<PointF>();
+            Stack<Point2D> stack = new Stack<Point2D>();
             stack.push(sorted.get(0));
             stack.push(sorted.get(1));
 
             for (int i = 2; i < sorted.size(); i++) {
 
-                PointF head = sorted.get(i);
-                PointF middle = stack.pop();
-                PointF tail = stack.peek();
+                Point2D head = sorted.get(i);
+                Point2D middle = stack.pop();
+                Point2D tail = stack.peek();
 
                 Turn turn = getTurn(tail, middle, head);
 
@@ -348,18 +347,18 @@ public final class RotatingCalipers {
 
             stack.push(sorted.get(0));
 
-            return new ArrayList<PointF>(stack);
+            return new ArrayList<Point2D>(stack);
         }
 
-        protected static PointF getLowestPoint(List<PointF> points) {
+        protected static Point2D getLowestPoint(List<Point2D> points) {
 
-            PointF lowest = points.get(0);
+            Point2D lowest = points.get(0);
 
             for(int i = 1; i < points.size(); i++) {
 
-                PointF temp = points.get(i);
+                Point2D temp = points.get(i);
 
-                if(temp.y < lowest.y || (temp.y == lowest.y && temp.x < lowest.x)) {
+                if(temp.y() < lowest.y() || (temp.y() == lowest.y() && temp.x() < lowest.x())) {
                     lowest = temp;
                 }
             }
@@ -367,20 +366,20 @@ public final class RotatingCalipers {
             return lowest;
         }
 
-        protected static Set<PointF> getSortedPointSet(List<PointF> points) {
+        protected static Set<Point2D> getSortedPointSet(List<Point2D> points) {
 
-            final PointF lowest = getLowestPoint(points);
+            final Point2D lowest = getLowestPoint(points);
 
-            TreeSet<PointF> set = new TreeSet<PointF>(new Comparator<PointF>() {
+            TreeSet<Point2D> set = new TreeSet<Point2D>(new Comparator<Point2D>() {
                 @Override
-                public int compare(PointF a, PointF b) {
+                public int compare(Point2D a, Point2D b) {
 
                     if(a == b || a.equals(b)) {
                         return 0;
                     }
 
-                    double thetaA = Math.atan2((long)a.y - lowest.y, (long)a.x - lowest.x);
-                    double thetaB = Math.atan2((long)b.y - lowest.y, (long)b.x - lowest.x);
+                    double thetaA = Math.atan2((long)a.y() - lowest.y(), (long)a.x() - lowest.x());
+                    double thetaB = Math.atan2((long)b.y() - lowest.y(), (long)b.x() - lowest.x());
 
                     if(thetaA < thetaB) {
                         return -1;
@@ -389,10 +388,10 @@ public final class RotatingCalipers {
                         return 1;
                     }
                     else {
-                        double distanceA = Math.sqrt((((long)lowest.x - a.x) * ((long)lowest.x - a.x)) +
-                                (((long)lowest.y - a.y) * ((long)lowest.y - a.y)));
-                        double distanceB = Math.sqrt((((long)lowest.x - b.x) * ((long)lowest.x - b.x)) +
-                                (((long)lowest.y - b.y) * ((long)lowest.y - b.y)));
+                        double distanceA = Math.sqrt((((long)lowest.x() - a.x()) * ((long)lowest.x() - a.x())) +
+                                (((long)lowest.y() - a.y()) * ((long)lowest.y() - a.y())));
+                        double distanceB = Math.sqrt((((long)lowest.x() - b.x()) * ((long)lowest.x() - b.x())) +
+                                (((long)lowest.y() - b.y()) * ((long)lowest.y() - b.y())));
 
                         if(distanceA < distanceB) {
                             return -1;
@@ -409,10 +408,10 @@ public final class RotatingCalipers {
             return set;
         }
 
-        protected static Turn getTurn(PointF a, PointF b, PointF c) {
+        protected static Turn getTurn(Point2D a, Point2D b, Point2D c) {
 
-            double crossProduct = (((long)b.x - a.x) * ((long)c.y - a.y)) -
-                    (((long)b.y - a.y) * ((long)c.x - a.x));
+            double crossProduct = (((long)b.x() - a.x()) * ((long)c.y() - a.y())) -
+                    (((long)b.y() - a.y()) * ((long)c.x() - a.x()));
 
             if(crossProduct > 0) {
                 return Turn.COUNTER_CLOCKWISE;

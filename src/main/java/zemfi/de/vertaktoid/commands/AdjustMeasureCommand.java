@@ -1,14 +1,14 @@
 package zemfi.de.vertaktoid.commands;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.Serializable;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 
-/**
- * Created by eugen on 16.03.17.
- */
 
-public class AdjustMeasureCommand implements ICommand, Serializable {
+public class AdjustMeasureCommand implements ICommand, Parcelable {
 
     private Facsimile facsimile;
     private Measure measure;
@@ -27,6 +27,27 @@ public class AdjustMeasureCommand implements ICommand, Serializable {
     public AdjustMeasureCommand() {
 
     }
+
+    protected AdjustMeasureCommand(Parcel in) {
+        facsimile = in.readParcelable(Facsimile.class.getClassLoader());
+        measure = in.readParcelable(Measure.class.getClassLoader());
+        manualSequenceNumber = in.readString();
+        rest = in.readString();
+        oldManualSequenceNumber = in.readString();
+        oldRest = in.readInt();
+    }
+
+    public static final Creator<AdjustMeasureCommand> CREATOR = new Creator<AdjustMeasureCommand>() {
+        @Override
+        public AdjustMeasureCommand createFromParcel(Parcel in) {
+            return new AdjustMeasureCommand(in);
+        }
+
+        @Override
+        public AdjustMeasureCommand[] newArray(int size) {
+            return new AdjustMeasureCommand[size];
+        }
+    };
 
     public Facsimile getFacsimile() {
         return facsimile;
@@ -89,5 +110,20 @@ public class AdjustMeasureCommand implements ICommand, Serializable {
             return facsimile.pages.indexOf(measure.page);
         }
         return -1;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeParcelable(facsimile, i);
+        parcel.writeParcelable(measure, i);
+        parcel.writeString(manualSequenceNumber);
+        parcel.writeString(rest);
+        parcel.writeString(oldManualSequenceNumber);
+        parcel.writeInt(oldRest);
     }
 }

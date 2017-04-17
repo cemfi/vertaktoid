@@ -20,6 +20,7 @@ public class Facsimile implements Parcelable {
     public ArrayList<Page> pages;
     public ArrayList<Movement> movements;
     public File dir;
+    public enum AnnotationType {ORTHOGONAL_BOX, ORIENTED_BOX, POLYGON}
     public AnnotationType nextAnnotationsType = AnnotationType.ORTHOGONAL_BOX;
 
     protected Facsimile(Parcel in) {
@@ -49,8 +50,6 @@ public class Facsimile implements Parcelable {
         parcel.writeTypedList(pages);
         parcel.writeTypedList(movements);
     }
-
-    public enum AnnotationType {ORTHOGONAL_BOX, ORIENTED_BOX, POLYGON}
 
     /**
      * Standard constructor
@@ -180,7 +179,7 @@ public class Facsimile implements Parcelable {
         }
         Collections.sort(images, FILE_NAME_COMPARATOR); // make alphabetical order
 
-        File meiFile = new File(dir.getAbsolutePath() + "/" + Vertaktoid.DEFAULT_MEI_FILENAME);
+        File meiFile = new File(dir.getAbsolutePath() + "/" + dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
         if(meiFile.exists()) {
             pages.clear();
             movements.clear();
@@ -210,7 +209,7 @@ public class Facsimile implements Parcelable {
      * @return true if the MEI output was properly saved
      */
     public boolean saveToDisk() {
-        File meiFile = new File(dir.getAbsolutePath() + "/" + Vertaktoid.DEFAULT_MEI_FILENAME);
+        File meiFile = new File(dir.getAbsolutePath() + "/" + dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
         return MEIHelper.writeMEI(meiFile, this);
 
     }
@@ -241,9 +240,9 @@ public class Facsimile implements Parcelable {
      * @param measures measures in system
      * @return positions in the form {top, bottom}
      */
-    private float[] getSystemPositions(ArrayList<Measure> measures){
-        float top = Float.MAX_VALUE;
-        float bottom = Float.MIN_VALUE;
+    private double[] getSystemPositions(ArrayList<Measure> measures){
+        double top = Double.MAX_VALUE;
+        double bottom = Double.MIN_VALUE;
         for(Measure measure : measures) {
             if(top > measure.zone.getBoundTop()) {
                 top = measure.zone.getBoundTop();
@@ -252,7 +251,7 @@ public class Facsimile implements Parcelable {
                 bottom = measure.zone.getBoundBottom();
             }
         }
-        return new float[]{top, bottom};
+        return new double[]{top, bottom};
     }
 
     /**
@@ -282,8 +281,8 @@ public class Facsimile implements Parcelable {
                 }
 
                 if(nexMeasure != null) {
-                    float[] systemPositions = getSystemPositions(predecessors);
-                    float yIsectFactor = (Math.min(systemPositions[1], nexMeasure.zone.getBoundBottom()) - Math.max(systemPositions[0], nexMeasure.zone.getBoundTop())) /
+                    double[] systemPositions = getSystemPositions(predecessors);
+                    double yIsectFactor = (Math.min(systemPositions[1], nexMeasure.zone.getBoundBottom()) - Math.max(systemPositions[0], nexMeasure.zone.getBoundTop())) /
                             Math.min(systemPositions[1] - systemPositions[0], nexMeasure.zone.getBoundBottom()  - nexMeasure.zone.getBoundTop());
                     if (yIsectFactor < 0.5) {
                         curMeasure.lastAtSystem = true;

@@ -1,5 +1,8 @@
 package zemfi.de.vertaktoid.commands;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -11,7 +14,7 @@ import zemfi.de.vertaktoid.model.Movement;
 import zemfi.de.vertaktoid.model.Page;
 
 
-public class CommandManager implements Serializable {
+public class CommandManager implements Parcelable {
     private int historyMaxSize = Vertaktoid.DEFAULT_UNDOREDO_STACK_SIZE;
     private SizedStack<ICommand> undoCommands;
     private SizedStack<ICommand> redoCommands;
@@ -20,6 +23,22 @@ public class CommandManager implements Serializable {
         undoCommands = new SizedStack<>(historyMaxSize);
         redoCommands = new SizedStack<>(historyMaxSize);
     }
+
+    protected CommandManager(Parcel in) {
+        historyMaxSize = in.readInt();
+    }
+
+    public static final Creator<CommandManager> CREATOR = new Creator<CommandManager>() {
+        @Override
+        public CommandManager createFromParcel(Parcel in) {
+            return new CommandManager(in);
+        }
+
+        @Override
+        public CommandManager[] newArray(int size) {
+            return new CommandManager[size];
+        }
+    };
 
     public int getUndoStackSize() {
         return undoCommands.size();
@@ -138,5 +157,15 @@ public class CommandManager implements Serializable {
         command.execute();
         undoCommands.push(command);
         redoCommands.clear();
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeInt(historyMaxSize);
     }
 }

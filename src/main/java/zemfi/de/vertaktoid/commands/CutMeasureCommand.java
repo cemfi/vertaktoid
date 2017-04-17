@@ -1,5 +1,8 @@
 package zemfi.de.vertaktoid.commands;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.Serializable;
 
 import zemfi.de.vertaktoid.commands.ICommand;
@@ -10,7 +13,7 @@ import zemfi.de.vertaktoid.model.Measure;
  * Created by eugen on 16.03.17.
  */
 
-public class CutMeasureCommand implements ICommand, Serializable {
+public class CutMeasureCommand implements ICommand, Parcelable {
     private Facsimile facsimile;
     private Measure oldMeasure;
     private Measure leftMeasure;
@@ -27,6 +30,25 @@ public class CutMeasureCommand implements ICommand, Serializable {
     public CutMeasureCommand() {
 
     }
+
+    protected CutMeasureCommand(Parcel in) {
+        facsimile = in.readParcelable(Facsimile.class.getClassLoader());
+        oldMeasure = in.readParcelable(Measure.class.getClassLoader());
+        leftMeasure = in.readParcelable(Measure.class.getClassLoader());
+        rightMeasure = in.readParcelable(Measure.class.getClassLoader());
+    }
+
+    public static final Creator<CutMeasureCommand> CREATOR = new Creator<CutMeasureCommand>() {
+        @Override
+        public CutMeasureCommand createFromParcel(Parcel in) {
+            return new CutMeasureCommand(in);
+        }
+
+        @Override
+        public CutMeasureCommand[] newArray(int size) {
+            return new CutMeasureCommand[size];
+        }
+    };
 
     public Facsimile getFacsimile() {
         return facsimile;
@@ -82,5 +104,18 @@ public class CutMeasureCommand implements ICommand, Serializable {
             return facsimile.pages.indexOf(oldMeasure.page);
         }
         return -1;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeParcelable(facsimile, i);
+        parcel.writeParcelable(oldMeasure, i);
+        parcel.writeParcelable(leftMeasure, i);
+        parcel.writeParcelable(rightMeasure, i);
     }
 }

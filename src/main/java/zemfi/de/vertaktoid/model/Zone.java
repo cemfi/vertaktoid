@@ -13,15 +13,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import zemfi.de.vertaktoid.helpers.RotatingCalipers;
+import zemfi.de.vertaktoid.helpers.Point2D;
 
 public class Zone implements Comparable<Zone>, Parcelable {
     public String zoneUuid = null;
     private Facsimile.AnnotationType annotationType;
-    private float boundLeft = Float.MAX_VALUE;
-    private float boundRight = Float.MIN_VALUE;
-    private float boundTop = Float.MIN_VALUE;
-    private float boundBottom = Float.MAX_VALUE;
-    private List<PointF> vertices;
+    private double boundLeft = Double.MAX_VALUE;
+    private double boundRight = Double.MIN_VALUE;
+    private double boundTop = Double.MIN_VALUE;
+    private double boundBottom = Double.MAX_VALUE;
+    private List<Point2D> vertices;
 
     public Zone() {
         vertices = new ArrayList<>();
@@ -35,11 +36,11 @@ public class Zone implements Comparable<Zone>, Parcelable {
 
     protected Zone(Parcel in) {
         zoneUuid = in.readString();
-        boundLeft = in.readFloat();
-        boundRight = in.readFloat();
-        boundTop = in.readFloat();
-        boundBottom = in.readFloat();
-        vertices = in.createTypedArrayList(PointF.CREATOR);
+        boundLeft = in.readDouble();
+        boundRight = in.readDouble();
+        boundTop = in.readDouble();
+        boundBottom = in.readDouble();
+        vertices = in.createTypedArrayList(Point2D.CREATOR);
     }
 
     public static final Creator<Zone> CREATOR = new Creator<Zone>() {
@@ -62,64 +63,64 @@ public class Zone implements Comparable<Zone>, Parcelable {
         this.annotationType = annotationType;
     }
 
-    public List<PointF> getVertices() {
+    public List<Point2D> getVertices() {
         return vertices;
     }
 
-    public void setVertices(List<PointF> vertices) {
+    public void setVertices(List<Point2D> vertices) {
         this.vertices = vertices;
         calculateBoundingBox();
     }
 
     public void convertToOrthogonalBox() {
         vertices.clear();
-        vertices.add(new PointF(boundLeft, boundTop));
-        vertices.add(new PointF(boundLeft, boundBottom));
-        vertices.add(new PointF(boundRight, boundBottom));
-        vertices.add(new PointF(boundRight, boundTop));
+        vertices.add(new Point2D(boundLeft, boundTop));
+        vertices.add(new Point2D(boundLeft, boundBottom));
+        vertices.add(new Point2D(boundRight, boundBottom));
+        vertices.add(new Point2D(boundRight, boundTop));
     }
 
     public void convertToOrientedBox() {
         convertToPolygon();
-        PointF[] minBoundingBox = RotatingCalipers.getMinimumBoundingRectangle(vertices);
-        vertices = new ArrayList<PointF>(Arrays.asList(minBoundingBox));
+        Point2D[] minBoundingBox = RotatingCalipers.getMinimumBoundingRectangle(vertices);
+        vertices = new ArrayList<Point2D>(Arrays.asList(minBoundingBox));
     }
 
     public void convertToPolygon() {
-        PointF[] verticesArray = new PointF[vertices.size()];
+        Point2D[] verticesArray = new Point2D[vertices.size()];
         for(int i = 0; i < vertices.size(); i++) {
             verticesArray[i] = vertices.get(i);
         }
-        Simplify<PointF> simplify = new Simplify<PointF>(new PointF[0],
-                new PointExtractor<PointF>() {
+        Simplify<Point2D> simplify = new Simplify<Point2D>(new Point2D[0],
+                new PointExtractor<Point2D>() {
                     @Override
-                    public double getX(PointF point) {
-                        return point.x;
+                    public double getX(Point2D point) {
+                        return point.x();
                     }
 
                     @Override
-                    public double getY(PointF point) {
-                        return point.y;
+                    public double getY(Point2D point) {
+                        return point.y();
                     }
                 });
 
-        PointF[] simplifiedVertices = simplify.simplify((PointF[]) verticesArray, 30f, true);
-        vertices = new ArrayList<PointF>(Arrays.asList(simplifiedVertices));
+        Point2D[] simplifiedVertices = simplify.simplify(verticesArray, 30f, true);
+        vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices));
     }
 
-    public float getBoundLeft() {
+    public double getBoundLeft() {
         return boundLeft;
     }
 
-    public float getBoundRight() {
+    public double getBoundRight() {
         return boundRight;
     }
 
-    public float getBoundTop() {
+    public double getBoundTop() {
         return boundTop;
     }
 
-    public float getBoundBottom() {
+    public double getBoundBottom() {
         return boundBottom;
     }
 
@@ -128,48 +129,20 @@ public class Zone implements Comparable<Zone>, Parcelable {
         boundRight = Float.MIN_VALUE;
         boundTop = Float.MAX_VALUE;
         boundBottom = Float.MIN_VALUE;
-        for(PointF vertex : vertices) {
-            if(boundLeft > vertex.x) {
-                boundLeft = vertex.x;
+        for(Point2D vertex : vertices) {
+            if(boundLeft > vertex.x()) {
+                boundLeft = vertex.x();
             }
-            if(boundRight < vertex.x) {
-                boundRight = vertex.x;
+            if(boundRight < vertex.x()) {
+                boundRight = vertex.x();
             }
-            if(boundTop > vertex.y) {
-                boundTop = vertex.y;
+            if(boundTop > vertex.y()) {
+                boundTop = vertex.y();
             }
-            if(boundBottom < vertex.y) {
-                boundBottom = vertex.y;
+            if(boundBottom < vertex.y()) {
+                boundBottom = vertex.y();
             }
         }
-    }
-
-    /**
-     * Checks if the measure contains a point.
-     * @param x The x coordinate of the giving point.
-     * @param y The y coordinate of the giving point.
-     * @return true if the point inside the measure is.
-     */
-    public boolean containsPoint(float x, float y) {
-        return x >= boundLeft && x <= boundRight && y >= boundTop && y <= boundBottom;
-    }
-
-    /**
-     * Checks if the measure contains a segment defined with two points.
-     * @param p1x The x coordinate of point 1.
-     * @param p1y The y coordinate of point 1.
-     * @param p2x the x coordinate of point 2.
-     * @param p2y The y coordinate of point 2.
-     * @return true if the segment inside the measure is.
-     */
-    public boolean containsSegment(float p1x, float p1y, float p2x, float p2y) {
-        boolean insideY = p1y >= boundTop && p2y >= boundTop && p1y <= boundBottom && p2y <= boundBottom;
-        if (!insideY) {
-            return false;
-        }
-        float smallerX = Math.min(p1x, p2x);
-        float largerX = Math.max(p1x, p2x);
-        return largerX > boundLeft && smallerX < boundRight;
     }
 
     @Override
@@ -183,7 +156,7 @@ public class Zone implements Comparable<Zone>, Parcelable {
         if (this.boundTop > zone.boundTop && this.boundLeft > zone.boundLeft) {
             return 1;
         }
-        float yIsectFactor = (Math.min(this.boundBottom, zone.boundBottom) - Math.max(this.boundTop, zone.boundTop)) /
+        double yIsectFactor = (Math.min(this.boundBottom, zone.boundBottom) - Math.max(this.boundTop, zone.boundTop)) /
                 Math.min(this.boundBottom - this.boundTop, zone.boundBottom - zone.boundTop);
         if (yIsectFactor < 0.5) {
             return (int) (zone.boundLeft - this.boundLeft);
@@ -199,10 +172,10 @@ public class Zone implements Comparable<Zone>, Parcelable {
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(zoneUuid);
-        parcel.writeFloat(boundLeft);
-        parcel.writeFloat(boundRight);
-        parcel.writeFloat(boundTop);
-        parcel.writeFloat(boundBottom);
+        parcel.writeDouble(boundLeft);
+        parcel.writeDouble(boundRight);
+        parcel.writeDouble(boundTop);
+        parcel.writeDouble(boundBottom);
         parcel.writeTypedList(vertices);
     }
 }

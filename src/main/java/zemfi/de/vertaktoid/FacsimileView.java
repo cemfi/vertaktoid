@@ -89,7 +89,7 @@ public class FacsimileView extends CoordinatorLayout {
         bundle.putInt("pageNumber", pageNumber.get());
         bundle.putInt("currentMovementNumber", currentMovementNumber);
         bundle.putInt("horOverlapping", horOverlapping);
-        bundle.putSerializable("history", commandManager);
+        bundle.putParcelable("history", commandManager);
         return bundle;
     }
 
@@ -109,7 +109,7 @@ public class FacsimileView extends CoordinatorLayout {
             currentMovementNumber = bundle.getInt("currentMovementNumber");
             horOverlapping = bundle.getInt("horOverlapping");
             //setPage(pageNumber.get());
-            commandManager = (CommandManager) bundle.getSerializable("history");
+            commandManager = (CommandManager) bundle.getParcelable("history");
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getName());
             HSLColorsGenerator.resetHueToDefault();

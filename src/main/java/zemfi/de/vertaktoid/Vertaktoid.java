@@ -10,7 +10,8 @@ import java.io.Serializable;
 
 public class Vertaktoid extends Application implements Serializable {
     // Default MEI file name with extension.
-    public final static String DEFAULT_MEI_FILENAME = "mei.mei";
+    //public final static String DEFAULT_MEI_FILENAME = "mei.mei";
+    public final static String DEFAULT_MEI_EXTENSION = ".mei";
     // Not found stub image file name.
     public final static String NOT_FOUND_STUBIMG = "facsimile404.png";
     // Default subfolder name.

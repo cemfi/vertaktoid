@@ -7,10 +7,13 @@ import java.util.Collections;
 import java.util.UUID;
 
 import android.graphics.BitmapFactory;
+import android.graphics.PointF;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import zemfi.de.vertaktoid.Vertaktoid;
+import zemfi.de.vertaktoid.helpers.Geometry;
+import zemfi.de.vertaktoid.helpers.Point2D;
 
 /**
  * Represents the single facsimile page. Contains reference to the image file.
@@ -82,30 +85,27 @@ public class Page implements Parcelable {
 
     /**
      * Gets a first measure at giving position (means the measure, that contains the giving point).
-     * @param x The x coordinate of point.
-     * @param y The y coordinate of point.
+     * @param point The target point.
      * @return The measure.
      */
-    public Measure getMeasureAt(float x, float y) {
+    public Measure getMeasureAt(Point2D point) {
         for (Measure measure : measures) {
-            if (measure.zone.containsPoint(x, y)) {
+            if (Geometry.polygonContainsPoint(measure.zone.getVertices(), point)) {
                 return measure;
             }
-
         }
         return null;
     }
 
     /**
      * Gets all measures at giving position.
-     * @param x The x coordinate of point.
-     * @param y The y coordinate of point.
+     * @param point The target point.
      * @return The list of measures.
      */
-    public ArrayList<Measure> getMeasuresAt(float x, float y) {
+    public ArrayList<Measure> getMeasuresAt(Point2D point) {
         ArrayList<Measure> result = new ArrayList<>();
         for (Measure measure : measures) {
-            if (measure.zone.containsPoint(x, y)) {
+            if (Geometry.polygonContainsPoint(measure.zone.getVertices(), point)) {
                 result.add(measure);
             }
 
@@ -113,14 +113,14 @@ public class Page implements Parcelable {
         return result;
     }
 
-    public ArrayList<Measure> getMeasuresAtSegment(float startx, float starty, float endx, float endy) {
-        ArrayList<Measure> toRemove = new ArrayList<>();
+    public ArrayList<Measure> getMeasuresAtSegment(Point2D start, Point2D end) {
+        ArrayList<Measure> result = new ArrayList<>();
         for(Measure measure : measures) {
-            if(measure.zone.containsSegment(startx, starty, endx, endy)) {
-                toRemove.add(measure);
+            if(Geometry.polygonContainsSegment(measure.zone.getVertices(), start, end)) {
+                result.add(measure);
             }
         }
-        return toRemove;
+        return result;
     }
 
     /**

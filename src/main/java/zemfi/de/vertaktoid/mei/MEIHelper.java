@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import nu.xom.*;
 import zemfi.de.vertaktoid.Vertaktoid;
+import zemfi.de.vertaktoid.helpers.Point2D;
 import zemfi.de.vertaktoid.model.*;
 
 /**
@@ -170,11 +171,11 @@ public class MEIHelper {
                 a = new Attribute("lry", "" + normalize(measure.zone.getBoundBottom(), page.imageHeight));
                 zone.addAttribute(a);
                 if(measure.zone.getAnnotationType() != Facsimile.AnnotationType.ORTHOGONAL_BOX) {
-                    for(PointF vertex : measure.zone.getVertices()) {
+                    for(Point2D vertex : measure.zone.getVertices()) {
                         Element point = new Element("point", Vertaktoid.MEI_NS);
-                        a = new Attribute("x","" + normalize(vertex.x, page.imageWidth));
+                        a = new Attribute("x","" + normalize(vertex.x(), page.imageWidth));
                         point.addAttribute(a);
-                        a = new Attribute("y","" + normalize(vertex.y, page.imageHeight));
+                        a = new Attribute("y","" + normalize(vertex.y(), page.imageHeight));
                         point.addAttribute(a);
                         zone.appendChild(point);
                     }
@@ -467,13 +468,13 @@ public class MEIHelper {
                 float uly = normalize(Float.parseFloat(zone.getAttributeValue("uly")), page.imageHeight);
                 float lrx = normalize(Float.parseFloat(zone.getAttributeValue("lrx")), page.imageWidth);
                 float lry = normalize(Float.parseFloat(zone.getAttributeValue("lry")), page.imageHeight);
-                List<PointF> vertices = new ArrayList<>();
+                List<Point2D> vertices = new ArrayList<>();
                 Elements points = zone.getChildElements("point", Vertaktoid.MEI_NS);
                 for(int l = 0; l < points.size(); l++) {
                     Element point = points.get(l);
                     float x = normalize(Float.parseFloat(point.getAttributeValue("x")), page.imageWidth);
                     float y = normalize(Float.parseFloat(point.getAttributeValue("y")), page.imageWidth);
-                    vertices.add(new PointF(x, y));
+                    vertices.add(new Point2D(x, y));
                 }
                 a = zone.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
                 if(a != null) {
@@ -499,10 +500,10 @@ public class MEIHelper {
                     }
                     else {
                         vertices.clear();
-                        vertices.add(new PointF(ulx, uly));
-                        vertices.add(new PointF(ulx, lry));
-                        vertices.add(new PointF(lrx, lry));
-                        vertices.add(new PointF(lrx, uly));
+                        vertices.add(new Point2D(ulx, uly));
+                        vertices.add(new Point2D(ulx, lry));
+                        vertices.add(new Point2D(lrx, lry));
+                        vertices.add(new Point2D(lrx, uly));
                         measure.zone.setVertices(vertices);
                         measure.zone.setAnnotationType(Facsimile.AnnotationType.ORTHOGONAL_BOX);
                     }
@@ -522,7 +523,7 @@ public class MEIHelper {
         return true;
     }
 
-    private static int normalize(float value, int max) {
+    private static long normalize(double value, long max) {
         if(value <= 0) return 0;
         if(value >= max) return max;
         return Math.round(value);

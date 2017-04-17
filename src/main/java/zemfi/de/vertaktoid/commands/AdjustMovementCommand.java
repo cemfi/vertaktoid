@@ -1,5 +1,8 @@
 package zemfi.de.vertaktoid.commands;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -8,7 +11,7 @@ import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
 
-public class AdjustMovementCommand implements ICommand, Serializable {
+public class AdjustMovementCommand implements ICommand, Parcelable {
     private Measure targetMeasure;
     private ArrayList<Measure> affectedMeasures;
     private Facsimile facsimile;
@@ -43,6 +46,32 @@ public class AdjustMovementCommand implements ICommand, Serializable {
         }
 
     }
+
+    protected AdjustMovementCommand(Parcel in) {
+        targetMeasure = in.readParcelable(Measure.class.getClassLoader());
+        affectedMeasures = in.createTypedArrayList(Measure.CREATOR);
+        facsimile = in.readParcelable(Facsimile.class.getClassLoader());
+        optionDef = in.readString();
+        optionElse = in.readString();
+        userOption = in.readString();
+        newLabel = in.readString();
+        oldLabel = in.readString();
+        targetMovement = in.readParcelable(Movement.class.getClassLoader());
+        oldMovement = in.readParcelable(Movement.class.getClassLoader());
+        oldMovementIndex = in.readInt();
+    }
+
+    public static final Creator<AdjustMovementCommand> CREATOR = new Creator<AdjustMovementCommand>() {
+        @Override
+        public AdjustMovementCommand createFromParcel(Parcel in) {
+            return new AdjustMovementCommand(in);
+        }
+
+        @Override
+        public AdjustMovementCommand[] newArray(int size) {
+            return new AdjustMovementCommand[size];
+        }
+    };
 
     public String getNewLabel() {
         return newLabel;
@@ -177,5 +206,25 @@ public class AdjustMovementCommand implements ICommand, Serializable {
         } else {
             return -1;
         }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeParcelable(targetMeasure, i);
+        parcel.writeTypedList(affectedMeasures);
+        parcel.writeParcelable(facsimile, i);
+        parcel.writeString(optionDef);
+        parcel.writeString(optionElse);
+        parcel.writeString(userOption);
+        parcel.writeString(newLabel);
+        parcel.writeString(oldLabel);
+        parcel.writeParcelable(targetMovement, i);
+        parcel.writeParcelable(oldMovement, i);
+        parcel.writeInt(oldMovementIndex);
     }
 }

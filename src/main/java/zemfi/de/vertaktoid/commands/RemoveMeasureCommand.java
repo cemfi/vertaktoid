@@ -1,12 +1,15 @@
 package zemfi.de.vertaktoid.commands;
 
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.io.Serializable;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 
 
-public class RemoveMeasureCommand implements ICommand, Serializable {
+public class RemoveMeasureCommand implements ICommand, Parcelable {
     private Measure measure;
     private Facsimile facsimile;
 
@@ -18,6 +21,23 @@ public class RemoveMeasureCommand implements ICommand, Serializable {
     public RemoveMeasureCommand() {
 
     }
+
+    protected RemoveMeasureCommand(Parcel in) {
+        measure = in.readParcelable(Measure.class.getClassLoader());
+        facsimile = in.readParcelable(Facsimile.class.getClassLoader());
+    }
+
+    public static final Creator<RemoveMeasureCommand> CREATOR = new Creator<RemoveMeasureCommand>() {
+        @Override
+        public RemoveMeasureCommand createFromParcel(Parcel in) {
+            return new RemoveMeasureCommand(in);
+        }
+
+        @Override
+        public RemoveMeasureCommand[] newArray(int size) {
+            return new RemoveMeasureCommand[size];
+        }
+    };
 
     public Measure getMeasure() {
         return measure;
@@ -54,5 +74,16 @@ public class RemoveMeasureCommand implements ICommand, Serializable {
             return facsimile.pages.indexOf(measure.page);
         }
         return -1;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeParcelable(measure, i);
+        parcel.writeParcelable(facsimile, i);
     }
 }
