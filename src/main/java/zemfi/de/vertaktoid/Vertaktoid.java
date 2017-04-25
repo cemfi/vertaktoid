@@ -3,6 +3,7 @@ package zemfi.de.vertaktoid;
 import android.app.Application;
 
 import java.io.Serializable;
+import android.content.res.Resources;
 
 /**
  * Application class containing some default strings.
@@ -29,5 +30,12 @@ public class Vertaktoid extends Application implements Serializable {
 
     public void onCreate() {
         super.onCreate();
+        defLandscapeWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        defLandscapeHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     }
+
+    public static int defLandscapeWidth = 2560;
+    public static int defLandscapeHeight = 1600;
+    public static final int MIN_DPI = 80;
+    public static int defBitmapResScaleFactor = 1;
 }

@@ -47,6 +47,7 @@ public class CustomPagerAdapter extends PagerAdapter {
         //pageView.recycle();
         cashedViews.remove(pageView);
         container.removeView(pageView);
+        pageView = null;
     }
 
     @Override

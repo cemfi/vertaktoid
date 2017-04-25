@@ -1,16 +1,18 @@
 package zemfi.de.vertaktoid.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.io.File;
 import java.util.Collections;
 import java.util.UUID;
 
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.PointF;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.davemorrissey.labs.subscaleview.ImageSource;
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.helpers.Geometry;
 import zemfi.de.vertaktoid.helpers.Point2D;
@@ -34,6 +36,8 @@ public class Page implements Parcelable {
     // Image dimensions.
     public int imageWidth;
     public int imageHeight;
+
+    private int inSampleSize = 1;
 
     /**
      * The constructor.
@@ -62,6 +66,11 @@ public class Page implements Parcelable {
         graphicUuid = in.readString();
         imageWidth = in.readInt();
         imageHeight = in.readInt();
+        inSampleSize = in.readInt();
+    }
+
+    public int getInSampleSize() {
+        return inSampleSize;
     }
 
     public static final Creator<Page> CREATOR = new Creator<Page>() {
@@ -116,7 +125,7 @@ public class Page implements Parcelable {
     public ArrayList<Measure> getMeasuresAtSegment(Point2D start, Point2D end) {
         ArrayList<Measure> result = new ArrayList<>();
         for(Measure measure : measures) {
-            if(Geometry.polygonContainsSegment(measure.zone.getVertices(), start, end)) {
+            if(Geometry.segmentIntersectsPolygon(measure.zone.getVertices(), start, end)) {
                 result.add(measure);
             }
         }
@@ -142,6 +151,22 @@ public class Page implements Parcelable {
         }
     }
 
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        int inSampleSize = 1;
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+
+        if(height > reqHeight || width > reqWidth) {
+             while ((height / inSampleSize) >= reqHeight &&
+                     (width / inSampleSize) >= reqWidth) {
+                 inSampleSize *= 2;
+             }
+
+        }
+
+        return inSampleSize;
+    }
+
     /**
      * Read the dimensions from image file.
      */
@@ -159,6 +184,16 @@ public class Page implements Parcelable {
             imageHeight = 0;
             imageWidth = 0;
         }
+        inSampleSize = calculateInSampleSize(options,
+                Vertaktoid.defLandscapeWidth * Vertaktoid.defBitmapResScaleFactor,
+                Vertaktoid.defLandscapeHeight * Vertaktoid.defBitmapResScaleFactor);
+    }
+
+    public ImageSource getImage() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = false;
+        options.inSampleSize = inSampleSize;
+        return ImageSource.bitmap(BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options));
     }
 
     @Override
@@ -174,5 +209,6 @@ public class Page implements Parcelable {
         parcel.writeString(graphicUuid);
         parcel.writeInt(imageWidth);
         parcel.writeInt(imageHeight);
+        parcel.writeInt(inSampleSize);
     }
 }

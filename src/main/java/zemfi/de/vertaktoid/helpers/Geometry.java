@@ -1,7 +1,5 @@
 package zemfi.de.vertaktoid.helpers;
 
-import com.google.common.collect.Lists;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,24 +58,100 @@ public class Geometry {
         return result;
     }
 
-    public static boolean polygonContainsSegment(List<Point2D> vertices, Point2D first, Point2D second) {
-        int i;
-        int j;
-        boolean includesFirst = false;
-        boolean includesSecond = false;
-        for (i = 0, j = vertices.size() - 1; i < vertices.size(); j = i++) {
-            if ((vertices.get(i).y() > first.y()) != (vertices.get(j).y() > first.y()) &&
-                    (first.x() < (vertices.get(j).x() - vertices.get(i).x()) * (first.y() - vertices.get(i).y()) /
-                            (vertices.get(j).y()-vertices.get(i).y()) + vertices.get(i).x())) {
-                includesFirst = !includesFirst;
-            }
-            if ((vertices.get(i).y() > second.y()) != (vertices.get(j).y() > second.y()) &&
-                    (second.x() < (vertices.get(j).x() - vertices.get(i).x()) * (second.y() - vertices.get(i).y()) /
-                            (vertices.get(j).y()-vertices.get(i).y()) + vertices.get(i).x())) {
-                includesSecond = !includesSecond;
+    public static Point2D lineIntersectSegment(Point2D sp1, Point2D sp2, Point2D lp1, Point2D lp2) {
+        Point2D intersection = linesIntersection(sp1, sp2, lp1, lp2);
+        if((Math.min(sp1.x(), sp2.x()) <= intersection.x() &&  Math.max(sp1.x(), sp2.x()) >= intersection.x()) &&
+                (Math.min(sp1.y(), sp2.y()) <= intersection.y() &&  Math.max(sp1.y(), sp2.y()) >= intersection.y())) {
+            return intersection;
+        }
+        return null;
+    }
+
+    public static Point2D segmentsIntersection(Point2D s1p1, Point2D s1p2, Point2D s2p1, Point2D s2p2) {
+        Point2D intersection = linesIntersection(s1p1, s1p2, s2p1, s2p2);
+        if(intersection == null) {
+            return null;
+        }
+        if((Math.min(s1p1.x(), s1p2.x()) <= intersection.x() &&  Math.max(s1p1.x(), s1p2.x()) >= intersection.x()) &&
+                (Math.min(s2p1.x(), s2p2.x()) <= intersection.x() &&  Math.max(s2p1.x(), s2p2.x()) >= intersection.x()) &&
+                (Math.min(s1p1.y(), s1p2.y()) <= intersection.y() &&  Math.max(s1p1.y(), s1p2.y()) >= intersection.y()) &&
+                (Math.min(s2p1.y(), s2p2.y()) <= intersection.y() &&  Math.max(s2p1.y(), s2p2.y()) >= intersection.y())) {
+            return intersection;
+        }
+        return null;
+    }
+
+    public static Point2D linesIntersection(Point2D l1p1, Point2D l1p2, Point2D l2p1, Point2D l2p2) {
+        if(l1p1.x() == l1p2.x() || l2p1.x() == l2p2.x()) {
+            if(l1p1.x() == l1p2.x() && l2p1.x() == l2p2.x()) {
+                if (l1p1.x() != l2p1.x()) {
+                    return null;
+                } else {
+                    if(Math.min(l1p1.y(), l1p2.y()) > Math.max(l2p1.y(), l2p2.y()) ||
+                            Math.max(l1p1.y(), l1p2.y()) < Math.min(l2p1.y(), l2p2.y())) {
+                        return null;
+                    } else {
+                        if(Math.min(l2p1.y(), l2p2.y()) <= Math.min(l1p1.y(), l1p2.y())) {
+                            return new Point2D(l1p1.x(), Math.min(l1p1.y(), l1p2.y()));
+                        } else {
+                            return new Point2D(l1p1.x(), Math.min(l2p1.y(), l2p2.y()));
+                        }
+                    }
+                }
+            } else {
+                if(l1p1.x() == l1p2.x()) {
+                    double a2 = (l2p2.y() - l2p1.y()) / (l2p2.x() - l2p1.x());
+                    double b2 = l2p1.y() - a2 * l2p1.x();
+                    double interX = l1p1.x();
+                    double interY = interX * a2 + b2;
+                    return new Point2D(interX, interY);
+
+                } else {
+                    double a1 = (l1p2.y() - l1p1.y()) / (l1p2.x() - l1p1.x());
+                    double b1 = l1p1.y() - a1 * l1p1.x();
+                    double interX = l2p1.x();
+                    double interY = interX * a1 + b1;
+                    return new Point2D(interX, interY);
+                }
             }
         }
-        return includesFirst && includesSecond;
+
+        double a1 = (l1p2.y() - l1p1.y()) / (l1p2.x() - l1p1.x());
+        double b1 = l1p1.y() - a1 * l1p1.x();
+        double a2 = (l2p2.y() - l2p1.y()) / (l2p2.x() - l2p1.x());
+        double b2 = l2p1.y() - a2 * l2p1.x();
+
+        if(a1 == a2) {
+            if(b1 == b2) {
+                if(Math.min(l1p1.x(), l1p2.x()) > Math.max(l2p1.x(), l2p2.x()) ||
+                        Math.max(l1p1.x(), l1p2.x()) < Math.min(l2p1.x(), l2p2.x())) {
+                    return null;
+                } else {
+                    if(Math.min(l2p1.x(), l2p2.x()) <= Math.min(l1p1.x(), l1p2.x())) {
+                        return new Point2D(Math.min(l1p1.x(), l1p2.x()), l1p1.y());
+                    } else {
+                        return new Point2D(Math.min(l2p1.x(), l2p2.x()), l1p1.y());
+                    }
+                }
+            } else {
+                return null;
+            }
+        }
+        double interX = (b2 - b1) / (a1 - a2);
+        double interY = interX * a1 + b1;
+        return new Point2D(interX, interY);
+    }
+
+    public static boolean segmentIntersectsPolygon(List<Point2D> vertices, Point2D first, Point2D second) {
+        for(int i = 1; i < vertices.size(); i++) {
+            if(segmentsIntersection(vertices.get(i-1), vertices.get(i), first, second) != null) {
+                return true;
+            }
+        }
+        if(segmentsIntersection(vertices.get(vertices.size() - 1), vertices.get(0), first, second) != null) {
+            return true;
+        }
+        return false;
     }
 
     /**

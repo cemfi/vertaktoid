@@ -1,6 +1,5 @@
 package zemfi.de.vertaktoid.mei;
 
-import android.graphics.PointF;
 import android.util.Log;
 
 import java.io.File;
@@ -162,20 +161,26 @@ public class MEIHelper {
                 zone.addAttribute(a);
                 a = new Attribute("type", "measure");
                 zone.addAttribute(a);
-                a = new Attribute("ulx", "" + normalize(measure.zone.getBoundLeft(), page.imageWidth));
+                a = new Attribute("ulx", "" + toSourceCoords(measure.zone.getBoundLeft(), page.getInSampleSize(),
+                        page.imageWidth * page.getInSampleSize()));
                 zone.addAttribute(a);
-                a = new Attribute("uly", "" + normalize(measure.zone.getBoundTop(), page.imageHeight));
+                a = new Attribute("uly", "" + toSourceCoords(measure.zone.getBoundTop(), page.getInSampleSize(),
+                        page.imageHeight * page.getInSampleSize()));
                 zone.addAttribute(a);
-                a = new Attribute("lrx", "" + normalize(measure.zone.getBoundRight(), page.imageWidth));
+                a = new Attribute("lrx", "" + toSourceCoords(measure.zone.getBoundRight(), page.getInSampleSize(),
+                        page.imageWidth * page.getInSampleSize()));
                 zone.addAttribute(a);
-                a = new Attribute("lry", "" + normalize(measure.zone.getBoundBottom(), page.imageHeight));
+                a = new Attribute("lry", "" + toSourceCoords(measure.zone.getBoundBottom(), page.getInSampleSize(),
+                        page.imageHeight * page.getInSampleSize()));
                 zone.addAttribute(a);
                 if(measure.zone.getAnnotationType() != Facsimile.AnnotationType.ORTHOGONAL_BOX) {
                     for(Point2D vertex : measure.zone.getVertices()) {
                         Element point = new Element("point", Vertaktoid.MEI_NS);
-                        a = new Attribute("x","" + normalize(vertex.x(), page.imageWidth));
+                        a = new Attribute("x","" + toSourceCoords(vertex.x(), page.getInSampleSize(),
+                                page.imageWidth * page.getInSampleSize()));
                         point.addAttribute(a);
-                        a = new Attribute("y","" + normalize(vertex.y(), page.imageHeight));
+                        a = new Attribute("y","" + toSourceCoords(vertex.y(), page.getInSampleSize(),
+                                page.imageHeight * page.getInSampleSize()));
                         point.addAttribute(a);
                         zone.appendChild(point);
                     }
@@ -464,16 +469,22 @@ public class MEIHelper {
 
             for(int j = 0; j < zones.size(); j++) {
                 Element zone = zones.get(j);
-                float ulx = normalize(Float.parseFloat(zone.getAttributeValue("ulx")), page.imageWidth);
-                float uly = normalize(Float.parseFloat(zone.getAttributeValue("uly")), page.imageHeight);
-                float lrx = normalize(Float.parseFloat(zone.getAttributeValue("lrx")), page.imageWidth);
-                float lry = normalize(Float.parseFloat(zone.getAttributeValue("lry")), page.imageHeight);
+                float ulx = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("ulx")), page.getInSampleSize(),
+                        page.imageWidth / page.getInSampleSize());
+                float uly = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("uly")), page.getInSampleSize(),
+                        page.imageHeight / page.getInSampleSize() );
+                float lrx = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("lrx")), page.getInSampleSize(),
+                        page.imageWidth / page.getInSampleSize());
+                float lry = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("lry")), page.getInSampleSize(),
+                        page.imageHeight / page.getInSampleSize());
                 List<Point2D> vertices = new ArrayList<>();
                 Elements points = zone.getChildElements("point", Vertaktoid.MEI_NS);
                 for(int l = 0; l < points.size(); l++) {
                     Element point = points.get(l);
-                    float x = normalize(Float.parseFloat(point.getAttributeValue("x")), page.imageWidth);
-                    float y = normalize(Float.parseFloat(point.getAttributeValue("y")), page.imageWidth);
+                    float x = fromSourceCoords(Float.parseFloat(point.getAttributeValue("x")), page.getInSampleSize(),
+                            page.imageWidth / page.getInSampleSize());
+                    float y = fromSourceCoords(Float.parseFloat(point.getAttributeValue("y")), page.getInSampleSize(),
+                            page.imageHeight / page.getInSampleSize());
                     vertices.add(new Point2D(x, y));
                 }
                 a = zone.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
@@ -523,10 +534,18 @@ public class MEIHelper {
         return true;
     }
 
-    private static long normalize(double value, long max) {
-        if(value <= 0) return 0;
-        if(value >= max) return max;
-        return Math.round(value);
+    private static long toSourceCoords(double value, int inSampleSize, long max) {
+        long result = Math.round(value * inSampleSize);
+        if(result <= 0) return 0;
+        if(result >= max) return max;
+        return result;
+    }
+
+    private static long fromSourceCoords(double value, int inSampleSize, long max) {
+        long result = Math.round(value / inSampleSize);
+        if(result <= 0) return 0;
+        if(result >= max) return max;
+        return result;
     }
 
     private static Measure findMeasureFor(String uuidZone, ArrayList<Movement> movements) {

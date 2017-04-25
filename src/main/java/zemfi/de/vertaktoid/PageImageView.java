@@ -42,7 +42,6 @@ public class PageImageView extends SubsamplingScaleImageView {
 
     private final FacsimileView facsimileView;
     private Facsimile facsimile;
-    private final PageView pageView;
     private final Page page;
     private Path boundingPath;
     private Path verticesPath;
@@ -75,8 +74,8 @@ public class PageImageView extends SubsamplingScaleImageView {
         super(pageView.getContext());
         this.facsimile = facsimile;
         this.facsimileView = facsimileView;
-        this.pageView = pageView;
         this.page = page;
+        fillColor = new HSLColor();
         init();
     }
 
@@ -85,7 +84,7 @@ public class PageImageView extends SubsamplingScaleImageView {
      */
     public void init() {
         setImage(findImageForPage());
-        this.setMinimumDpi(80);
+        this.setMinimumDpi(Vertaktoid.MIN_DPI);
         grayPath = new Path();
         boundingPath = new Path();
         verticesPath = new Path();
@@ -155,7 +154,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             return ImageSource.uri(Uri.fromFile(stubImg));
         }
         else {
-            return ImageSource.uri(Uri.fromFile(page.imageFile));
+            return page.getImage();
         }
     }
 
@@ -188,9 +187,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             return;
         }
 
-        int i;
-
-        for (i = 0; i < page.measures.size(); i++) {
+        for (int i = 0; i < page.measures.size(); i++) {
             boundingPath.reset();
             verticesPath.reset();
             Measure measure = page.measures.get(i);
@@ -227,7 +224,6 @@ public class PageImageView extends SubsamplingScaleImageView {
             }
             verticesPath.close();
             drawPaint.setStyle(Paint.Style.FILL);
-            fillColor = new HSLColor();
             fillColor.a = 0.1f;
             fillColor.h = facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement)).h;
@@ -272,7 +268,7 @@ public class PageImageView extends SubsamplingScaleImageView {
         }
 
         verticesPath.reset();
-        for (i = 0; i < pointPath.size(); i++) {
+        for (int i = 0; i < pointPath.size(); i++) {
             PointF bitmapCoord = pointPath.get(i).getPointF();
             PointF touchCoord = sourceToViewCoord(bitmapCoord);
             if (i == 0) {
@@ -314,10 +310,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             case MotionEvent.ACTION_DOWN:
                 switch (facsimileView.nextAction) {
                     case ERASE:
-                        if(measures.size() > 0) {
-                            facsimileView.commandManager.processRemoveMeasuresCommand(measures, facsimile);
-                            invalidate();
-                        }
+                        eraseMeasures(measures);
                         break;
                     case CUT:
                         if (measure == null) {
@@ -342,6 +335,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                                     verticesRight.add(new Point2D(measure.zone.getBoundRight(), measure.zone.getBoundTop()));
                                     break;
                                 case ORIENTED_BOX:
+
                                     List<Point2D[]> horSegments = Geometry.orientedSegments(measure.zone.getVertices(), Geometry.Orientation.HORIZONTAL);
                                     // for in 45 degrees rotated rectangles
                                     while(horSegments.size() > 2) {
@@ -425,12 +419,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             case MotionEvent.ACTION_MOVE:
                 switch (facsimileView.nextAction) {
                     case ERASE:
-                        ArrayList<Measure> toRemove = page.getMeasuresAtSegment
-                                (bitmapCoord, lastPoint);
-                        if(toRemove.size() > 0) {
-                            facsimileView.commandManager.processRemoveMeasuresCommand(toRemove, facsimile);
-                            invalidate();
-                        }
+                        eraseMeasures(measures);
                         break;
                     case DRAW:
                         if (!facsimileView.isFirstPoint) {
@@ -446,23 +435,12 @@ public class PageImageView extends SubsamplingScaleImageView {
             case MotionEvent.ACTION_UP:
                 switch (facsimileView.nextAction) {
                     case ERASE:
-                        if (measures.size() > 0) {
-                            facsimileView.commandManager.processRemoveMeasuresCommand(measures, facsimile);
-                            invalidate();
-                        }
+                        eraseMeasures(measures);
                         if(facsimileView.currentMovementNumber >= facsimile.movements.size()) {
                             facsimileView.currentMovementNumber = facsimile.movements.get(facsimile.movements.size() - 1).number;
                         }
                         break;
                     case ADJUST_MOVEMENT:
-                        final ArrayList<Measure> measuresToMove = new ArrayList<>();
-                        if(measure != null) {
-                            Movement currentMov = measure.movement;
-                            for (int i = currentMov.measures.indexOf(measure); i < currentMov.measures.size(); i++) {
-                                measuresToMove.add(currentMov.measures.get(i));
-                            }
-                        }
-
                         final Dialog editMODialog = new Dialog(getContext());
                         window = editMODialog.getWindow();
                         wlp = window.getAttributes();
@@ -602,4 +580,11 @@ public class PageImageView extends SubsamplingScaleImageView {
         facsimileView.needToSave = true;
         return true;
     } // end onTouchEvent
+
+    private void eraseMeasures(ArrayList<Measure> measures){
+        if(measures.size() > 0) {
+            facsimileView.commandManager.processRemoveMeasuresCommand(measures, facsimile);
+            invalidate();
+        }
+    }
 }
