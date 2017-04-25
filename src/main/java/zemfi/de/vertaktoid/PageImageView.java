@@ -250,16 +250,17 @@ public class PageImageView extends SubsamplingScaleImageView {
             largeBoldText.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
             smallBoldText.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
 
-            float leftTextBox = (topLeft.x + bottomRight.x) / 2 - measureNameRect.centerX() - 5;
-            float topTextBox = topLeft.y + 50 - measureNameRect.height();
-            float rightTextBox = (topLeft.x + bottomRight.x) / 2 + measureNameRect.centerX() + 5;
-            float bottomTextBox = topLeft.y + 50;
+            Point2D centroid = Geometry.centroid2D(measure.zone.getVertices());
+            PointF centroidF = sourceToViewCoord((float) centroid.x(), (float) centroid.y());
+            float leftTextBox = centroidF.x - measureNameRect.width() - 5;
+            float topTextBox = centroidF.y - 20 - measureNameRect.height() /2 ;
+            float rightTextBox = centroidF.x + measureNameRect.width() + 5;
+            float bottomTextBox = centroidF.y - 15 + measureNameRect.height() / 2;
 
             if(measure.manualSequenceNumber != null) {
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, drawPaint);
             }
-            Point2D centroid = Geometry.centroid2D(measure.zone.getVertices());
-            PointF centroidF = sourceToViewCoord((float) centroid.x(), (float) centroid.y());
+
             canvas.drawText(measureLabel, centroidF.x - measureNameRect.centerX(), centroidF.y, largeBoldText);
             if(measure.movement.measures.indexOf(measure) == 0) {
                 canvas.drawText(movementLabel, centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallBoldText);

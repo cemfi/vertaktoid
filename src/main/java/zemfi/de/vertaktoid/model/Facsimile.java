@@ -21,7 +21,7 @@ public class Facsimile implements Parcelable {
     public ArrayList<Movement> movements;
     public File dir;
     public enum AnnotationType {ORTHOGONAL_BOX, ORIENTED_BOX, POLYGON}
-    public AnnotationType nextAnnotationsType = AnnotationType.ORIENTED_BOX;
+    public AnnotationType nextAnnotationsType = AnnotationType.ORTHOGONAL_BOX;
 
     protected Facsimile(Parcel in) {
         pages = in.createTypedArrayList(Page.CREATOR);
