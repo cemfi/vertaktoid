@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import zemfi.de.vertaktoid.mei.MEIHelper;
 import zemfi.de.vertaktoid.Vertaktoid;
@@ -21,7 +22,7 @@ public class Facsimile implements Parcelable {
     public ArrayList<Movement> movements;
     public File dir;
     public enum AnnotationType {ORTHOGONAL_BOX, ORIENTED_BOX, POLYGON}
-    public AnnotationType nextAnnotationsType = AnnotationType.ORTHOGONAL_BOX;
+    public AnnotationType nextAnnotationsType = AnnotationType.ORIENTED_BOX;
 
     protected Facsimile(Parcel in) {
         pages = in.createTypedArrayList(Page.CREATOR);
@@ -132,7 +133,7 @@ public class Facsimile implements Parcelable {
      * Removes a list of measures from the corresponding movements and pages.
      * @param measures list of measures
      */
-    public void removeMeasures(ArrayList<Measure> measures) {
+    public void removeMeasures(List<Measure> measures) {
         for(Measure measure : measures) {
             measure.movement.removeMeasure(measure);
             measure.page.removeMeasure(measure);

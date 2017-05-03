@@ -12,9 +12,15 @@
             app:showAsAction="always" />
 
         <item
-            android:id="@+id/action_cut"
-            android:title="Cut"
-            android:icon="@drawable/cut_off"
+            android:id="@+id/action_orthogonal_cut"
+            android:title="Orhtogonal Cut"
+            android:icon="@drawable/orthogonal_cut_off"
+            app:showAsAction="always" />
+
+        <item
+            android:id="@+id/action_precise_cut"
+            android:title="Precise Cut"
+            android:icon="@drawable/precise_cut_off"
             app:showAsAction="always" />
 
         <item

@@ -4,17 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Geometry {
-    public enum Orientation {HORIZONTAL, VERTICAL}
+    public static enum Direction {HORIZONTAL, VERTICAL}
 
-    public static List<Point2D[]> orientedSegments(List<Point2D> vertices, Orientation orientation) {
+    public static List<Point2D[]> orientedSegments(List<Point2D> vertices, Direction direction) {
         List<Point2D[]> segments = new ArrayList<>();
         double localDelta = 0.0;
         for(int i = 0; i < vertices.size() - 1; i++) {
             Point2D p1 = vertices.get(i);
             Point2D p2 = vertices.get(i+1);
             localDelta = Math.abs(p2.x() - p1.x()) / Math.abs(p2.y() - p1.y());
-            if(localDelta < 1 && orientation == Orientation.VERTICAL ||
-                    localDelta >= 1 && orientation == Orientation.HORIZONTAL) {
+            if(localDelta < 1 && direction == Direction.VERTICAL ||
+                    localDelta >= 1 && direction == Direction.HORIZONTAL) {
                 Point2D[] segment = new Point2D[2];
                 segment[0] = p1;
                 segment[1] = p2;
@@ -24,8 +24,8 @@ public class Geometry {
         Point2D p1 = vertices.get(vertices.size()-1);
         Point2D p2 = vertices.get(0);
         localDelta = Math.abs(p2.x() - p1.x()) / Math.abs(p2.y() - p1.y());
-        if(localDelta < 1 && orientation == Orientation.VERTICAL ||
-                localDelta >= 1 && orientation == Orientation.HORIZONTAL) {
+        if(localDelta < 1 && direction == Direction.VERTICAL ||
+                localDelta >= 1 && direction == Direction.HORIZONTAL) {
             Point2D[] segment = new Point2D[2];
             segment[0] = p1;
             segment[1] = p2;
@@ -44,6 +44,17 @@ public class Geometry {
                 point.y() + k * (segment[1].x() - segment[0].x()));
     }
 
+    public static Point2D[] parallelLine(Point2D[] segment, Point2D point) {
+        Point2D[] result = new Point2D[2];
+        result[0] = point;
+        double a = (segment[1].y() - segment[0].y()) / (segment[1].x() - segment[0].x());
+        double b1 = segment[1].y() - a * segment[0].x();
+        double b2 = point.y() - point.x() * a;
+        double x2 = point.x() + 100;
+        result[1] = new Point2D(x2, a * x2 + b2);
+        return result;
+    }
+
     public static boolean polygonContainsPoint(List<Point2D> vertices, Point2D point) {
         int i;
         int j;
@@ -58,79 +69,79 @@ public class Geometry {
         return result;
     }
 
-    public static Point2D lineIntersectSegment(Point2D sp1, Point2D sp2, Point2D lp1, Point2D lp2) {
-        Point2D intersection = linesIntersection(sp1, sp2, lp1, lp2);
-        if((Math.min(sp1.x(), sp2.x()) <= intersection.x() &&  Math.max(sp1.x(), sp2.x()) >= intersection.x()) &&
-                (Math.min(sp1.y(), sp2.y()) <= intersection.y() &&  Math.max(sp1.y(), sp2.y()) >= intersection.y())) {
+    public static Point2D lineIntersectSegment(Point2D[] segment, Point2D[] line) {
+        Point2D intersection = linesIntersection(segment, line);
+        if((Math.min(segment[0].x(), segment[1].x()) <= intersection.x() &&  Math.max(segment[0].x(), segment[1].x()) >= intersection.x()) &&
+                (Math.min(segment[0].y(), segment[1].y()) <= intersection.y() &&  Math.max(segment[0].y(), segment[1].y()) >= intersection.y())) {
             return intersection;
         }
         return null;
     }
 
-    public static Point2D segmentsIntersection(Point2D s1p1, Point2D s1p2, Point2D s2p1, Point2D s2p2) {
-        Point2D intersection = linesIntersection(s1p1, s1p2, s2p1, s2p2);
+    public static Point2D segmentsIntersection(Point2D[] segment1, Point2D[] segment2) {
+        Point2D intersection = linesIntersection(segment1, segment2);
         if(intersection == null) {
             return null;
         }
-        if((Math.min(s1p1.x(), s1p2.x()) <= intersection.x() &&  Math.max(s1p1.x(), s1p2.x()) >= intersection.x()) &&
-                (Math.min(s2p1.x(), s2p2.x()) <= intersection.x() &&  Math.max(s2p1.x(), s2p2.x()) >= intersection.x()) &&
-                (Math.min(s1p1.y(), s1p2.y()) <= intersection.y() &&  Math.max(s1p1.y(), s1p2.y()) >= intersection.y()) &&
-                (Math.min(s2p1.y(), s2p2.y()) <= intersection.y() &&  Math.max(s2p1.y(), s2p2.y()) >= intersection.y())) {
+        if((Math.min(segment1[0].x(), segment1[1].x()) <= intersection.x() &&  Math.max(segment1[0].x(), segment1[1].x()) >= intersection.x()) &&
+                (Math.min(segment2[0].x(), segment2[1].x()) <= intersection.x() &&  Math.max(segment2[0].x(), segment2[1].x()) >= intersection.x()) &&
+                (Math.min(segment1[0].y(), segment1[1].y()) <= intersection.y() &&  Math.max(segment1[0].y(), segment1[1].y()) >= intersection.y()) &&
+                (Math.min(segment2[0].y(), segment2[1].y()) <= intersection.y() &&  Math.max(segment2[0].y(), segment2[1].y()) >= intersection.y())) {
             return intersection;
         }
         return null;
     }
 
-    public static Point2D linesIntersection(Point2D l1p1, Point2D l1p2, Point2D l2p1, Point2D l2p2) {
-        if(l1p1.x() == l1p2.x() || l2p1.x() == l2p2.x()) {
-            if(l1p1.x() == l1p2.x() && l2p1.x() == l2p2.x()) {
-                if (l1p1.x() != l2p1.x()) {
+    public static Point2D linesIntersection(Point2D[] line1, Point2D[] line2) {
+        if(line1[0].x() == line1[1].x() || line2[0].x() == line2[1].x()) {
+            if(line1[0].x() == line1[1].x() && line2[0].x() == line2[1].x()) {
+                if (line1[0].x() != line2[0].x()) {
                     return null;
                 } else {
-                    if(Math.min(l1p1.y(), l1p2.y()) > Math.max(l2p1.y(), l2p2.y()) ||
-                            Math.max(l1p1.y(), l1p2.y()) < Math.min(l2p1.y(), l2p2.y())) {
+                    if(Math.min(line1[0].y(), line1[1].y()) > Math.max(line2[0].y(), line2[1].y()) ||
+                            Math.max(line1[0].y(), line1[1].y()) < Math.min(line2[0].y(), line2[1].y())) {
                         return null;
                     } else {
-                        if(Math.min(l2p1.y(), l2p2.y()) <= Math.min(l1p1.y(), l1p2.y())) {
-                            return new Point2D(l1p1.x(), Math.min(l1p1.y(), l1p2.y()));
+                        if(Math.min(line2[0].y(), line2[1].y()) <= Math.min(line1[0].y(), line1[1].y())) {
+                            return new Point2D(line1[0].x(), Math.min(line1[0].y(), line1[1].y()));
                         } else {
-                            return new Point2D(l1p1.x(), Math.min(l2p1.y(), l2p2.y()));
+                            return new Point2D(line1[0].x(), Math.min(line2[0].y(), line2[1].y()));
                         }
                     }
                 }
             } else {
-                if(l1p1.x() == l1p2.x()) {
-                    double a2 = (l2p2.y() - l2p1.y()) / (l2p2.x() - l2p1.x());
-                    double b2 = l2p1.y() - a2 * l2p1.x();
-                    double interX = l1p1.x();
+                if(line1[0].x() == line1[1].x()) {
+                    double a2 = (line2[1].y() - line2[0].y()) / (line2[1].x() - line2[0].x());
+                    double b2 = line2[0].y() - a2 * line2[0].x();
+                    double interX = line1[0].x();
                     double interY = interX * a2 + b2;
                     return new Point2D(interX, interY);
 
                 } else {
-                    double a1 = (l1p2.y() - l1p1.y()) / (l1p2.x() - l1p1.x());
-                    double b1 = l1p1.y() - a1 * l1p1.x();
-                    double interX = l2p1.x();
+                    double a1 = (line1[1].y() - line1[0].y()) / (line1[1].x() - line1[0].x());
+                    double b1 = line1[0].y() - a1 * line1[0].x();
+                    double interX = line2[0].x();
                     double interY = interX * a1 + b1;
                     return new Point2D(interX, interY);
                 }
             }
         }
 
-        double a1 = (l1p2.y() - l1p1.y()) / (l1p2.x() - l1p1.x());
-        double b1 = l1p1.y() - a1 * l1p1.x();
-        double a2 = (l2p2.y() - l2p1.y()) / (l2p2.x() - l2p1.x());
-        double b2 = l2p1.y() - a2 * l2p1.x();
+        double a1 = (line1[1].y() - line1[0].y()) / (line1[1].x() - line1[0].x());
+        double b1 = line1[0].y() - a1 * line1[0].x();
+        double a2 = (line2[1].y() - line2[0].y()) / (line2[1].x() - line2[0].x());
+        double b2 = line2[0].y() - a2 * line2[0].x();
 
         if(a1 == a2) {
             if(b1 == b2) {
-                if(Math.min(l1p1.x(), l1p2.x()) > Math.max(l2p1.x(), l2p2.x()) ||
-                        Math.max(l1p1.x(), l1p2.x()) < Math.min(l2p1.x(), l2p2.x())) {
+                if(Math.min(line1[0].x(), line1[1].x()) > Math.max(line2[0].x(), line2[1].x()) ||
+                        Math.max(line1[0].x(), line1[1].x()) < Math.min(line2[0].x(), line2[1].x())) {
                     return null;
                 } else {
-                    if(Math.min(l2p1.x(), l2p2.x()) <= Math.min(l1p1.x(), l1p2.x())) {
-                        return new Point2D(Math.min(l1p1.x(), l1p2.x()), l1p1.y());
+                    if(Math.min(line2[0].x(), line2[1].x()) <= Math.min(line1[0].x(), line1[1].x())) {
+                        return new Point2D(Math.min(line1[0].x(), line1[1].x()), line1[0].y());
                     } else {
-                        return new Point2D(Math.min(l2p1.x(), l2p2.x()), l1p1.y());
+                        return new Point2D(Math.min(line2[0].x(), line2[1].x()), line1[0].y());
                     }
                 }
             } else {
@@ -142,13 +153,16 @@ public class Geometry {
         return new Point2D(interX, interY);
     }
 
-    public static boolean segmentIntersectsPolygon(List<Point2D> vertices, Point2D first, Point2D second) {
+    public static boolean segmentIntersectsPolygon(List<Point2D> vertices, Point2D[] segment) {
+        Point2D[] side;
         for(int i = 1; i < vertices.size(); i++) {
-            if(segmentsIntersection(vertices.get(i-1), vertices.get(i), first, second) != null) {
+            side = new Point2D[]{vertices.get(i-1), vertices.get(i)};
+            if(segmentsIntersection(side, segment) != null) {
                 return true;
             }
         }
-        if(segmentsIntersection(vertices.get(vertices.size() - 1), vertices.get(0), first, second) != null) {
+        side = new Point2D[]{vertices.get(vertices.size() - 1), vertices.get(0)};
+        if(segmentsIntersection(side, segment) != null) {
             return true;
         }
         return false;

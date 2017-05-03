@@ -69,7 +69,7 @@ public class FacsimileView extends CoordinatorLayout {
     public final ObservableField<String> currentPath = new ObservableField<>();
     public final ObservableInt maxPageNumber = new ObservableInt(0);
     public boolean needToSave = false;
-    public enum Action {DRAW, ERASE, ADJUST_MEASURE, CUT, ADJUST_MOVEMENT}
+    public enum Action {DRAW, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, ADJUST_MOVEMENT}
     public enum CornerTypes {ROUNDED, STRAIGHT}
     public CornerTypes cornerType = CornerTypes.STRAIGHT;
     public Action nextAction = Action.DRAW;
@@ -331,11 +331,19 @@ public class FacsimileView extends CoordinatorLayout {
     }
 
     /**
-     * Menu entry "cut" clicked.
+     * Menu entry "vertical cut" clicked.
      */
-    public void cutClicked() {
+    public void OrthogonalCutClicked() {
         refresh();
-        nextAction = Action.CUT;
+        nextAction = Action.ORTHOGONAL_CUT;
+    }
+
+    /**
+     * Menu entry "horizontal cut" clicked.
+     */
+    public void PreciseCutClicked() {
+        refresh();
+        nextAction = Action.PRECISE_CUT;
     }
 
     /**
@@ -404,8 +412,10 @@ public class FacsimileView extends CoordinatorLayout {
                 menu.getItem(i).setIcon(R.drawable.eraser_off);
             } else if (menu.getItem(i).getItemId() == R.id.action_type) {
                 menu.getItem(i).setIcon(R.drawable.textbox_off);
-            } else if (menu.getItem(i).getItemId() == R.id.action_cut) {
-                menu.getItem(i).setIcon(R.drawable.cut_off);
+            } else if (menu.getItem(i).getItemId() == R.id.action_orthogonal_cut) {
+                menu.getItem(i).setIcon(R.drawable.orthogonal_cut_off);
+            } else if (menu.getItem(i).getItemId() == R.id.action_precise_cut) {
+                menu.getItem(i).setIcon(R.drawable.precise_cut_off);
             } else if (menu.getItem(i).getItemId() == R.id.action_brush) {
                 menu.getItem(i).setIcon(R.drawable.brush_on);
             }

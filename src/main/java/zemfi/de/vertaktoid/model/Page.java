@@ -122,10 +122,10 @@ public class Page implements Parcelable {
         return result;
     }
 
-    public ArrayList<Measure> getMeasuresAtSegment(Point2D start, Point2D end) {
+    public ArrayList<Measure> getMeasuresAtSegment(Point2D[] segment) {
         ArrayList<Measure> result = new ArrayList<>();
         for(Measure measure : measures) {
-            if(Geometry.segmentIntersectsPolygon(measure.zone.getVertices(), start, end)) {
+            if(Geometry.segmentIntersectsPolygon(measure.zone.getVertices(), segment)) {
                 result.add(measure);
             }
         }

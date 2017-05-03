@@ -104,7 +104,7 @@ public class Zone implements Comparable<Zone>, Parcelable {
                     }
                 });
 
-        Point2D[] simplifiedVertices = simplify.simplify(verticesArray, 30f, true);
+        Point2D[] simplifiedVertices = simplify.simplify(verticesArray, 10f, true);
         vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices));
     }
 

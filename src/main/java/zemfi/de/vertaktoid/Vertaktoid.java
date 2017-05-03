@@ -37,5 +37,6 @@ public class Vertaktoid extends Application implements Serializable {
     public static int defLandscapeWidth = 2560;
     public static int defLandscapeHeight = 1600;
     public static final int MIN_DPI = 80;
+    public static final int MIN_GESTURE_LENGTH = 10;
     public static int defBitmapResScaleFactor = 1;
 }

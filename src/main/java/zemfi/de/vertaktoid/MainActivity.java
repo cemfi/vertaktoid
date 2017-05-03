@@ -276,8 +276,11 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.action_brush:
                         mainMenu.getItem(i).setIcon(R.drawable.brush_off);
                         break;
-                    case R.id.action_cut:
-                        mainMenu.getItem(i).setIcon(R.drawable.cut_off);
+                    case R.id.action_orthogonal_cut:
+                        mainMenu.getItem(i).setIcon(R.drawable.orthogonal_cut_off);
+                        break;
+                    case R.id.action_precise_cut:
+                        mainMenu.getItem(i).setIcon(R.drawable.precise_cut_off);
                         break;
                     case R.id.action_movement:
                         mainMenu.getItem(i).setIcon(R.drawable.movement_off);
@@ -304,9 +307,13 @@ public class MainActivity extends AppCompatActivity {
                 actionOpen();
                 view.resetMenu();
                 break;
-            case R.id.action_cut:
-                item.setIcon(R.drawable.cut_on);
-                view.cutClicked();
+            case R.id.action_orthogonal_cut:
+                item.setIcon(R.drawable.orthogonal_cut_on);
+                view.OrthogonalCutClicked();
+                break;
+            case R.id.action_precise_cut:
+                item.setIcon(R.drawable.precise_cut_on);
+                view.PreciseCutClicked();
                 break;
             case R.id.action_goto:
                 view.gotoClicked();

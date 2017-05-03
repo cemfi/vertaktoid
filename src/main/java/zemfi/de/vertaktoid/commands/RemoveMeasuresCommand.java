@@ -6,6 +6,8 @@ import android.os.Parcelable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
+
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
@@ -13,11 +15,11 @@ import zemfi.de.vertaktoid.model.Movement;
 
 public class RemoveMeasuresCommand implements ICommand, Parcelable {
     private Facsimile facsimile;
-    private ArrayList<Measure> measures;
+    private List<Measure> measures;
 
-    RemoveMeasuresCommand(ArrayList<Measure> measures, Facsimile facsimile) {
+    RemoveMeasuresCommand(List<Measure> measures, Facsimile facsimile) {
         this.facsimile = facsimile;
-        this.measures = measures;
+        this.measures = new ArrayList<>(measures);
     }
 
     public RemoveMeasuresCommand() {
@@ -48,7 +50,7 @@ public class RemoveMeasuresCommand implements ICommand, Parcelable {
         this.facsimile = facsimile;
     }
 
-    public ArrayList<Measure> getMeasures() {
+    public List<Measure> getMeasures() {
         return measures;
     }
 

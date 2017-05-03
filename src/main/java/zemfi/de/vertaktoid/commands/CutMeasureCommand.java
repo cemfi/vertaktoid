@@ -3,9 +3,6 @@ package zemfi.de.vertaktoid.commands;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
-
-import zemfi.de.vertaktoid.commands.ICommand;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 
@@ -16,15 +13,15 @@ import zemfi.de.vertaktoid.model.Measure;
 public class CutMeasureCommand implements ICommand, Parcelable {
     private Facsimile facsimile;
     private Measure oldMeasure;
-    private Measure leftMeasure;
-    private Measure rightMeasure;
+    private Measure measure1;
+    private Measure measure2;
 
     public CutMeasureCommand(Facsimile facsimile, Measure oldMeasure,
-                             Measure leftMeasure, Measure rightMeasure) {
+                             Measure measure1, Measure measure2) {
         this.facsimile = facsimile;
         this.oldMeasure = oldMeasure;
-        this.leftMeasure = leftMeasure;
-        this.rightMeasure = rightMeasure;
+        this.measure1 = measure1;
+        this.measure2 = measure2;
     }
 
     public CutMeasureCommand() {
@@ -34,8 +31,8 @@ public class CutMeasureCommand implements ICommand, Parcelable {
     protected CutMeasureCommand(Parcel in) {
         facsimile = in.readParcelable(Facsimile.class.getClassLoader());
         oldMeasure = in.readParcelable(Measure.class.getClassLoader());
-        leftMeasure = in.readParcelable(Measure.class.getClassLoader());
-        rightMeasure = in.readParcelable(Measure.class.getClassLoader());
+        measure1 = in.readParcelable(Measure.class.getClassLoader());
+        measure2 = in.readParcelable(Measure.class.getClassLoader());
     }
 
     public static final Creator<CutMeasureCommand> CREATOR = new Creator<CutMeasureCommand>() {
@@ -66,28 +63,28 @@ public class CutMeasureCommand implements ICommand, Parcelable {
         this.oldMeasure = oldMeasure;
     }
 
-    public Measure getLeftMeasure() {
-        return leftMeasure;
+    public Measure getMeasure1() {
+        return measure1;
     }
 
-    public void setLeftMeasure(Measure leftMeasure) {
-        this.leftMeasure = leftMeasure;
+    public void setMeasure1(Measure measure1) {
+        this.measure1 = measure1;
     }
 
-    public Measure getRightMeasure() {
-        return rightMeasure;
+    public Measure getMeasure2() {
+        return measure2;
     }
 
-    public void setRightMeasure(Measure rightMeasure) {
-        this.rightMeasure = rightMeasure;
+    public void setMeasure2(Measure measure2) {
+        this.measure2 = measure2;
     }
 
     @Override
     public int execute() {
         if(oldMeasure != null) {
             facsimile.removeMeasure(oldMeasure);
-            facsimile.addMeasure(leftMeasure, oldMeasure.movement, oldMeasure.page);
-            facsimile.addMeasure(rightMeasure, oldMeasure.movement, oldMeasure.page);
+            facsimile.addMeasure(measure1, oldMeasure.movement, oldMeasure.page);
+            facsimile.addMeasure(measure2, oldMeasure.movement, oldMeasure.page);
             facsimile.resort(oldMeasure.movement, oldMeasure.page);
             return facsimile.pages.indexOf(oldMeasure.page);
         }
@@ -97,8 +94,8 @@ public class CutMeasureCommand implements ICommand, Parcelable {
     @Override
     public int unexecute() {
         if(oldMeasure != null) {
-            facsimile.removeMeasure(leftMeasure);
-            facsimile.removeMeasure(rightMeasure);
+            facsimile.removeMeasure(measure1);
+            facsimile.removeMeasure(measure2);
             facsimile.addMeasure(oldMeasure, oldMeasure.movement, oldMeasure.page);
             facsimile.resort(oldMeasure.movement, oldMeasure.page);
             return facsimile.pages.indexOf(oldMeasure.page);
@@ -115,7 +112,7 @@ public class CutMeasureCommand implements ICommand, Parcelable {
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeParcelable(facsimile, i);
         parcel.writeParcelable(oldMeasure, i);
-        parcel.writeParcelable(leftMeasure, i);
-        parcel.writeParcelable(rightMeasure, i);
+        parcel.writeParcelable(measure1, i);
+        parcel.writeParcelable(measure2, i);
     }
 }

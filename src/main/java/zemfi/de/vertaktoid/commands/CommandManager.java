@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.helpers.SizedStack;
@@ -127,7 +128,7 @@ public class CommandManager implements Parcelable {
         redoCommands.clear();
     }
 
-    public void processRemoveMeasuresCommand(ArrayList<Measure> measures, Facsimile facsimile) {
+    public void processRemoveMeasuresCommand(List<Measure> measures, Facsimile facsimile) {
         ICommand command = new RemoveMeasuresCommand(measures, facsimile);
         command.execute();
         undoCommands.push(command);
