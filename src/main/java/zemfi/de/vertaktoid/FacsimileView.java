@@ -108,7 +108,7 @@ public class FacsimileView extends CoordinatorLayout {
             pageNumber.set(bundle.getInt("pageNumber"));
             currentMovementNumber = bundle.getInt("currentMovementNumber");
             horOverlapping = bundle.getInt("horOverlapping");
-            //setPage(pageNumber.get());
+            setPage(pageNumber.get());
             commandManager = (CommandManager) bundle.getParcelable("history");
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getName());

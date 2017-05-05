@@ -11,10 +11,6 @@ import java.util.ArrayList;
 
 import zemfi.de.vertaktoid.model.Facsimile;
 
-/**
- * Created by eugen on 27.03.17.
- */
-
 public class CustomPagerAdapter extends PagerAdapter {
     private FacsimileView facsimileView;
     private ArrayList<PageView> cashedViews;
