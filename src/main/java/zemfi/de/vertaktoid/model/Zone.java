@@ -147,6 +147,7 @@ public class Zone implements Comparable<Zone>, Parcelable {
 
     @Override
     public int compareTo(Zone zone) {
+        int result = 0;
         if (this.boundLeft == zone.boundLeft && this.boundTop == zone.boundTop) {
             return 0;
         }
@@ -156,12 +157,27 @@ public class Zone implements Comparable<Zone>, Parcelable {
         if (this.boundTop > zone.boundTop && this.boundLeft > zone.boundLeft) {
             return 1;
         }
+        if(Math.min(this.boundBottom - this.boundTop, zone.boundBottom - zone.boundTop) == 0) {
+            result = (int) (zone.boundLeft - this.boundLeft);
+            if(result == 0) {
+                result = (int) (zone.boundTop - this.boundTop);
+            }
+            return result;
+        }
         double yIsectFactor = (Math.min(this.boundBottom, zone.boundBottom) - Math.max(this.boundTop, zone.boundTop)) /
                 Math.min(this.boundBottom - this.boundTop, zone.boundBottom - zone.boundTop);
         if (yIsectFactor < 0.5) {
-            return (int) (zone.boundLeft - this.boundLeft);
+            result = (int) (zone.boundLeft - this.boundLeft);
+            if(result == 0) {
+                result = (int) (this.boundTop - zone.boundTop);
+            }
+            return result;
         }
-        return (int) (this.boundLeft - zone.boundLeft);
+        result = (int) (this.boundLeft - zone.boundLeft);
+        if(result == 0) {
+            result = (int) (this.boundTop - zone.boundTop);
+        }
+        return result;
     }
 
     @Override

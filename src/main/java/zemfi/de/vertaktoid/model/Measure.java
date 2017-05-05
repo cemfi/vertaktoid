@@ -88,7 +88,7 @@ public class Measure implements Comparable<Measure>, Parcelable {
     /**
      * Compare the measures by their sequence number.
      */
-    static final Comparator<Measure> MEASURE_NUMBER_COMPARATOR = new Comparator<Measure>() {
+    public static final Comparator<Measure> MEASURE_NUMBER_COMPARATOR = new Comparator<Measure>() {
         @Override
         public int compare(Measure m1, Measure m2) {
             if(m1.movement == m2.movement) {

@@ -44,14 +44,44 @@ public class Geometry {
                 point.y() + k * (segment[1].x() - segment[0].x()));
     }
 
+    public static Point2D[] segmentFromLineXCoords(Point2D[] line, double x1, double x2) {
+        Point2D[] result = new Point2D[2];
+        if(line[0].x() - line[0].x() != 0) {
+            double a = (line[1].y() - line[0].y()) / (line[1].x() - line[0].x());
+            double b = line[1].y() - a * line[0].x();
+            result[0] = new Point2D(x1, a * x1 + b);
+            result[1] = new Point2D(x2, a * x2 + b);
+        } else {
+            result = new Point2D[]{new Point2D(x1, line[0].y()), new Point2D(x2, line[0].y())};
+        }
+        return result;
+    }
+
+    public static Point2D[] segmentFromLineYCoords(Point2D[] line, double y1, double y2) {
+        Point2D[] result = new Point2D[2];
+        if(line[0].x() - line[0].x() != 0) {
+            double a = (line[1].y() - line[0].y()) / (line[1].x() - line[0].x());
+            double b = line[1].y() - a * line[0].x();
+            result[0] = new Point2D((y1 - b) / a, y1);
+            result[1] = new Point2D((y2 - b) / a, y2);
+        } else {
+            result = new Point2D[]{new Point2D(line[0].x(), y1), new Point2D(line[0].x(), y2)};
+        }
+        return result;
+    }
+
     public static Point2D[] parallelLine(Point2D[] segment, Point2D point) {
         Point2D[] result = new Point2D[2];
         result[0] = point;
-        double a = (segment[1].y() - segment[0].y()) / (segment[1].x() - segment[0].x());
-        double b1 = segment[1].y() - a * segment[0].x();
-        double b2 = point.y() - point.x() * a;
-        double x2 = point.x() + 100;
-        result[1] = new Point2D(x2, a * x2 + b2);
+        if(segment[1].x() - segment[0].x() != 0) {
+            double a = (segment[1].y() - segment[0].y()) / (segment[1].x() - segment[0].x());
+            double b1 = segment[1].y() - a * segment[0].x();
+            double b2 = point.y() - point.x() * a;
+            double x2 = point.x() + 10;
+            result[1] = new Point2D(x2, a * x2 + b2);
+        } else {
+            result[1] = new Point2D(point.x(), point.y() + 10);
+        }
         return result;
     }
 

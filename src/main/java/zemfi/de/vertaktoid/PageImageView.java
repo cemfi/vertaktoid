@@ -3,6 +3,7 @@ package zemfi.de.vertaktoid;
 import android.app.Dialog;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -25,6 +26,7 @@ import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import zemfi.de.vertaktoid.helpers.Geometry;
@@ -44,26 +46,29 @@ public class PageImageView extends SubsamplingScaleImageView {
     private Path verticesPath;
     private ArrayList<Point2D> pointPath;
     private Paint selectionPaint;
+    private Paint cutLinePaint;
     private Paint drawPaint;
-    private Paint largeBoldText = new Paint();
-    private Paint smallBoldText = new Paint();
+    private Paint largeTextPaint = new Paint();
+    private Paint smallTextPaint = new Paint();
     private Rect pageNameRect = new Rect();
     private Rect measureNameRect = new Rect();
     private Rect movementNameRect = new Rect();
     private List<Measure> selectedMeasures = new ArrayList<>();
     private int selectionColor = 0xff404040;
+    private int cutLineColor = 0xff0f0f0f;
     HSLColor fillColor;
     private float s = 100f;
     private float l = 30f;
     private float a = 1f;
-    private float currentBrushSize = 5;
+    private float brushSize = 5;
     Path grayPath;
     Path polygonHoverPath;
-    float downX = 0.0f;
-    float downY = 0.0f;
     Point2D firstDrawPoint;
     Point2D firstGesturePoint;
+    Point2D touchBitmapPosition;
     Point2D lastPolygonPoint;
+    Point2D firstCutPoint;
+    Point2D lastCutPoint;
     Point2D lastPoint = null; // in bitmap coordinates
     float trackLength;
 
@@ -92,18 +97,23 @@ public class PageImageView extends SubsamplingScaleImageView {
         polygonHoverPath = new Path();
         drawPaint = new Paint();
         drawPaint.setAntiAlias(true);
-        drawPaint.setStrokeWidth(currentBrushSize);
+        drawPaint.setStrokeWidth(brushSize);
         drawPaint.setStyle(Paint.Style.STROKE);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
         selectionPaint = new Paint();
         selectionPaint.setAntiAlias(true);
-        selectionPaint.setStrokeWidth(currentBrushSize);
+        selectionPaint.setStrokeWidth(brushSize);
         selectionPaint.setStyle(Paint.Style.STROKE);
         selectionPaint.setStrokeJoin(Paint.Join.ROUND);
         selectionPaint.setStrokeCap(Paint.Cap.ROUND);
-        selectionPaint.setStyle(Paint.Style.STROKE);
         selectionPaint.setColor(selectionColor);
+        cutLinePaint = new Paint();
+        cutLinePaint.setAntiAlias(true);
+        cutLinePaint.setStyle(Paint.Style.STROKE);
+        cutLinePaint.setPathEffect(new DashPathEffect(new float[]{10f, 5f}, 0));
+        cutLinePaint.setStrokeWidth(brushSize);
+        cutLinePaint.setColor(cutLineColor);
 
 
         setOnHoverListener(new View.OnHoverListener() {
@@ -180,21 +190,21 @@ public class PageImageView extends SubsamplingScaleImageView {
             return;
         }
 
-        largeBoldText.setColor(Color.BLACK);
-        largeBoldText.setTextSize(50);
-        largeBoldText.setFakeBoldText(true);
+        largeTextPaint.setColor(Color.BLACK);
+        largeTextPaint.setTextSize(50);
+        largeTextPaint.setFakeBoldText(true);
 
-        smallBoldText.setColor(Color.BLACK);
-        smallBoldText.setTextSize(36);
-        smallBoldText.setFakeBoldText(true);
+        smallTextPaint.setColor(Color.BLACK);
+        smallTextPaint.setTextSize(36);
+        smallTextPaint.setFakeBoldText(true);
 
         facsimileView.generateColors();
 
         if (!page.imageFile.exists()) {
-            largeBoldText.getTextBounds(page.imageFile.getName(), 0,
+            largeTextPaint.getTextBounds(page.imageFile.getName(), 0,
                     page.imageFile.getName().length(), pageNameRect);
             canvas.drawText("" + page.imageFile.getName(),
-                    (this.getRight() - this.getLeft()) / 2  - pageNameRect.centerX(), 100,  largeBoldText);
+                    (this.getRight() - this.getLeft()) / 2  - pageNameRect.centerX(), 100, largeTextPaint);
             return;
         }
 
@@ -206,9 +216,9 @@ public class PageImageView extends SubsamplingScaleImageView {
             if(index < 0) {
                 facsimile.movements.add(0, measure.movement);
             }
-            largeBoldText.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
+            largeTextPaint.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement))));
-            smallBoldText.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
+            smallTextPaint.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement))));
 
             PointF topLeft = sourceToViewCoord((float)measure.zone.getBoundLeft(), (float) measure.zone.getBoundTop());
@@ -265,8 +275,8 @@ public class PageImageView extends SubsamplingScaleImageView {
 
             String movementLabel = measure.movement.getName() + " >>";
 
-            largeBoldText.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
-            smallBoldText.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
+            largeTextPaint.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
+            smallTextPaint.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
 
             Point2D centroid = Geometry.centroid2D(measure.zone.getVertices());
             PointF centroidF = sourceToViewCoord((float) centroid.x(), (float) centroid.y());
@@ -279,9 +289,9 @@ public class PageImageView extends SubsamplingScaleImageView {
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, drawPaint);
             }
 
-            canvas.drawText(measureLabel, centroidF.x - measureNameRect.centerX(), centroidF.y, largeBoldText);
+            canvas.drawText(measureLabel, centroidF.x - measureNameRect.centerX(), centroidF.y, largeTextPaint);
             if(measure.movement.measures.indexOf(measure) == 0) {
-                canvas.drawText(movementLabel, centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallBoldText);
+                canvas.drawText(movementLabel, centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallTextPaint);
 
             }
         }
@@ -299,10 +309,54 @@ public class PageImageView extends SubsamplingScaleImageView {
         }
         canvas.drawPath(verticesPath, drawPaint);
         canvas.drawPath(polygonHoverPath, drawPaint);
+        if((facsimileView.nextAction == FacsimileView.Action.ORTHOGONAL_CUT ||
+                facsimileView.nextAction == FacsimileView.Action.PRECISE_CUT) &&
+                firstCutPoint != null && lastCutPoint != null) {
+            PointF fcut = sourceToViewCoord(firstCutPoint.getPointF());
+            PointF lcut = sourceToViewCoord(lastCutPoint.getPointF());
+            canvas.drawLine(fcut.x, fcut.y, lcut.x, lcut.y, cutLinePaint);
+        }
+    }
+
+    private Point2D[] orthogonalCutPreview(List<Measure> measures, Point2D[] touchSegment) {
+        Geometry.Direction direction = Geometry.Direction.VERTICAL;
+        if(Math.abs(touchSegment[1].x() - touchSegment[0].x()) >
+                Math.abs(touchSegment[1].y() - touchSegment[0].y()) &&
+                touchSegment[0].distanceTo(touchSegment[1]) >= Vertaktoid.MIN_GESTURE_LENGTH) {
+            direction = Geometry.Direction.HORIZONTAL;
+        }
+        Point2D[] cutPreview = new Point2D[2];
+        List<Measure> copy = new ArrayList<>(measures);
+        Collections.sort(copy, Measure.MEASURE_POSITION_COMPARATOR);
+        double minX = Double.MAX_VALUE;
+        double maxX = Double.MIN_VALUE;
+        double minY = Double.MAX_VALUE;
+        double maxY = Double.MIN_VALUE;
+        for (Point2D point : copy.get(0).zone.getVertices()) {
+            minX = Math.min(minX, point.x());
+            minY = Math.min(minY, point.y());
+        }
+        for (Point2D point : copy.get(copy.size() - 1).zone.getVertices()) {
+            maxX = Math.max(maxX, point.x());
+            maxY = Math.max(maxY, point.y());
+        }
+        if(direction == Geometry.Direction.VERTICAL) {
+            Point2D[] cutLine = Geometry.parallelLine(Geometry.orientedSegments(measures.get(0).zone.getVertices(),
+                    Geometry.Direction.VERTICAL).get(0), touchSegment[0]);
+            cutPreview = Geometry.segmentFromLineYCoords(cutLine, minY, maxY);
+        } else if (direction == Geometry.Direction.HORIZONTAL) {
+            Point2D[] cutLine = Geometry.parallelLine(Geometry.orientedSegments(measures.get(0).zone.getVertices(),
+                    Geometry.Direction.HORIZONTAL).get(0), touchSegment[0]);
+            cutPreview = Geometry.segmentFromLineXCoords(cutLine, minX, maxX);
+        }
+        return cutPreview;
     }
 
     private void cutMeasuresOrthogonal(List<Measure> measures, Point2D[] touchSegment) {
         for(Measure measure : measures) {
+            if(measure.zone.getAnnotationType() == Facsimile.AnnotationType.POLYGON) {
+                break;
+            }
             Measure m1 = new Measure();
             Measure m2 = new Measure();
             List<Point2D> vertices1 = new ArrayList<>();
@@ -437,14 +491,6 @@ public class PageImageView extends SubsamplingScaleImageView {
                     break;
                 case POLYGON:
                     //TODO Polygon splitting
-                    vertices1.add(new Point2D(measure.zone.getBoundLeft(), measure.zone.getBoundTop()));
-                    vertices1.add(new Point2D(measure.zone.getBoundLeft(), measure.zone.getBoundBottom()));
-                    vertices1.add(new Point2D(touchSegment[0].x() + facsimileView.horOverlapping, measure.zone.getBoundBottom()));
-                    vertices1.add(new Point2D(touchSegment[0].x() + facsimileView.horOverlapping, measure.zone.getBoundTop()));
-                    vertices2.add(new Point2D(touchSegment[0].x() - facsimileView.horOverlapping, measure.zone.getBoundTop()));
-                    vertices2.add(new Point2D(touchSegment[0].x() - facsimileView.horOverlapping, measure.zone.getBoundBottom()));
-                    vertices2.add(new Point2D(measure.zone.getBoundRight(), measure.zone.getBoundBottom()));
-                    vertices2.add(new Point2D(measure.zone.getBoundRight(), measure.zone.getBoundTop()));
                     break;
             }
             m1.zone.setVertices(vertices1);
@@ -474,7 +520,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             return super.onTouchEvent(event);
 
         }
-        Point2D touchBitmapPosition = new Point2D(viewToSourceCoord(touchX, touchY));
+        touchBitmapPosition = new Point2D(viewToSourceCoord(touchX, touchY));
         final ArrayList<Measure> measures = page.getMeasuresAt(touchBitmapPosition);
         final Measure measure = page.getMeasureAt(touchBitmapPosition);
         switch (event.getAction()) {
@@ -509,8 +555,6 @@ public class PageImageView extends SubsamplingScaleImageView {
                             trackLength = 0.0f;
                             invalidate();
                         }
-                        downX = touchX;
-                        downY = touchY;
                         break;
                 }
                 break;
@@ -525,6 +569,12 @@ public class PageImageView extends SubsamplingScaleImageView {
                     }
                 }
                 switch (facsimileView.nextAction) {
+                    case ORTHOGONAL_CUT:
+                        Point2D[] cutPreview = orthogonalCutPreview(selectedMeasures,
+                                new Point2D[]{firstGesturePoint, touchBitmapPosition});
+                        firstCutPoint = cutPreview[0];
+                        lastCutPoint = cutPreview[1];
+                        break;
                     case DRAW:
                         if (!facsimileView.isFirstPoint) {
                             trackLength += Math.abs(lastPolygonPoint.x() - touchBitmapPosition.x()) + Math.abs(lastPolygonPoint.y() - touchBitmapPosition.y());
@@ -537,6 +587,8 @@ public class PageImageView extends SubsamplingScaleImageView {
                 break;
 
             case MotionEvent.ACTION_UP:
+                firstCutPoint = null;
+                lastCutPoint = null;
                 switch (facsimileView.nextAction) {
                     case ORTHOGONAL_CUT:
                         cutMeasuresOrthogonal(selectedMeasures, new Point2D[]{firstGesturePoint, touchBitmapPosition});
