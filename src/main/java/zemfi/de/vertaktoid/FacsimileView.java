@@ -70,8 +70,6 @@ public class FacsimileView extends CoordinatorLayout {
     public final ObservableInt maxPageNumber = new ObservableInt(0);
     public boolean needToSave = false;
     public enum Action {DRAW, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, ADJUST_MOVEMENT}
-    public enum CornerTypes {ROUNDED, STRAIGHT}
-    public CornerTypes cornerType = CornerTypes.STRAIGHT;
     public Action nextAction = Action.DRAW;
     public boolean isFirstPoint = true;
     public ArrayList<HSLColor> movementColors;
@@ -90,6 +88,7 @@ public class FacsimileView extends CoordinatorLayout {
         bundle.putInt("currentMovementNumber", currentMovementNumber);
         bundle.putInt("cutOverlapping", cutOverlapping);
         bundle.putParcelable("history", commandManager);
+        bundle.putParcelableArrayList("colors", movementColors);
         return bundle;
     }
 
@@ -112,7 +111,7 @@ public class FacsimileView extends CoordinatorLayout {
             commandManager = (CommandManager) bundle.getParcelable("history");
             maxPageNumber.set(document.pages.size());
             currentPath.set(document.dir.getName());
-            HSLColorsGenerator.resetHueToDefault();
+            movementColors = bundle.getParcelableArrayList("colors");
             super.onRestoreInstanceState(bundle.getParcelable("instanceState"));
             return;
         }
@@ -165,6 +164,9 @@ public class FacsimileView extends CoordinatorLayout {
         gotoButtonNegative.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                resetMenu();
+                resetState();
+                invalidate();
                 gotoDialog.cancel();
             }
         });
@@ -184,6 +186,8 @@ public class FacsimileView extends CoordinatorLayout {
                 catch (NumberFormatException e) {
 
                 }
+                resetMenu();
+                resetState();
                 invalidate();
                 gotoDialog.dismiss();
             }
@@ -213,31 +217,28 @@ public class FacsimileView extends CoordinatorLayout {
         final EditText settingsUndosizeInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_undosize_input);
         settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
         settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-        final RadioGroup settingsCornerType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_corner_type);
-        if(cornerType == CornerTypes.STRAIGHT) {
-            settingsCornerType.check(R.id.dialog_settings_corner_type_straight);
-        } else if(cornerType == CornerTypes.ROUNDED) {
-            settingsCornerType.check(R.id.dialog_settings_corner_type_rounded);
-        }
         final RadioGroup settingsMEIType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_mei_type);
         if(document.nextAnnotationsType == Facsimile.AnnotationType.ORTHOGONAL_BOX) {
-            settingsMEIType.check(R.id.dialog_settings_mei_type_canonical);
+            settingsMEIType.check(R.id.dialog_settings_annotation_type_orthogonal);
         } else if(document.nextAnnotationsType == Facsimile.AnnotationType.ORIENTED_BOX) {
-            settingsMEIType.check(R.id.dialog_settings_mei_type_extended);
+            settingsMEIType.check(R.id.dialog_settings_annotation_type_oriented);
         } else if(document.nextAnnotationsType == Facsimile.AnnotationType.POLYGON) {
-            settingsMEIType.check(R.id.dialog_settings_mei_type_polygonal);
+            settingsMEIType.check(R.id.dialog_settings_annotation_type_polygon);
         }
-        Button gotoButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
+        Button settingsButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
 
-        gotoButtonNegative.setOnClickListener(new OnClickListener() {
+        settingsButtonNegative.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 settingsDialog.cancel();
+                resetState();
+                resetMenu();
+                invalidate();
             }
         });
 
-        Button gotoButtonPositive = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_positive);
-        gotoButtonPositive.setOnClickListener(new OnClickListener() {
+        Button settingsButtonPositive = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_positive);
+        settingsButtonPositive.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
@@ -259,23 +260,20 @@ public class FacsimileView extends CoordinatorLayout {
                             cutOverlapping = 0;
                         }
                     }
-                    if(settingsCornerType.getCheckedRadioButtonId() == R.id.dialog_settings_corner_type_straight) {
-                        cornerType = CornerTypes.STRAIGHT;
-                    } else if(settingsCornerType.getCheckedRadioButtonId() == R.id.dialog_settings_corner_type_rounded) {
-                        cornerType = CornerTypes.ROUNDED;
-                    }
-                    if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_canonical) {
+                    if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_annotation_type_orthogonal) {
                         document.nextAnnotationsType = Facsimile.AnnotationType.ORTHOGONAL_BOX;
-                    } else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_extended) {
+                    } else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_annotation_type_oriented) {
                         document.nextAnnotationsType = Facsimile.AnnotationType.ORIENTED_BOX;
                     }
-                    else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_mei_type_polygonal) {
+                    else if(settingsMEIType.getCheckedRadioButtonId() == R.id.dialog_settings_annotation_type_polygon) {
                         document.nextAnnotationsType = Facsimile.AnnotationType.POLYGON;
                     }
                 }
                 catch (NumberFormatException e) {
                     // do nothing
                 }
+                resetState();
+                resetMenu();
                 invalidate();
                 settingsDialog.dismiss();
             }

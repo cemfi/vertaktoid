@@ -500,7 +500,6 @@ public class MEIHelper {
                 String uuidZone = zone.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
 
                 Measure measure = findMeasureFor(uuidZone, document.movements);
-                document.nextAnnotationsType = Facsimile.AnnotationType.ORTHOGONAL_BOX;
                 if(measure != null) {
                     if(vertices.size() == 4) {
                         measure.zone.setVertices(vertices);

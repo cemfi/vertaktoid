@@ -1,6 +1,8 @@
 package zemfi.de.vertaktoid.helpers;
 
 import android.graphics.Color;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * HSLColor class represents a color in the HSLA color scheme.
@@ -12,7 +14,7 @@ import android.graphics.Color;
  * HSLColor class defines the import and exports methods for colors in RGB(ARGB) color scheme.
  */
 
-public class HSLColor extends Color {
+public class HSLColor extends Color implements Parcelable {
 
     public float h = 0f;
     public float s = 0f;
@@ -42,6 +44,25 @@ public class HSLColor extends Color {
         this.l = 0f;
         this.a = 1f;
     }
+
+    protected HSLColor(Parcel in) {
+        h = in.readFloat();
+        s = in.readFloat();
+        l = in.readFloat();
+        a = in.readFloat();
+    }
+
+    public static final Creator<HSLColor> CREATOR = new Creator<HSLColor>() {
+        @Override
+        public HSLColor createFromParcel(Parcel in) {
+            return new HSLColor(in);
+        }
+
+        @Override
+        public HSLColor[] newArray(int size) {
+            return new HSLColor[size];
+        }
+    };
 
     /**
      * Converts a color in ARGB scheme to a equivalent color in HSLA scheme.
@@ -275,5 +296,18 @@ public class HSLColor extends Color {
         }
 
         return p;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeFloat(h);
+        parcel.writeFloat(s);
+        parcel.writeFloat(l);
+        parcel.writeFloat(a);
     }
 }

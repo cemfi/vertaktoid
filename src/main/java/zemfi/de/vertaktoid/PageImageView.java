@@ -230,11 +230,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             }
 
             if(measure.zone.getAnnotationType() == Facsimile.AnnotationType.ORTHOGONAL_BOX) {
-                if (facsimileView.cornerType == FacsimileView.CornerTypes.ROUNDED) {
-                    boundingPath.addRoundRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, 15f, 15f, Path.Direction.CW);
-                } else if (facsimileView.cornerType == FacsimileView.CornerTypes.STRAIGHT) {
-                    boundingPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
-                }
+                boundingPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
             }
             List<Point2D> vertices = measure.zone.getVertices();
             final PointF fp = sourceToViewCoord(vertices.get(0).getPointF());
