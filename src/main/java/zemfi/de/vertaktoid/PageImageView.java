@@ -71,7 +71,6 @@ public class PageImageView extends SubsamplingScaleImageView {
     Point2D firstCutPoint;
     Point2D lastCutPoint;
     Point2D lastPoint = null; // in bitmap coordinates
-    float trackLength;
 
     /**
      * Constructor
@@ -565,7 +564,6 @@ public class PageImageView extends SubsamplingScaleImageView {
                             firstDrawPoint = touchBitmapPosition;
                             facsimileView.isFirstPoint = false;
                             lastPolygonPoint = touchBitmapPosition;
-                            trackLength = 0.0f;
                             invalidate();
                         }
                         break;
@@ -596,7 +594,6 @@ public class PageImageView extends SubsamplingScaleImageView {
                         break;
                     case DRAW:
                         if (!facsimileView.isFirstPoint) {
-                            trackLength += Math.abs(lastPolygonPoint.x() - touchBitmapPosition.x()) + Math.abs(lastPolygonPoint.y() - touchBitmapPosition.y());
                             pointPath.add(touchBitmapPosition);
                             lastPolygonPoint = touchBitmapPosition;
                         }
@@ -733,12 +730,16 @@ public class PageImageView extends SubsamplingScaleImageView {
                         if(lastPolygonPoint == null) {
                             break;
                         }
-                        trackLength += Math.abs(lastPolygonPoint.x() - touchBitmapPosition.x()) + Math.abs(lastPolygonPoint.y() - touchBitmapPosition.y());
                         pointPath.add(touchBitmapPosition);
                         lastPolygonPoint = new Point2D(touchX, touchY);
                         PointF firstPointInTouch = sourceToViewCoord(firstDrawPoint.getPointF()); // due to scrolling this may be another position than initially stored in firstDrawPoint
+                        double trackLength = 0;
+                        for(int i = 1; i < pointPath.size(); i++) {
+                            trackLength += pointPath.get(i-1).distanceTo(pointPath.get(i));
+                        }
+                        trackLength += pointPath.get(pointPath.size()-1).distanceTo(pointPath.get(0));
                         double distanceToFirstPoint = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
-                        if (distanceToFirstPoint < 20.0f && trackLength > 100.0f) {
+                        if (distanceToFirstPoint < 20.0f && trackLength > 20f) {
                             pointPath.remove(pointPath.size() - 1);
                             Measure newMeasure = new Measure();
                             newMeasure.zone.setVertices(pointPath);
@@ -756,8 +757,8 @@ public class PageImageView extends SubsamplingScaleImageView {
                                     newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.POLYGON);
                                     break;
                             }
-                            if(newMeasure.zone.getBoundRight() - newMeasure.zone.getBoundLeft() > 50 &&
-                                    newMeasure.zone.getBoundBottom() - newMeasure.zone.getBoundTop() > 50) {
+                            if(newMeasure.zone.getBoundRight() - newMeasure.zone.getBoundLeft() > 5 &&
+                                    newMeasure.zone.getBoundBottom() - newMeasure.zone.getBoundTop() > 5) {
                                 if (facsimileView.currentMovementNumber > facsimile.movements.size() - 1) {
                                     facsimileView.currentMovementNumber = facsimile.movements.size() - 1;
                                 }
