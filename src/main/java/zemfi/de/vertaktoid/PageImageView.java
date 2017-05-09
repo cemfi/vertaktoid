@@ -36,6 +36,7 @@ import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
 import zemfi.de.vertaktoid.model.Page;
+import zemfi.de.vertaktoid.model.Zone;
 
 public class PageImageView extends SubsamplingScaleImageView {
 
@@ -320,65 +321,28 @@ public class PageImageView extends SubsamplingScaleImageView {
 
     private Point2D[] preciseCutPreview(List<Measure> measures, Point2D[] touchSegment) {
         Point2D[] cutPreview = new Point2D[2];
-        List<Measure> copy = new ArrayList<>(measures);
-        Collections.sort(copy, Measure.MEASURE_POSITION_COMPARATOR);
-        Geometry.Direction direction = Geometry.Direction.VERTICAL;
-        if(Math.abs(touchSegment[1].x() - touchSegment[0].x()) >
-                Math.abs(touchSegment[1].y() - touchSegment[0].y()) &&
-                touchSegment[0].distanceTo(touchSegment[1]) >= Vertaktoid.MIN_GESTURE_LENGTH) {
-            direction = Geometry.Direction.HORIZONTAL;
+        List<Point2D> collisions = new ArrayList<>();
+        for(Measure measure : measures) {
+            List<Point2D> vertices = measure.zone.getVertices();
+            for(int i = 0; i < vertices.size(); i++) {
+                int j = i+1;
+                if(j == vertices.size()) {
+                    j = 0;
+                }
+                Point2D collision = Geometry.lineIntersectSegment(
+                        new Point2D[]{vertices.get(i), vertices.get(j)}, touchSegment);
+                if(collision != null) {
+                    collisions.add(collision);
+                }
+            }
         }
-        if(direction == Geometry.Direction.VERTICAL) {
-            List<Point2D[]> horSidesUpperBox = Geometry.orientedSegments(copy.get(0).zone.getVertices(),
-                    Geometry.Direction.HORIZONTAL);
-            Point2D[] upperSide = new Point2D[2];
-            double averageY = Double.MAX_VALUE;
-            for(Point2D[] side : horSidesUpperBox) {
-                if((side[0].y() + side[1].y()) / 2 < averageY) {
-                    averageY = (side[0].y() + side[1].y()) / 2;
-                    upperSide = side;
-                }
-            }
-            List<Point2D[]> horSidesLowerBox = Geometry.orientedSegments(copy.get(copy.size()-1).zone.getVertices(),
-                    Geometry.Direction.HORIZONTAL);
-            Point2D[] lowerSide = new Point2D[2];
-            averageY = Double.MIN_VALUE;
-            for(Point2D[] side : horSidesLowerBox) {
-                if((side[0].y() + side[1].y()) / 2 > averageY) {
-                    averageY = (side[0].y() + side[1].y()) / 2;
-                    lowerSide = side;
-                }
-            }
-            Point2D upperCutPoint = Geometry.lineIntersectSegment(upperSide, touchSegment);
-            Point2D lowerCutPoint = Geometry.lineIntersectSegment(lowerSide, touchSegment);
-            cutPreview[0] = upperCutPoint;
-            cutPreview[1] = lowerCutPoint;
-        } else if (direction == Geometry.Direction.HORIZONTAL) {
-            List<Point2D[]> verSidesLeftBox = Geometry.orientedSegments(copy.get(0).zone.getVertices(),
-                    Geometry.Direction.VERTICAL);
-            Point2D[] leftSide = new Point2D[2];
-            double averageX = Double.MAX_VALUE;
-            for(Point2D[] side : verSidesLeftBox) {
-                if((side[0].x() + side[1].x()) / 2 < averageX) {
-                    averageX = (side[0].x() + side[1].x()) / 2;
-                    leftSide = side;
-                }
-            }
-            List<Point2D[]> verSidesRightBox = Geometry.orientedSegments(copy.get(copy.size()-1).zone.getVertices(),
-                    Geometry.Direction.VERTICAL);
-            Point2D[] rightSide = new Point2D[2];
-            averageX = Double.MIN_VALUE;
-            for(Point2D[] side : verSidesRightBox) {
-                if((side[0].x() + side[1].x()) / 2 > averageX) {
-                    averageX = (side[0].x() + side[1].x()) / 2;
-                    rightSide = side;
-                }
-            }
-
-            Point2D leftCutPoint = Geometry.lineIntersectSegment(leftSide, touchSegment);
-            Point2D rightCutPoint = Geometry.lineIntersectSegment(rightSide, touchSegment);
-            cutPreview[0] = leftCutPoint;
-            cutPreview[1] = rightCutPoint;
+        Collections.sort(collisions, Point2D.X_ORDER);
+        if(touchSegment[0].x() < touchSegment[1].x()) {
+            cutPreview[0] = collisions.get(0);
+            cutPreview[1] = collisions.get(collisions.size()-1);
+        } else {
+            cutPreview[1] = collisions.get(0);
+            cutPreview[0] = collisions.get(collisions.size()-1);
         }
         return cutPreview;
     }
