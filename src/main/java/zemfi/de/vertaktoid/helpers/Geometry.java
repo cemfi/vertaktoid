@@ -101,9 +101,11 @@ public class Geometry {
 
     public static Point2D lineIntersectSegment(Point2D[] segment, Point2D[] line) {
         Point2D intersection = linesIntersection(segment, line);
-        if((Math.min(segment[0].x(), segment[1].x()) <= intersection.x() &&  Math.max(segment[0].x(), segment[1].x()) >= intersection.x()) &&
-                (Math.min(segment[0].y(), segment[1].y()) <= intersection.y() &&  Math.max(segment[0].y(), segment[1].y()) >= intersection.y())) {
-            return intersection;
+        if(intersection != null) {
+            if ((Math.min(segment[0].x(), segment[1].x()) <= intersection.x() && Math.max(segment[0].x(), segment[1].x()) >= intersection.x()) &&
+                    (Math.min(segment[0].y(), segment[1].y()) <= intersection.y() && Math.max(segment[0].y(), segment[1].y()) >= intersection.y())) {
+                return intersection;
+            }
         }
         return null;
     }
@@ -193,6 +195,21 @@ public class Geometry {
         }
         side = new Point2D[]{vertices.get(vertices.size() - 1), vertices.get(0)};
         if(segmentsIntersection(side, segment) != null) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean lineIntersectsPolygon(List<Point2D> vertices, Point2D[] line) {
+        Point2D[] side;
+        for(int i = 1; i < vertices.size(); i++) {
+            side = new Point2D[]{vertices.get(i-1), vertices.get(i)};
+            if(lineIntersectSegment(side, line) != null) {
+                return true;
+            }
+        }
+        side = new Point2D[]{vertices.get(vertices.size() - 1), vertices.get(0)};
+        if(lineIntersectSegment(side, line) != null) {
             return true;
         }
         return false;

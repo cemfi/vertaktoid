@@ -62,7 +62,7 @@ public class FacsimileView extends CoordinatorLayout {
     private float s = 100f;
     private float l = 30f;
     private float a = 1f;
-    public int horOverlapping = 0;
+    public int cutOverlapping = 0;
     public Facsimile document;
     public final ObservableInt pageNumber = new ObservableInt(-1);
     public int currentMovementNumber = 0;
@@ -88,7 +88,7 @@ public class FacsimileView extends CoordinatorLayout {
         bundle.putParcelable("document", document);
         bundle.putInt("pageNumber", pageNumber.get());
         bundle.putInt("currentMovementNumber", currentMovementNumber);
-        bundle.putInt("horOverlapping", horOverlapping);
+        bundle.putInt("cutOverlapping", cutOverlapping);
         bundle.putParcelable("history", commandManager);
         return bundle;
     }
@@ -107,7 +107,7 @@ public class FacsimileView extends CoordinatorLayout {
             }
             pageNumber.set(bundle.getInt("pageNumber"));
             currentMovementNumber = bundle.getInt("currentMovementNumber");
-            horOverlapping = bundle.getInt("horOverlapping");
+            cutOverlapping = bundle.getInt("cutOverlapping");
             setPage(pageNumber.get());
             commandManager = (CommandManager) bundle.getParcelable("history");
             maxPageNumber.set(document.pages.size());
@@ -206,7 +206,7 @@ public class FacsimileView extends CoordinatorLayout {
         settingsDialog.setContentView(R.layout.dialog_settings);
         settingsDialog.setTitle(R.string.dialog_settings_titel);
         final EditText settingsHoroverInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_horover_input);
-        settingsHoroverInput.setHint("" + horOverlapping);
+        settingsHoroverInput.setHint("" + cutOverlapping);
         settingsHoroverInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         final RadioGroup settingsHoroverType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_horover_type);
         settingsHoroverType.check(R.id.dialog_settings_horover_type_points);
@@ -248,15 +248,15 @@ public class FacsimileView extends CoordinatorLayout {
                     String horover = settingsHoroverInput.getText().toString();
                     if(!horover.equals("")) {
                         if (settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_points) {
-                            horOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
+                            cutOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
                         } else if (settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_percents) {
                             float percent = Float.parseFloat(settingsHoroverInput.getText().toString());
                             if (percent > 100) {
                                 percent = percent % 100;
                             }
-                            horOverlapping = Math.round(document.pages.get(pageNumber.get()).imageWidth * percent / 100);
+                            cutOverlapping = Math.round(document.pages.get(pageNumber.get()).imageWidth * percent / 100);
                         } else {
-                            horOverlapping = 0;
+                            cutOverlapping = 0;
                         }
                     }
                     if(settingsCornerType.getCheckedRadioButtonId() == R.id.dialog_settings_corner_type_straight) {
@@ -295,7 +295,7 @@ public class FacsimileView extends CoordinatorLayout {
         currentMovementNumber = document.movements.size() - 1;
         maxPageNumber.set(document.pages.size());
         currentPath.set(document.dir.getName());
-        horOverlapping = 0;
+        cutOverlapping = 0;
     }
 
     /**

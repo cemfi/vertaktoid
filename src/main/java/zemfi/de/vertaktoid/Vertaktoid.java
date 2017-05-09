@@ -30,13 +30,13 @@ public class Vertaktoid extends Application implements Serializable {
 
     public void onCreate() {
         super.onCreate();
-        defLandscapeWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        defLandscapeHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        defWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        defHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     }
 
-    public static int defLandscapeWidth = 2560;
-    public static int defLandscapeHeight = 1600;
+    public static int defWidth = 2560;
+    public static int defHeight = 1600;
     public static final int MIN_DPI = 80;
-    public static final int MIN_GESTURE_LENGTH = 10;
+    public static final int MIN_GESTURE_LENGTH = 20;
     public static int defBitmapResScaleFactor = 1;
 }

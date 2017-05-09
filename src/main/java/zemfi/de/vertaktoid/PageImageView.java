@@ -261,8 +261,8 @@ public class PageImageView extends SubsamplingScaleImageView {
                     facsimile.movements.indexOf(measure.movement))));
             if(selectedMeasures.contains(measure) &&
                     (facsimileView.nextAction == FacsimileView.Action.ERASE ||
-                    facsimileView.nextAction == FacsimileView.Action.ORTHOGONAL_CUT ||
-                    facsimileView.nextAction == FacsimileView.Action.PRECISE_CUT)){
+                            facsimileView.nextAction == FacsimileView.Action.ORTHOGONAL_CUT ||
+                            facsimileView.nextAction == FacsimileView.Action.PRECISE_CUT)){
                 canvas.drawPath(verticesPath, selectionPaint);
             } else {
                 canvas.drawPath(verticesPath, drawPaint);
@@ -318,6 +318,71 @@ public class PageImageView extends SubsamplingScaleImageView {
         }
     }
 
+    private Point2D[] preciseCutPreview(List<Measure> measures, Point2D[] touchSegment) {
+        Point2D[] cutPreview = new Point2D[2];
+        List<Measure> copy = new ArrayList<>(measures);
+        Collections.sort(copy, Measure.MEASURE_POSITION_COMPARATOR);
+        Geometry.Direction direction = Geometry.Direction.VERTICAL;
+        if(Math.abs(touchSegment[1].x() - touchSegment[0].x()) >
+                Math.abs(touchSegment[1].y() - touchSegment[0].y()) &&
+                touchSegment[0].distanceTo(touchSegment[1]) >= Vertaktoid.MIN_GESTURE_LENGTH) {
+            direction = Geometry.Direction.HORIZONTAL;
+        }
+        if(direction == Geometry.Direction.VERTICAL) {
+            List<Point2D[]> horSidesUpperBox = Geometry.orientedSegments(copy.get(0).zone.getVertices(),
+                    Geometry.Direction.HORIZONTAL);
+            Point2D[] upperSide = new Point2D[2];
+            double averageY = Double.MAX_VALUE;
+            for(Point2D[] side : horSidesUpperBox) {
+                if((side[0].y() + side[1].y()) / 2 < averageY) {
+                    averageY = (side[0].y() + side[1].y()) / 2;
+                    upperSide = side;
+                }
+            }
+            List<Point2D[]> horSidesLowerBox = Geometry.orientedSegments(copy.get(copy.size()-1).zone.getVertices(),
+                    Geometry.Direction.HORIZONTAL);
+            Point2D[] lowerSide = new Point2D[2];
+            averageY = Double.MIN_VALUE;
+            for(Point2D[] side : horSidesLowerBox) {
+                if((side[0].y() + side[1].y()) / 2 > averageY) {
+                    averageY = (side[0].y() + side[1].y()) / 2;
+                    lowerSide = side;
+                }
+            }
+            Point2D upperCutPoint = Geometry.lineIntersectSegment(upperSide, touchSegment);
+            Point2D lowerCutPoint = Geometry.lineIntersectSegment(lowerSide, touchSegment);
+            cutPreview[0] = upperCutPoint;
+            cutPreview[1] = lowerCutPoint;
+        } else if (direction == Geometry.Direction.HORIZONTAL) {
+            List<Point2D[]> verSidesLeftBox = Geometry.orientedSegments(copy.get(0).zone.getVertices(),
+                    Geometry.Direction.VERTICAL);
+            Point2D[] leftSide = new Point2D[2];
+            double averageX = Double.MAX_VALUE;
+            for(Point2D[] side : verSidesLeftBox) {
+                if((side[0].x() + side[1].x()) / 2 < averageX) {
+                    averageX = (side[0].x() + side[1].x()) / 2;
+                    leftSide = side;
+                }
+            }
+            List<Point2D[]> verSidesRightBox = Geometry.orientedSegments(copy.get(copy.size()-1).zone.getVertices(),
+                    Geometry.Direction.VERTICAL);
+            Point2D[] rightSide = new Point2D[2];
+            averageX = Double.MIN_VALUE;
+            for(Point2D[] side : verSidesRightBox) {
+                if((side[0].x() + side[1].x()) / 2 > averageX) {
+                    averageX = (side[0].x() + side[1].x()) / 2;
+                    rightSide = side;
+                }
+            }
+
+            Point2D leftCutPoint = Geometry.lineIntersectSegment(leftSide, touchSegment);
+            Point2D rightCutPoint = Geometry.lineIntersectSegment(rightSide, touchSegment);
+            cutPreview[0] = leftCutPoint;
+            cutPreview[1] = rightCutPoint;
+        }
+        return cutPreview;
+    }
+
     private Point2D[] orthogonalCutPreview(List<Measure> measures, Point2D[] touchSegment) {
         Geometry.Direction direction = Geometry.Direction.VERTICAL;
         if(Math.abs(touchSegment[1].x() - touchSegment[0].x()) >
@@ -328,173 +393,157 @@ public class PageImageView extends SubsamplingScaleImageView {
         Point2D[] cutPreview = new Point2D[2];
         List<Measure> copy = new ArrayList<>(measures);
         Collections.sort(copy, Measure.MEASURE_POSITION_COMPARATOR);
-        double minX = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE;
-        double minY = Double.MAX_VALUE;
-        double maxY = Double.MIN_VALUE;
-        for (Point2D point : copy.get(0).zone.getVertices()) {
-            minX = Math.min(minX, point.x());
-            minY = Math.min(minY, point.y());
-        }
-        for (Point2D point : copy.get(copy.size() - 1).zone.getVertices()) {
-            maxX = Math.max(maxX, point.x());
-            maxY = Math.max(maxY, point.y());
-        }
+
         if(direction == Geometry.Direction.VERTICAL) {
+            List<Point2D[]> horSidesUpperBox = Geometry.orientedSegments(copy.get(0).zone.getVertices(),
+                    Geometry.Direction.HORIZONTAL);
+            Point2D[] upperSide = new Point2D[2];
+            double averageY = Double.MAX_VALUE;
+            for(Point2D[] side : horSidesUpperBox) {
+                if((side[0].y() + side[1].y()) / 2 < averageY) {
+                    averageY = (side[0].y() + side[1].y()) / 2;
+                    upperSide = side;
+                }
+            }
+            List<Point2D[]> horSidesLowerBox = Geometry.orientedSegments(copy.get(copy.size()-1).zone.getVertices(),
+                    Geometry.Direction.HORIZONTAL);
+            Point2D[] lowerSide = new Point2D[2];
+            averageY = Double.MIN_VALUE;
+            for(Point2D[] side : horSidesLowerBox) {
+                if((side[0].y() + side[1].y()) / 2 > averageY) {
+                    averageY = (side[0].y() + side[1].y()) / 2;
+                    lowerSide = side;
+                }
+            }
             Point2D[] cutLine = Geometry.parallelLine(Geometry.orientedSegments(measures.get(0).zone.getVertices(),
                     Geometry.Direction.VERTICAL).get(0), touchSegment[0]);
-            cutPreview = Geometry.segmentFromLineYCoords(cutLine, minY, maxY);
+            Point2D upperCutPoint = Geometry.lineIntersectSegment(upperSide, cutLine);
+            Point2D lowerCutPoint = Geometry.lineIntersectSegment(lowerSide, cutLine);
+            cutPreview[0] = upperCutPoint;
+            cutPreview[1] = lowerCutPoint;
         } else if (direction == Geometry.Direction.HORIZONTAL) {
+            List<Point2D[]> verSidesLeftBox = Geometry.orientedSegments(copy.get(0).zone.getVertices(),
+                    Geometry.Direction.VERTICAL);
+            Point2D[] leftSide = new Point2D[2];
+            double averageX = Double.MAX_VALUE;
+            for(Point2D[] side : verSidesLeftBox) {
+                if((side[0].x() + side[1].x()) / 2 < averageX) {
+                    averageX = (side[0].x() + side[1].x()) / 2;
+                    leftSide = side;
+                }
+            }
+            List<Point2D[]> verSidesRightBox = Geometry.orientedSegments(copy.get(copy.size()-1).zone.getVertices(),
+                    Geometry.Direction.VERTICAL);
+            Point2D[] rightSide = new Point2D[2];
+            averageX = Double.MIN_VALUE;
+            for(Point2D[] side : verSidesRightBox) {
+                if((side[0].x() + side[1].x()) / 2 > averageX) {
+                    averageX = (side[0].x() + side[1].x()) / 2;
+                    rightSide = side;
+                }
+            }
             Point2D[] cutLine = Geometry.parallelLine(Geometry.orientedSegments(measures.get(0).zone.getVertices(),
                     Geometry.Direction.HORIZONTAL).get(0), touchSegment[0]);
-            cutPreview = Geometry.segmentFromLineXCoords(cutLine, minX, maxX);
+            Point2D leftCutPoint = Geometry.lineIntersectSegment(leftSide, cutLine);
+            Point2D rightCutPoint = Geometry.lineIntersectSegment(rightSide, cutLine);
+            cutPreview[0] = leftCutPoint;
+            cutPreview[1] = rightCutPoint;
         }
         return cutPreview;
     }
 
-    private void cutMeasuresOrthogonal(List<Measure> measures, Point2D[] touchSegment) {
+    private void cutMeasures(List<Measure> measures, Point2D[] touchSegment) {
         for(Measure measure : measures) {
-            if(measure.zone.getAnnotationType() == Facsimile.AnnotationType.POLYGON) {
+            if(!Geometry.lineIntersectsPolygon(measure.zone.getVertices(), touchSegment)) {
                 break;
             }
+
+            boolean trigger = false;
             Measure m1 = new Measure();
             Measure m2 = new Measure();
             List<Point2D> vertices1 = new ArrayList<>();
             List<Point2D> vertices2 = new ArrayList<>();
-            Geometry.Direction direction = Geometry.Direction.VERTICAL;
-            if(Math.abs(touchSegment[1].x() - touchSegment[0].x()) >
-                    Math.abs(touchSegment[1].y() - touchSegment[0].y()) &&
-                    touchSegment[0].distanceTo(touchSegment[1]) >= Vertaktoid.MIN_GESTURE_LENGTH) {
-                direction = Geometry.Direction.HORIZONTAL;
-            }
-            switch (measure.zone.getAnnotationType()) {
-                case ORTHOGONAL_BOX:
-                    if(direction == Geometry.Direction.VERTICAL) {
-                        vertices1.add(new Point2D(measure.zone.getBoundLeft(), measure.zone.getBoundTop()));
-                        vertices1.add(new Point2D(measure.zone.getBoundLeft(), measure.zone.getBoundBottom()));
-                        vertices1.add(new Point2D(touchSegment[0].x() + facsimileView.horOverlapping, measure.zone.getBoundBottom()));
-                        vertices1.add(new Point2D(touchSegment[0].x() + facsimileView.horOverlapping, measure.zone.getBoundTop()));
-                        vertices2.add(new Point2D(touchSegment[0].x() - facsimileView.horOverlapping, measure.zone.getBoundTop()));
-                        vertices2.add(new Point2D(touchSegment[0].x() - facsimileView.horOverlapping, measure.zone.getBoundBottom()));
-                        vertices2.add(new Point2D(measure.zone.getBoundRight(), measure.zone.getBoundBottom()));
-                        vertices2.add(new Point2D(measure.zone.getBoundRight(), measure.zone.getBoundTop()));
-                    } else if(direction == Geometry.Direction.HORIZONTAL) {
-                        vertices1.add(new Point2D(measure.zone.getBoundLeft(), measure.zone.getBoundTop()));
-                        vertices1.add(new Point2D(measure.zone.getBoundLeft(), touchSegment[0].y()));
-                        vertices1.add(new Point2D(measure.zone.getBoundRight(), touchSegment[0].y()));
-                        vertices1.add(new Point2D(measure.zone.getBoundRight(), measure.zone.getBoundTop()));
-                        vertices2.add(new Point2D(measure.zone.getBoundLeft(), touchSegment[0].y()));
-                        vertices2.add(new Point2D(measure.zone.getBoundLeft(), measure.zone.getBoundBottom()));
-                        vertices2.add(new Point2D(measure.zone.getBoundRight(), measure.zone.getBoundBottom()));
-                        vertices2.add(new Point2D(measure.zone.getBoundRight(), touchSegment[0].y()));
+
+            for(int i = 0; i < measure.zone.getVertices().size() - 1; i++) {
+                Point2D[] side = new Point2D[2];
+                side[0] = measure.zone.getVertices().get(i);
+                side[1] = measure.zone.getVertices().get(i+1);
+                Point2D collision = Geometry.lineIntersectSegment(side, touchSegment);
+                if(collision == null) {
+                    if(!trigger) {
+                        vertices1.add(side[0]);
+                    } else {
+                        vertices2.add(side[0]);
                     }
-                    break;
-                case ORIENTED_BOX:
-                    List<Point2D[]> segments;
-                    if(direction == Geometry.Direction.VERTICAL) {
-                        segments = Geometry.orientedSegments(measure.zone.getVertices(), Geometry.Direction.HORIZONTAL);
-                        // for in 45 degrees rotated rectangles
-                        while (segments.size() > 2) {
-                            segments.remove(segments.size() - 1);
-                        }
-                        Point2D[] upperSide;
-                        Point2D[] lowerSide;
-                        double s3minY = Math.min(segments.get(0)[0].y(), segments.get(0)[1].y());
-                        double s4minY = Math.min(segments.get(1)[0].y(), segments.get(1)[1].y());
-                        if (s3minY <= s4minY) {
-                            upperSide = segments.get(0);
-                            lowerSide = segments.get(1);
+                } else {
+                    if(!trigger) {
+                        vertices1.add(side[0]);
+                        if(facsimileView.cutOverlapping > 0) {
+                            double dx = (side[1].x() - side[0].x()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                            double dy = (side[1].y() - side[0].y()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                            vertices1.add(new Point2D(collision.x() + dx, collision.y() + dy));
+                            vertices2.add(new Point2D(collision.x() - dx, collision.y() - dy));
                         } else {
-                            upperSide = segments.get(1);
-                            lowerSide = segments.get(0);
+                            vertices1.add(collision);
+                            vertices2.add(collision);
                         }
-
-                        Point2D upperIntersectPoint = Geometry.projectionPointToSegment(upperSide, touchSegment[0]);
-                        Point2D lowerIntersectPoint = Geometry.projectionPointToSegment(lowerSide, touchSegment[0]);
-
-                        vertices1.add(upperIntersectPoint);
-                        vertices1.add(lowerIntersectPoint);
-                        if (Point2D.X_ORDER.compare(lowerSide[0], lowerSide[1]) <= 0) {
-                            vertices1.add(lowerSide[0]);
+                    } else {
+                        vertices2.add(side[0]);
+                        if(facsimileView.cutOverlapping > 0) {
+                            double dx = (side[1].x() - side[0].x()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                            double dy = (side[1].y() - side[0].y()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                            vertices2.add(new Point2D(collision.x() + dx, collision.y() + dy));
+                            vertices1.add(new Point2D(collision.x() - dx, collision.y() - dy));
                         } else {
-                            vertices1.add(lowerSide[1]);
+                            vertices2.add(collision);
+                            vertices1.add(collision);
                         }
-                        if (Point2D.X_ORDER.compare(upperSide[0], upperSide[1]) <= 0) {
-                            vertices1.add(upperSide[0]);
-                        } else {
-                            vertices1.add(upperSide[1]);
-                        }
-
-                        vertices2.add(lowerIntersectPoint);
-                        vertices2.add(upperIntersectPoint);
-                        if (Point2D.X_ORDER.compare(upperSide[0], upperSide[1]) >= 0) {
-                            vertices2.add(upperSide[0]);
-                        } else {
-                            vertices2.add(upperSide[1]);
-                        }
-                        if (Point2D.X_ORDER.compare(lowerSide[0], lowerSide[1]) >= 0) {
-                            vertices2.add(lowerSide[0]);
-                        } else {
-                            vertices2.add(lowerSide[1]);
-                        }
-                        m1.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
-                        m2.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
-                    } else if(direction == Geometry.Direction.HORIZONTAL) {
-                        segments = Geometry.orientedSegments(measure.zone.getVertices(), Geometry.Direction.VERTICAL);
-                        // for in 45 degrees rotated rectangles
-                        while (segments.size() > 2) {
-                            segments.remove(segments.size() - 1);
-                        }
-                        Point2D[] leftSide;
-                        Point2D[] rightSide;
-                        double s3minX = Math.min(segments.get(0)[0].x(), segments.get(0)[1].x());
-                        double s4minX = Math.min(segments.get(1)[0].x(), segments.get(1)[1].x());
-                        if (s3minX <= s4minX) {
-                            leftSide = segments.get(0);
-                            rightSide = segments.get(1);
-                        } else {
-                            leftSide = segments.get(1);
-                            rightSide = segments.get(0);
-                        }
-
-                        Point2D leftIntersectPoint = Geometry.projectionPointToSegment(leftSide, touchSegment[0]);
-                        Point2D rightIntersectPoint = Geometry.projectionPointToSegment(rightSide, touchSegment[0]);
-
-                        vertices1.add(leftIntersectPoint);
-                        vertices1.add(rightIntersectPoint);
-                        if (Point2D.Y_ORDER.compare(rightSide[0], rightSide[1]) <= 0) {
-                            vertices1.add(rightSide[0]);
-                        } else {
-                            vertices1.add(rightSide[1]);
-                        }
-                        if (Point2D.Y_ORDER.compare(leftSide[0], leftSide[1]) <= 0) {
-                            vertices1.add(leftSide[0]);
-                        } else {
-                            vertices1.add(leftSide[1]);
-                        }
-
-                        vertices2.add(rightIntersectPoint);
-                        vertices2.add(leftIntersectPoint);
-                        if (Point2D.Y_ORDER.compare(leftSide[0], leftSide[1]) >= 0) {
-                            vertices2.add(leftSide[0]);
-                        } else {
-                            vertices2.add(leftSide[1]);
-                        }
-                        if (Point2D.Y_ORDER.compare(rightSide[0], rightSide[1]) >= 0) {
-                            vertices2.add(rightSide[0]);
-                        } else {
-                            vertices2.add(rightSide[1]);
-                        }
-                        m1.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
-                        m2.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
                     }
-                    break;
-                case POLYGON:
-                    //TODO Polygon splitting
-                    break;
+                    trigger = !trigger;
+                }
             }
+
+            Point2D[] side = new Point2D[2];
+            side[0] = measure.zone.getVertices().get(measure.zone.getVertices().size() - 1);
+            side[1] = measure.zone.getVertices().get(0);
+            Point2D collision = Geometry.lineIntersectSegment(side, touchSegment);
+            if(collision == null) {
+                if(!trigger) {
+                    vertices1.add(side[0]);
+                } else {
+                    vertices2.add(side[0]);
+                }
+            } else {
+                if(!trigger) {
+                    vertices1.add(side[0]);
+                    if(facsimileView.cutOverlapping > 0) {
+                        double dx = (side[1].x() - side[0].x()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                        double dy = (side[1].y() - side[0].y()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                        vertices1.add(new Point2D(collision.x() + dx, collision.y() + dy));
+                        vertices2.add(new Point2D(collision.x() - dx, collision.y() - dy));
+                    } else {
+                        vertices1.add(collision);
+                        vertices2.add(collision);
+                    }
+                } else {
+                    vertices2.add(side[0]);
+                    if(facsimileView.cutOverlapping > 0) {
+                        double dx = (side[1].x() - side[0].x()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                        double dy = (side[1].y() - side[0].y()) * facsimileView.cutOverlapping / side[1].distanceTo(side[0]);
+                        vertices2.add(new Point2D(collision.x() + dx, collision.y() + dy));
+                        vertices1.add(new Point2D(collision.x() - dx, collision.y() - dy));
+                    } else {
+                        vertices2.add(collision);
+                        vertices1.add(collision);
+                    }
+                }
+
+            }
+
             m1.zone.setVertices(vertices1);
             m2.zone.setVertices(vertices2);
+            m1.zone.setAnnotationType(m1.zone.checkType());
+            m2.zone.setAnnotationType(m1.zone.checkType());
             facsimileView.commandManager.processCutMeasureCommand(facsimile, measure, m1, m2);
         }
     }
@@ -575,6 +624,12 @@ public class PageImageView extends SubsamplingScaleImageView {
                         firstCutPoint = cutPreview[0];
                         lastCutPoint = cutPreview[1];
                         break;
+                    case PRECISE_CUT:
+                        Point2D[] cut2Preview = preciseCutPreview(selectedMeasures,
+                                new Point2D[]{firstGesturePoint, touchBitmapPosition});
+                        firstCutPoint = cut2Preview[0];
+                        lastCutPoint = cut2Preview[1];
+                        break;
                     case DRAW:
                         if (!facsimileView.isFirstPoint) {
                             trackLength += Math.abs(lastPolygonPoint.x() - touchBitmapPosition.x()) + Math.abs(lastPolygonPoint.y() - touchBitmapPosition.y());
@@ -587,11 +642,25 @@ public class PageImageView extends SubsamplingScaleImageView {
                 break;
 
             case MotionEvent.ACTION_UP:
-                firstCutPoint = null;
-                lastCutPoint = null;
                 switch (facsimileView.nextAction) {
                     case ORTHOGONAL_CUT:
-                        cutMeasuresOrthogonal(selectedMeasures, new Point2D[]{firstGesturePoint, touchBitmapPosition});
+                        if(firstCutPoint != null && lastCutPoint != null) {
+                            if (firstCutPoint.distanceTo(touchBitmapPosition) >= Vertaktoid.MIN_GESTURE_LENGTH) {
+                                cutMeasures(selectedMeasures, new Point2D[]{firstCutPoint, lastCutPoint});
+                                firstCutPoint = null;
+                                lastCutPoint = null;
+                            }
+                        }
+
+                        break;
+                    case PRECISE_CUT:
+                        if(firstCutPoint != null && lastCutPoint != null) {
+                            if (firstCutPoint.distanceTo(touchBitmapPosition) >= Vertaktoid.MIN_GESTURE_LENGTH) {
+                                cutMeasures(selectedMeasures, new Point2D[]{firstGesturePoint, touchBitmapPosition});
+                                firstCutPoint = null;
+                                lastCutPoint = null;
+                            }
+                        }
                         break;
                     case ERASE:
                         eraseMeasures(selectedMeasures);

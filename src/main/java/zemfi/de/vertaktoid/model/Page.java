@@ -5,9 +5,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.UUID;
 
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -185,8 +182,8 @@ public class Page implements Parcelable {
             imageWidth = 0;
         }
         inSampleSize = calculateInSampleSize(options,
-                Vertaktoid.defLandscapeWidth * Vertaktoid.defBitmapResScaleFactor,
-                Vertaktoid.defLandscapeHeight * Vertaktoid.defBitmapResScaleFactor);
+                Vertaktoid.defWidth * Vertaktoid.defBitmapResScaleFactor,
+                Vertaktoid.defHeight * Vertaktoid.defBitmapResScaleFactor);
     }
 
     public ImageSource getImage() {

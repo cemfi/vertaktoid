@@ -145,10 +145,25 @@ public class Zone implements Comparable<Zone>, Parcelable {
         }
     }
 
+    public Facsimile.AnnotationType checkType() {
+        if(vertices.size() != 4)
+            return Facsimile.AnnotationType.POLYGON;
+        double d1 = vertices.get(0).distanceTo(vertices.get(2));
+        double d2 = vertices.get(1).distanceTo(vertices.get(3));
+        if(d1 != d2)
+            return Facsimile.AnnotationType.POLYGON;
+        Point2D lu = new Point2D(boundLeft, boundTop);
+        Point2D rb = new Point2D(boundRight, boundBottom);
+        if(vertices.contains(lu) && vertices.contains(rb))
+            return Facsimile.AnnotationType.ORTHOGONAL_BOX;
+        return Facsimile.AnnotationType.ORIENTED_BOX;
+    }
+
     @Override
     public int compareTo(Zone zone) {
         int result = 0;
-        if (this.boundLeft == zone.boundLeft && this.boundTop == zone.boundTop) {
+        if (this.boundLeft == zone.boundLeft && this.boundTop == zone.boundTop &&
+                this.boundRight == zone.boundRight && this.boundBottom == zone.boundBottom) {
             return 0;
         }
         if (this.boundTop < zone.boundTop && this.boundLeft < zone.boundLeft) {

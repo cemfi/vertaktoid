@@ -54,7 +54,11 @@ public class Movement implements Parcelable {
      * Sorts the measures in the movement by their position on the pages.
      */
     public void sortMeasures() {
-        Collections.sort(measures, Measure.MEASURE_POSITION_COMPARATOR);
+        try {
+            Collections.sort(measures, Measure.MEASURE_POSITION_COMPARATOR);
+        } catch (IllegalArgumentException e) {
+
+        }
     }
 
     /**

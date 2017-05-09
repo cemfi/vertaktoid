@@ -162,7 +162,7 @@ public class Point2D implements Comparable<Point2D>, Parcelable
         }
     }
 
-    public static class ROrder implements Comparator<Point2D>
+    private static class ROrder implements Comparator<Point2D>
     {
         public int compare(Point2D p, Point2D q)
         {
@@ -175,7 +175,7 @@ public class Point2D implements Comparable<Point2D>, Parcelable
         }
     }
 
-    public class Atan2Order implements Comparator<Point2D>
+    private class Atan2Order implements Comparator<Point2D>
     {
         public int compare(Point2D q1, Point2D q2)
         {
@@ -190,7 +190,7 @@ public class Point2D implements Comparable<Point2D>, Parcelable
         }
     }
 
-    public class PolarOrder implements Comparator<Point2D>
+    private class PolarOrder implements Comparator<Point2D>
     {
         public int compare(Point2D q1, Point2D q2)
         {
