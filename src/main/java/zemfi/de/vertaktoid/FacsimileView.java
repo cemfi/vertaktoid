@@ -293,6 +293,8 @@ public class FacsimileView extends CoordinatorLayout {
         currentMovementNumber = document.movements.size() - 1;
         maxPageNumber.set(document.pages.size());
         currentPath.set(document.dir.getName());
+        HSLColorsGenerator.resetHueToDefault();
+        generateColors();
         cutOverlapping = 0;
     }
 
