@@ -1,13 +1,13 @@
 package zemfi.de.vertaktoid.model;
 
 
-import android.graphics.PointF;
+//import android.graphics.PointF;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.goebl.simplify.PointExtractor;
 import com.goebl.simplify.Simplify;
-import com.google.common.collect.Lists;
+//import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Arrays;

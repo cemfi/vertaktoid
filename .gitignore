@@ -4,4 +4,5 @@ keystore.properties
 local.properties
 passwds.txt
 
+# IDE files
 .idea
