@@ -13,7 +13,6 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
     compileSdkVersion 22
-    buildToolsVersion "24.0.1"
     repositories {
         maven { url 'http://repo1.maven.org/maven2' }
     }
@@ -56,7 +55,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:3.0.1'
     }
 }
 
