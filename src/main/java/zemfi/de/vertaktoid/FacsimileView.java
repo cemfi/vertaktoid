@@ -388,7 +388,8 @@ public class FacsimileView extends CoordinatorLayout {
         invalidate();
         CustomViewPager viewPager = (CustomViewPager) findViewById(R.id.view_pager);
         CustomPagerAdapter pagerAdapter = (CustomPagerAdapter) viewPager.getAdapter();
-        pagerAdapter.refresh();
+        if(pagerAdapter != null)
+            pagerAdapter.refresh();
     }
 
 
