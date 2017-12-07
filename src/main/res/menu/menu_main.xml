@@ -7,7 +7,7 @@
     <group android:id="@+id/group_other">
         <item
             android:id="@+id/action_brush"
-            android:title="Erase"
+            android:title="Brush"
             android:icon="@drawable/brush_on"
             app:showAsAction="always" />
 
