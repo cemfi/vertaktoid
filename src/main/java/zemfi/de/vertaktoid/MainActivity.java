@@ -103,11 +103,19 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
         path = prefs.getString("zemfi.de.vertaktoid.path", "");
+        File dir = new File(path);
+        File files[] = dir.listFiles();
 
-        if(!path.equals("")) {
-            loadFacsimile(path);
-        } else {
+        if(path.equals("")) {
+            //important on start-up
             //view.setImage(ImageSource.resource(R.drawable.handel));
+            Toast.makeText(this, "No folder selected. Please choose a file.", Toast.LENGTH_LONG).show();
+        } else if(files==null)
+        {
+            //important on moved folder
+            Toast.makeText(this, "Image file not found. Please choose a file.", Toast.LENGTH_LONG).show();
+        } else {
+            loadFacsimile(path);
         }
 
         binding.setFview(facsimileView);

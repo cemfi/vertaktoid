@@ -146,7 +146,7 @@ public class FacsimileView extends CoordinatorLayout {
     /**
      * Shows dialog and obtains the user defined next page number. Changes to the page with giving number.
      */
-    public  void gotoClicked(){
+    public void gotoClicked(){
         resetState();
         final Dialog gotoDialog = new Dialog(getContext());
         Window window = gotoDialog.getWindow();
@@ -388,6 +388,7 @@ public class FacsimileView extends CoordinatorLayout {
         invalidate();
         CustomViewPager viewPager = (CustomViewPager) findViewById(R.id.view_pager);
         CustomPagerAdapter pagerAdapter = (CustomPagerAdapter) viewPager.getAdapter();
+        // pageAdapter is null if opened the first time and no image is loaded
         if(pagerAdapter != null)
             pagerAdapter.refresh();
     }

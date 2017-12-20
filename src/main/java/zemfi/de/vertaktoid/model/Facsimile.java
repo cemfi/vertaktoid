@@ -171,6 +171,7 @@ public class Facsimile implements Parcelable {
         File files[] = dir.listFiles();
         ArrayList<File> images = new ArrayList<>();
 
+        // files==null when folder doesn't exist
         for (int i = 0; i < files.length; i++) {
             if (!files[i].getName().startsWith(".")) {
                 if (files[i].getName().toLowerCase().endsWith(".jpg") || files[i].getName().toLowerCase().endsWith(".png")) {
