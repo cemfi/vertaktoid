@@ -242,7 +242,8 @@ public class MEIHelper {
             }
             ArrayList<MeasureElementPair> corrMeasureElems = new ArrayList<>();
             Elements measureElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
-            for(Measure measure : movement.measures) {
+            for(int i = 0; i < movement.measures.size(); i++) {
+                Measure measure = movement.measures.get(i);
                 Element measureElem = findElementByUiid(measureElems, measure.measureUuid);
                 if(measureElem == null) {
                     measureElem = new Element("measure", Vertaktoid.MEI_NS);
@@ -252,9 +253,11 @@ public class MEIHelper {
                 //old
                 // a = new Attribute("n", measure.manualSequenceNumber == null ?
                 //        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
-                //measureElem.addAttribute(a);
-                a = new Attribute("n", String.valueOf(measure.sequenceNumber));
+
+                // calculation of a unique and sequent number n
+                a = new Attribute("n", "" + (i + 1));
                 measureElem.addAttribute(a);
+                // label will later be read and used to calculate the sequenceNumber
                 a = new Attribute("label", measure.manualSequenceNumber == null ?
                         String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
                 measureElem.addAttribute(a);

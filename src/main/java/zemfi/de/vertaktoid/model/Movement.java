@@ -63,7 +63,13 @@ public class Movement implements Parcelable {
 
     /**
      * Calculates the sequence numbers of the measures.
-     * The algorithm will try to parse the manualSequenceNumbers to obtain a number.
+     * The algorithm will try to parse the manualSequenceNumbers to obtain a number (first digit(s) found).
+     *
+     * If a number is recognized, the sequenceNumber will be those number, it doesn't have to be unique.
+     * Else: sequenceNumber will be 1 or "rest" more then the last measure.
+     * (The calculation of sequent and unique numbers "n" will take place when writing the file)
+     *
+     * Sets manualSequenceNumber to null if it doesn't differ from intended sequenceNumber
      */
     public void calculateSequenceNumbers() {
         if(measures.size() == 0) return;
@@ -73,36 +79,42 @@ public class Movement implements Parcelable {
             measure = measures.get(i);
             // Calculate the next sequence number by default
             if(i > 0) {
+                // sequent number
                 num = measures.get(i-1).sequenceNumber + (measures.get(i-1).rest > 1 ? measures.get(i-1).rest : 1);
             }
             // Try to parse manual sequence number if not null.
             // If no number can be parsed from manual sequence number,
             // then use the next number calculated by default.
-//            if(measure.manualSequenceNumber != null) {
-//                try {
-//                    String modified = measure.manualSequenceNumber.replaceAll("[\\D]", " ");
-//                    modified = modified.trim();
-//                    String mnumStrs[] = modified.split(" ");
-//                    if(mnumStrs.length == 0) {
-//                        measure.sequenceNumber = num;
-//                    }
-//                    else {
-//                        String mnumStr = mnumStrs[0];
-//                        int mnum = Integer.parseInt(mnumStr);
-//                        if (String.valueOf(mnum).equals(measure.manualSequenceNumber) && mnum == num) {
-//                            measure.manualSequenceNumber = null;
-//                        }
-//                        measure.sequenceNumber = mnum;
-//                    }
-//                }
-//                catch (NumberFormatException e) {
-//                    measure.sequenceNumber = num;
-//                }
-//            }
-//            else {
-//                measure.sequenceNumber = num;
-//            }
-            measure.sequenceNumber = num;
+            if(measure.manualSequenceNumber != null) {
+                try {
+                    String modified = measure.manualSequenceNumber.replaceAll("[\\D]", " ");
+                    modified = modified.trim();
+                    String mnumStrs[] = modified.split(" ");
+                    // if no number recognized (only non-digit)
+                    if(mnumStrs.length == 0) {
+                        measure.sequenceNumber = num;
+                    }
+                    else {
+                        // first number found
+                        String mnumStr = mnumStrs[0];
+                        int mnum = Integer.parseInt(mnumStr);
+                        // if unchanged throughout the manipulation and equals intended (sequent) sequenceNumber set manualSequenceNumber to null
+                        if (String.valueOf(mnum).equals(measure.manualSequenceNumber) && mnum == num) {
+                            measure.manualSequenceNumber = null;
+                        }
+                        // set sequenceNumber to first number found
+                        measure.sequenceNumber = mnum;
+                    }
+                }
+                catch (NumberFormatException e) {
+                    // set sequenceNumber to sequent number
+                    measure.sequenceNumber = num;
+                }
+            }
+            else {
+                // set sequenceNumber to sequent number
+                measure.sequenceNumber = num;
+            }
         }
     }
 
