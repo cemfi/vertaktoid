@@ -54,7 +54,10 @@ public class MEIHelper {
      */
     public static boolean writeMEI(File meiFile, Facsimile document) {
         boolean returnValue = true;
+
+        //save in measures objects if last at system or page
         document.calculateBreaks();
+
         if(meiDocument == null) {
             meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
         }
@@ -246,7 +249,13 @@ public class MEIHelper {
                 }
                 corrMeasureElems.add(new MeasureElementPair(measure, measureElem));
 
-                a = new Attribute("n", measure.manualSequenceNumber == null ?
+                //old
+                // a = new Attribute("n", measure.manualSequenceNumber == null ?
+                //        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
+                //measureElem.addAttribute(a);
+                a = new Attribute("n", String.valueOf(measure.sequenceNumber));
+                measureElem.addAttribute(a);
+                a = new Attribute("label", measure.manualSequenceNumber == null ?
                         String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
                 measureElem.addAttribute(a);
                 a = new Attribute("id", measure.measureUuid);
@@ -387,7 +396,7 @@ public class MEIHelper {
                     section.removeChild(element);
                 }
                 if (element.getLocalName().equals("measure")) {
-                    String name = element.getAttributeValue("n");
+                    String name = element.getAttributeValue("label");
                     Measure measure = new Measure();
                     measure.manualSequenceNumber = name;
                     a = element.getAttribute("facs");

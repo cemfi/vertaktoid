@@ -17,10 +17,10 @@ import zemfi.de.vertaktoid.Vertaktoid;
 public class Measure implements Comparable<Measure>, Parcelable {
 
     public final Zone zone;
-    // Automatically calculated sequence number of measure.
+    // Automatically calculated sequence number of measure in "Movement"
     public int sequenceNumber = -1;
     // Manually created name of measure. Is a string.
-    // If the string contains number, the humber will be used as sequence number.
+    // If the string contains number, the number will be used as sequence number.
     public String manualSequenceNumber = null;
     // Rest value (musical pause).
     public int rest = 0;

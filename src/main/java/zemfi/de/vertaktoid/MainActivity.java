@@ -42,8 +42,9 @@ public class MainActivity extends AppCompatActivity {
     final Status status = new Status();
     Menu mainMenu;
     String path = null;
-    private Handler tmpSaveHandler = new Handler();
 
+    //autosave
+    private Handler tmpSaveHandler = new Handler();
     private Runnable tmpSaveRunnable = new Runnable() {
         @Override
         public void run() {
@@ -129,7 +130,10 @@ public class MainActivity extends AppCompatActivity {
     private void loadFacsimile(String path) {
         Facsimile facsimile = new Facsimile();
         File dir = new File(path);
+
+        //create subfolder (for MEI) and dummy image file
         prepareApplicationFiles(dir);
+
         facsimile.openDirectory(dir);
 
         facsimileView.setFacsimile(facsimile);
