@@ -198,10 +198,10 @@ public class MEIHelper {
             }
         }
 
-        ArrayList<Element> exitstingMdivs = new ArrayList<>();
+        ArrayList<Element> existingMdivs = new ArrayList<>();
         for(Movement movement : document.movements) {
             Element mdiv = findElementByUiid(mdivs, movement.mdivUuid);
-            exitstingMdivs.add(mdiv);
+            existingMdivs.add(mdiv);
             if(mdiv == null) {
                 mdiv = new Element("mdiv", Vertaktoid.MEI_NS);
                 body.appendChild(mdiv);
@@ -240,6 +240,8 @@ public class MEIHelper {
             for (int i = 0; i < pbs.size(); i++) {
                 section.removeChild(pbs.get(i));
             }
+
+
             ArrayList<MeasureElementPair> corrMeasureElems = new ArrayList<>();
             Elements measureElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
             for(int i = 0; i < movement.measures.size(); i++) {
@@ -277,16 +279,21 @@ public class MEIHelper {
                 if(measure.lastAtPage) {
                     Element pb = new Element("pb", Vertaktoid.MEI_NS);
                     section.insertChild(pb, section.indexOf(measureElem) + 1);
+                    Element sb = new Element("sb", Vertaktoid.MEI_NS);
+                    section.insertChild(sb, section.indexOf(measureElem) + 1);
                 } else
                 if(measure.lastAtSystem) {
                     Element sb = new Element("sb", Vertaktoid.MEI_NS);
                     section.insertChild(sb, section.indexOf(measureElem) + 1);
                 }
             }
+            // add pb at the beginning
+            Element pb = new Element("pb", Vertaktoid.MEI_NS);
+            section.insertChild(pb, 0);
         }
 
         for(int i = 0; i < mdivs.size(); i++) {
-            if(!exitstingMdivs.contains(mdivs.get(i))) {
+            if(!existingMdivs.contains(mdivs.get(i))) {
                 body.removeChild(mdivs.get(i));
             }
         }
