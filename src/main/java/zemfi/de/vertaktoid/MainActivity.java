@@ -328,14 +328,16 @@ public class MainActivity extends AppCompatActivity {
                 view.PreciseCutClicked();
                 break;
             case R.id.action_goto:
-                view.gotoClicked();
+                if(view.document != null)
+                    view.gotoClicked();
                 break;
             case R.id.action_movement:
                 item.setIcon(R.drawable.movement_on);
                 view.movementClicked();
                 break;
             case R.id.action_settings:
-                view.settingsClicked();
+                if(view.document != null)
+                    view.settingsClicked();
                 break;
             case R.id.action_undo:
                 view.undoClicked();
