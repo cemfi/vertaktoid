@@ -9,7 +9,7 @@ import android.view.MotionEvent;
 import java.io.Console;
 
 /**
- * Created by eugen on 30.03.17.
+ * Layout manager that contains an adapter to show the pages.
  */
 
 public class CustomViewPager extends ViewPager {

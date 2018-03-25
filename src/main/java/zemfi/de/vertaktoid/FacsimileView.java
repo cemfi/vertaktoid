@@ -26,7 +26,7 @@ import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
 import zemfi.de.vertaktoid.model.Facsimile;
 
 /**
- * Contains the presentation and user interaction functions. Directs the UI layouts.
+ * Contains the presentation and user interaction functions (click on icon). Directs the UI layouts.
  * Extends the SubsamplingScaleImageView class.
  */
 
@@ -130,6 +130,9 @@ public class FacsimileView extends CoordinatorLayout {
         }
     }
 
+    /**
+     * Sets Icons after actions to show possible undo and redo actions.
+     */
     public void adjustHistoryNavigation() {
         if(commandManager.getUndoStackSize() > 0) {
             menu.findItem(R.id.action_undo).setIcon(R.drawable.undo_on);
@@ -196,9 +199,9 @@ public class FacsimileView extends CoordinatorLayout {
         gotoDialog.show();
     }
 
-    /*
-    Shows the settings dialog and process the user input.
-    Currently obtains the horizontal overlapping parameter.
+    /**
+     * Shows the settings dialog and process the user input.
+     * Currently obtains the horizontal overlapping parameter.
      */
     public void settingsClicked() {
         resetState();

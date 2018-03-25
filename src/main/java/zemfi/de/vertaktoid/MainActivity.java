@@ -39,6 +39,7 @@ import android.databinding.DataBindingUtil;
 public class MainActivity extends AppCompatActivity {
 
     final String TAG = "de.zemfi.vertaktoid";
+    // bindable status for bar
     final Status status = new Status();
     Menu mainMenu;
     String path = null;
@@ -119,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
             loadFacsimile(path);
         }
 
+        // link activity ui to facsimileView
         binding.setFview(facsimileView);
         status.setStatus(StatusStrings.StatusId.SUCCESS);
         status.setAction(StatusStrings.ActionId.STARTED);
@@ -128,10 +130,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadFacsimile(String path) {
+        // facsimile contains pages, movements, breaks
         Facsimile facsimile = new Facsimile();
         File dir = new File(path);
 
-        //create subfolder (for MEI) and dummy image file
+        // create subfolder (for MEI) and dummy image file
         prepareApplicationFiles(dir);
 
         facsimile.openDirectory(dir);
@@ -250,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * onCreateIptionMenu events routine
+     * onCreateOptionsMenu events routine
      * @param menu The menu.
      * @return true value.
      */
