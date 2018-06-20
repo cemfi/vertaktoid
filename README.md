@@ -4,7 +4,7 @@ This application offers an useful intuitive tool that helps to mark and number a
 Vertaktoid is an open source application and will be published under LGPL 3.0 license.
 
 <h3>Publication</h3>
-If you would like to refer to Vertaktoid, please use thispublication:
+If you would like to refer to Vertaktoid, please use this publication:
 <pre>
 Tools for Annotating Musical Measures in Digital Music Editions
 Y. Mexin, A. Hadjakos, A. Berndt, S. Waloschek, A. Wawilow, and G. Szwillus 
