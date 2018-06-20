@@ -4,12 +4,13 @@ This application offers an useful intuitive tool that helps to mark and number a
 Vertaktoid is an open source application and will be published under LGPL 3.0 license.
 
 <h3>Publication</h3>
-If you would like to refer to Vertaktoid, please use [this publication](http://www.cemfi.de/wp-content/papercite-data/pdf/mexin-2017-vertaktoid.pdf):
+If you would like to refer to Vertaktoid, please use thispublication:
 <pre>
 Tools for Annotating Musical Measures in Digital Music Editions
 Y. Mexin, A. Hadjakos, A. Berndt, S. Waloschek, A. Wawilow, and G. Szwillus 
 in 14th Sound and Music Computing Conf. (SMC-17), Espoo, Finland, 2017. 
 </pre>
+Download: http://www.cemfi.de/wp-content/papercite-data/pdf/mexin-2017-vertaktoid.pdf
 
 <h3>Requirements:</h3>
 <ul>
