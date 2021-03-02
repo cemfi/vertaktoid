@@ -38,6 +38,11 @@ import zemfi.de.vertaktoid.model.Movement;
 import zemfi.de.vertaktoid.model.Page;
 import zemfi.de.vertaktoid.model.Zone;
 
+/**
+ * Includes rendering functions, dialogs, touch functions.
+ * Uses rotating calipers algorithm.
+ */
+
 public class PageImageView extends SubsamplingScaleImageView {
 
     private final FacsimileView facsimileView;
@@ -45,7 +50,7 @@ public class PageImageView extends SubsamplingScaleImageView {
     private final Page page;
     private Path boundingPath;
     private Path verticesPath;
-    private ArrayList<Point2D> pointPath;
+    private ArrayList<Point2D> pointPath;   //currentPath
     private Paint selectionPaint;
     private Paint cutLinePaint;
     private Paint drawPaint;
@@ -115,7 +120,30 @@ public class PageImageView extends SubsamplingScaleImageView {
         cutLinePaint.setStrokeWidth(brushSize);
         cutLinePaint.setColor(cutLineColor);
 
+        // clicks for finger touches (movement and measure labels)
+        // in the touchEvent finger touches are entirely ignored so that zoom actions don't cause other actions
+        setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final Measure measure = page.getMeasureAt(touchBitmapPosition);
+                    switch (facsimileView.nextAction) {
+                        case ADJUST_MOVEMENT:
+                            if (measure != null) {
+                                buildMODialog(measure);
+                            }
+                            break;
 
+                        case ADJUST_MEASURE:
+                            if (measure != null) {
+                                buildMEDialog(measure);
+                            }
+                            break;
+
+                }
+            }
+        });
+
+        // show preview
         setOnHoverListener(new View.OnHoverListener() {
             @Override
             public boolean onHover(View v, MotionEvent event) {
@@ -155,6 +183,121 @@ public class PageImageView extends SubsamplingScaleImageView {
     }
 
     /**
+     * dialog to rename a measure
+     * called from touchListener (pen) and clickListener (fingers)
+     * @param measure measure to be renamed
+     */
+    private void buildMEDialog(final Measure measure)
+    {
+        Window window;
+        WindowManager.LayoutParams wlp;
+        if (page.getMeasureAt(touchBitmapPosition) != null) {
+            final Dialog editMEDialog = new Dialog(getContext());
+            window = editMEDialog.getWindow();
+            wlp = window.getAttributes();
+            wlp.gravity = Gravity.TOP;
+            window.setAttributes(wlp);
+            editMEDialog.setContentView(R.layout.dialog_editme);
+            editMEDialog.setTitle(R.string.dialog_editme_titel);
+            TextView editMENameLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_name_label);
+            editMENameLabel.setText(R.string.dialog_editme_name_label);
+            final EditText editMENameInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_name_input);
+            editMENameInput.setHint(measure.getName());
+            editMENameInput.setInputType(InputType.TYPE_CLASS_TEXT);
+            TextView editMERestLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_rest_label);
+            editMERestLabel.setText(R.string.dialog_editme_rest_label);
+            String repeatTxt = "" + measure.rest;
+            final EditText editMERestInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_rest_input);
+            editMERestInput.setHint(repeatTxt);
+            editMERestInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+            Button editMEButtonNegative = (Button) editMEDialog.findViewById(R.id.dialog_editme_button_negative);
+            editMEButtonNegative.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    editMEDialog.cancel();
+                }
+            });
+
+            Button editMEButtonPositive = (Button) editMEDialog.findViewById(R.id.dialog_editme_button_positive);
+            editMEButtonPositive.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String manualSequenceNumber = editMENameInput.getText().toString();
+                    String rest = editMERestInput.getText().toString();
+                    if (rest.equals("")) {
+                        rest = "" + measure.rest;
+                    }
+                    facsimileView.commandManager.processAdjustMeasureCommand(facsimile, measure, manualSequenceNumber, rest);
+                    editMEDialog.dismiss();
+                    facsimileView.adjustHistoryNavigation();
+                    invalidate();
+                }
+            });
+            editMEDialog.show();
+        }
+    }
+
+    /**
+     * dialog to change the movement
+     * called from touchListener (pen) and clickListener (fingers)
+     * @param measure measure to be the start of the movement
+     */
+    private void buildMODialog(final Measure measure)
+    {
+        Window window;
+        WindowManager.LayoutParams wlp;
+        final Dialog editMODialog = new Dialog(getContext());
+        window = editMODialog.getWindow();
+        wlp = window.getAttributes();
+        wlp.gravity = Gravity.TOP;
+        window.setAttributes(wlp);
+        editMODialog.setContentView(R.layout.dialog_editmo);
+        editMODialog.setTitle(R.string.dialog_editmo_titel);
+        TextView editMOMovementLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_movement_label);
+        editMOMovementLabel.setText(R.string.dialog_editmo_movement_label);
+        final Spinner editMOMovementInput = (Spinner) editMODialog.findViewById(R.id.dialog_editmo_movement_input);
+        ArrayList<String> movementOptions = new ArrayList<>();
+        movementOptions.add(getResources().getString(R.string.dialog_editmo_spinner_optdef));
+        for (Movement movement : facsimile.movements) {
+            movementOptions.add(movement.getName());
+        }
+        movementOptions.add(getResources().getString(R.string.dialog_editmo_spinner_optelse));
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, movementOptions);
+        editMOMovementInput.setAdapter(adapter);
+        editMOMovementInput.setSelection(0);
+        TextView editMOLabelLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_label_label);
+        editMOLabelLabel.setText(R.string.dialog_editmo_label_label);
+        final EditText editMOLabelInput = (EditText) editMODialog.findViewById(R.id.dialog_editmo_label_input);
+        editMOLabelInput.setHint(R.string.dialog_editmo_label_input_hint);
+        editMOLabelInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        Button editMOButtonNegative = (Button) editMODialog.findViewById(R.id.dialog_editmo_button_negative);
+        editMOButtonNegative.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editMODialog.cancel();
+            }
+        });
+
+        Button editMOButtonPositive = (Button) editMODialog.findViewById(R.id.dialog_editmo_button_positive);
+        editMOButtonPositive.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String option = editMOMovementInput.getSelectedItem().toString();
+                String labelStr = editMOLabelInput.getText().toString();
+                facsimileView.commandManager.processAdjustMovementCommand(facsimile, measure, option, labelStr,
+                        getResources().getString(R.string.dialog_editmo_spinner_optelse),
+                        getResources().getString(R.string.dialog_editmo_spinner_optdef));
+                facsimileView.currentMovementNumber = facsimile.movements.indexOf(measure.movement);
+                editMODialog.dismiss();
+                facsimileView.adjustHistoryNavigation();
+                invalidate();
+            }
+        });
+        editMODialog.show();
+    }
+
+
+    /**
      * Refreshes the current drawing path
      */
     void refresh() {
@@ -181,6 +324,8 @@ public class PageImageView extends SubsamplingScaleImageView {
 
     /**
      * Rendering function
+     * boundingPath is an oriented orthogonal box covering all points
+     * verticesPath is the Path connecting the corner marks
      * @param canvas canvas
      */
     @Override
@@ -200,6 +345,7 @@ public class PageImageView extends SubsamplingScaleImageView {
 
         facsimileView.generateColors();
 
+        // if image is missing draw Name
         if (!page.imageFile.exists()) {
             largeTextPaint.getTextBounds(page.imageFile.getName(), 0,
                     page.imageFile.getName().length(), pageNameRect);
@@ -209,6 +355,7 @@ public class PageImageView extends SubsamplingScaleImageView {
         }
 
         for (int i = 0; i < page.measures.size(); i++) {
+            // foreach measure
             boundingPath.reset();
             verticesPath.reset();
             Measure measure = page.measures.get(i);
@@ -229,9 +376,13 @@ public class PageImageView extends SubsamplingScaleImageView {
                 return;
             }
 
+            // calculated in zone by rotating calipers
             if(measure.zone.getAnnotationType() == Facsimile.AnnotationType.ORTHOGONAL_BOX) {
                 boundingPath.addRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, Path.Direction.CW);
             }
+
+            // adds vertices (corner marks) of each measure (its zone) to verticesPath
+            // vertices were set in onTouchEvent (Action Up, draw mode)
             List<Point2D> vertices = measure.zone.getVertices();
             final PointF fp = sourceToViewCoord(vertices.get(0).getPointF());
             verticesPath.moveTo(fp.x, fp.y);
@@ -240,6 +391,8 @@ public class PageImageView extends SubsamplingScaleImageView {
                 verticesPath.lineTo(cp.x, cp.y);
             }
             verticesPath.close();
+
+            // draw border of each measure
             drawPaint.setStyle(Paint.Style.FILL);
             fillColor.a = 0.1f;
             fillColor.h = facsimileView.movementColors.get(
@@ -252,6 +405,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             } else {
                 canvas.drawPath(verticesPath, drawPaint);
             }
+
             drawPaint.setStyle(Paint.Style.STROKE);
             drawPaint.setColor(HSLColor.toRGB(facsimileView.movementColors.get(
                     facsimile.movements.indexOf(measure.movement))));
@@ -266,32 +420,28 @@ public class PageImageView extends SubsamplingScaleImageView {
 
             boundingPath.reset();
 
+            // draw sequence number
             String measureLabel = measure.manualSequenceNumber != null ?
                     "" + measure.manualSequenceNumber : "" + measure.sequenceNumber;
-
             String movementLabel = measure.movement.getName() + " >>";
-
             largeTextPaint.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
             smallTextPaint.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
-
             Point2D centroid = Geometry.centroid2D(measure.zone.getVertices());
             PointF centroidF = sourceToViewCoord((float) centroid.x(), (float) centroid.y());
             float leftTextBox = centroidF.x - measureNameRect.width() / 2 - 5;
             float topTextBox = centroidF.y - 20 - measureNameRect.height() /2 ;
             float rightTextBox = centroidF.x + measureNameRect.width() / 2 + 5;
             float bottomTextBox = centroidF.y - 15 + measureNameRect.height() / 2;
-
             if(measure.manualSequenceNumber != null) {
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, drawPaint);
             }
-
             canvas.drawText(measureLabel, centroidF.x - measureNameRect.centerX(), centroidF.y, largeTextPaint);
             if(measure.movement.measures.indexOf(measure) == 0) {
                 canvas.drawText(movementLabel, centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallTextPaint);
-
             }
-        }
+        } // end for (foreach measure)
 
+        // build current Path
         verticesPath.reset();
         for (int i = 0; i < pointPath.size(); i++) {
             PointF bitmapCoord = pointPath.get(i).getPointF();
@@ -303,6 +453,8 @@ public class PageImageView extends SubsamplingScaleImageView {
                 verticesPath.lineTo(touchCoord.x, touchCoord.y);
             }
         }
+
+        // execute current path drawing
         canvas.drawPath(verticesPath, drawPaint);
         canvas.drawPath(polygonHoverPath, drawPaint);
         if((facsimileView.nextAction == FacsimileView.Action.ORTHOGONAL_CUT ||
@@ -312,7 +464,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             PointF lcut = sourceToViewCoord(lastCutPoint.getPointF());
             canvas.drawLine(fcut.x, fcut.y, lcut.x, lcut.y, cutLinePaint);
         }
-    }
+    } // end onDraw
 
     private Point2D[] preciseCutPreview(List<Measure> measures, Point2D[] touchSegment) {
         Point2D[] cutPreview = new Point2D[2];
@@ -512,23 +664,23 @@ public class PageImageView extends SubsamplingScaleImageView {
      * @param event touch event
      * @return true if the touch input was correctly processed
      */
-    @Override
+    //@Override
     public boolean onTouchEvent(MotionEvent event) {
-        Window window;
-        WindowManager.LayoutParams wlp;
         if(facsimile == null) {
 
             return false;
         }
+
+        // position, also used in "onClick" for Measures and Movements
         float touchX = event.getX();
         float touchY = event.getY();
-        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER &&
-                facsimileView.nextAction != FacsimileView.Action.ADJUST_MEASURE &&
-                facsimileView.nextAction != FacsimileView.Action.ADJUST_MOVEMENT) {
-            return super.onTouchEvent(event);
-
-        }
         touchBitmapPosition = new Point2D(viewToSourceCoord(touchX, touchY));
+
+        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
+        {
+            return super.onTouchEvent(event);
+        }
+
         final ArrayList<Measure> measures = page.getMeasuresAt(touchBitmapPosition);
         final Measure measure = page.getMeasureAt(touchBitmapPosition);
         switch (event.getAction()) {
@@ -555,6 +707,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                         break;
                     case DRAW:
                         if (facsimileView.isFirstPoint) {
+                            // add to current Path
                             pointPath = new ArrayList<>();
                             pointPath.add(touchBitmapPosition);
                             firstDrawPoint = touchBitmapPosition;
@@ -626,100 +779,14 @@ public class PageImageView extends SubsamplingScaleImageView {
                         }
                         break;
                     case ADJUST_MOVEMENT:
-                        final Dialog editMODialog = new Dialog(getContext());
-                        window = editMODialog.getWindow();
-                        wlp = window.getAttributes();
-                        wlp.gravity = Gravity.TOP;
-                        window.setAttributes(wlp);
-                        editMODialog.setContentView(R.layout.dialog_editmo);
-                        editMODialog.setTitle(R.string.dialog_editmo_titel);
-                        TextView editMOMovementLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_movement_label);
-                        editMOMovementLabel.setText(R.string.dialog_editmo_movement_label);
-                        final Spinner editMOMovementInput = (Spinner) editMODialog.findViewById(R.id.dialog_editmo_movement_input);
-                        ArrayList<String> movementOptions = new ArrayList<>();
-                        movementOptions.add(getResources().getString(R.string.dialog_editmo_spinner_optdef));
-                        for(Movement movement : facsimile.movements) {
-                            movementOptions.add(movement.getName());
+                        if (measure != null) {
+                            buildMODialog(measure);
                         }
-                        movementOptions.add(getResources().getString(R.string.dialog_editmo_spinner_optelse));
-                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_dropdown_item, movementOptions);
-                        editMOMovementInput.setAdapter(adapter);
-                        editMOMovementInput.setSelection(0);
-                        TextView editMOLabelLabel = (TextView) editMODialog.findViewById(R.id.dialog_editmo_label_label);
-                        editMOLabelLabel.setText(R.string.dialog_editmo_label_label);
-                        final EditText editMOLabelInput = (EditText) editMODialog.findViewById(R.id.dialog_editmo_label_input);
-                        editMOLabelInput.setHint(R.string.dialog_editmo_label_input_hint);
-                        editMOLabelInput.setInputType(InputType.TYPE_CLASS_TEXT);
-                        Button editMOButtonNegative = (Button) editMODialog.findViewById(R.id.dialog_editmo_button_negative);
-                        editMOButtonNegative.setOnClickListener(new OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                editMODialog.cancel();
-                            }
-                        });
-
-                        Button editMOButtonPositive = (Button) editMODialog.findViewById(R.id.dialog_editmo_button_positive);
-                        editMOButtonPositive.setOnClickListener(new OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                String option = editMOMovementInput.getSelectedItem().toString();
-                                String labelStr = editMOLabelInput.getText().toString();
-                                facsimileView.commandManager.processAdjustMovementCommand(facsimile, measure, option, labelStr,
-                                        getResources().getString(R.string.dialog_editmo_spinner_optelse),
-                                        getResources().getString(R.string.dialog_editmo_spinner_optdef));
-                                facsimileView.currentMovementNumber = facsimile.movements.indexOf(measure.movement);
-                                editMODialog.dismiss();
-                                facsimileView.adjustHistoryNavigation();
-                                invalidate();
-                            }
-                        });
-                        editMODialog.show();
                         break;
+
                     case ADJUST_MEASURE:
-                        if (page.getMeasureAt(touchBitmapPosition) != null) {
-                            final Dialog editMEDialog = new Dialog(getContext());
-                            window = editMEDialog.getWindow();
-                            wlp = window.getAttributes();
-                            wlp.gravity = Gravity.TOP;
-                            window.setAttributes(wlp);
-                            editMEDialog.setContentView(R.layout.dialog_editme);
-                            editMEDialog.setTitle(R.string.dialog_editme_titel);
-                            TextView editMENameLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_name_label);
-                            editMENameLabel.setText(R.string.dialog_editme_name_label);
-                            final EditText editMENameInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_name_input);
-                            editMENameInput.setHint(measure.getName());
-                            editMENameInput.setInputType(InputType.TYPE_CLASS_TEXT);
-                            TextView editMERestLabel = (TextView) editMEDialog.findViewById(R.id.dialog_editme_rest_label);
-                            editMERestLabel.setText(R.string.dialog_editme_rest_label);
-                            String repeatTxt = "" + measure.rest;
-                            final EditText editMERestInput = (EditText) editMEDialog.findViewById(R.id.dialog_editme_rest_input);
-                            editMERestInput.setHint(repeatTxt);
-                            editMERestInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-                            Button editMEButtonNegative = (Button) editMEDialog.findViewById(R.id.dialog_editme_button_negative);
-                            editMEButtonNegative.setOnClickListener(new OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    editMEDialog.cancel();
-                                }
-                            });
-
-                            Button editMEButtonPositive = (Button) editMEDialog.findViewById(R.id.dialog_editme_button_positive);
-                            editMEButtonPositive.setOnClickListener(new OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    String manualSequenceNumber = editMENameInput.getText().toString();
-                                    String rest = editMERestInput.getText().toString();
-                                    if(rest.equals("")) {
-                                        rest = "" + measure.rest;
-                                    }
-                                    facsimileView.commandManager.processAdjustMeasureCommand(facsimile, measure, manualSequenceNumber, rest);
-                                    editMEDialog.dismiss();
-                                    facsimileView.adjustHistoryNavigation();
-                                    invalidate();
-                                }
-                            });
-
-                            editMEDialog.show();
+                        if (measure != null) {
+                            buildMEDialog(measure);
                         }
                         break;
                     case DRAW:
@@ -738,13 +805,14 @@ public class PageImageView extends SubsamplingScaleImageView {
                         if (distanceToFirstPoint < 20.0f && trackLength > 20f) {
                             pointPath.remove(pointPath.size() - 1);
                             Measure newMeasure = new Measure();
-                            newMeasure.zone.setVertices(pointPath);
+                            newMeasure.zone.setVertices(pointPath); // sets Vertices to currentPath
                             switch (facsimile.nextAnnotationsType) {
                                 case ORTHOGONAL_BOX:
                                     newMeasure.zone.convertToOrthogonalBox();
                                     newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.ORTHOGONAL_BOX);
                                     break;
                                 case ORIENTED_BOX:
+                                    // uses rotating calipers
                                     newMeasure.zone.convertToOrientedBox();
                                     newMeasure.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
                                     break;

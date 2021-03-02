@@ -13,7 +13,6 @@ keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
     compileSdkVersion 22
-    buildToolsVersion "24.0.1"
     repositories {
         maven { url 'http://repo1.maven.org/maven2' }
     }
@@ -56,12 +55,11 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:3.0.1'
     }
 }
 
 dependencies {
-
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'com.android.support:design:22.2.1'
@@ -72,4 +70,5 @@ dependencies {
         exclude module: 'xercesImpl'
         exclude module: 'xml-apis'
     }
+    //compile 'com.google.guava:guava:16.0.1'
 }

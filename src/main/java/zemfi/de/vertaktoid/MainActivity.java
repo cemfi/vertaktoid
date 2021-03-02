@@ -39,11 +39,13 @@ import android.databinding.DataBindingUtil;
 public class MainActivity extends AppCompatActivity {
 
     final String TAG = "de.zemfi.vertaktoid";
+    // bindable status for bar
     final Status status = new Status();
     Menu mainMenu;
     String path = null;
-    private Handler tmpSaveHandler = new Handler();
 
+    //autosave
+    private Handler tmpSaveHandler = new Handler();
     private Runnable tmpSaveRunnable = new Runnable() {
         @Override
         public void run() {
@@ -103,13 +105,22 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
         path = prefs.getString("zemfi.de.vertaktoid.path", "");
+        File dir = new File(path);
+        File files[] = dir.listFiles();
 
-        if(!path.equals("")) {
-            loadFacsimile(path);
-        } else {
+        if(path.equals("")) {
+            //important on start-up
             //view.setImage(ImageSource.resource(R.drawable.handel));
+            Toast.makeText(this, "No folder selected. Please choose a file.", Toast.LENGTH_LONG).show();
+        } else if(files==null)
+        {
+            //important on moved folder
+            Toast.makeText(this, "Image file not found. Please choose a file.", Toast.LENGTH_LONG).show();
+        } else {
+            loadFacsimile(path);
         }
 
+        // link activity ui to facsimileView
         binding.setFview(facsimileView);
         status.setStatus(StatusStrings.StatusId.SUCCESS);
         status.setAction(StatusStrings.ActionId.STARTED);
@@ -119,9 +130,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadFacsimile(String path) {
+        // facsimile contains pages, movements, breaks
         Facsimile facsimile = new Facsimile();
         File dir = new File(path);
+
+        // create subfolder (for MEI) and dummy image file
         prepareApplicationFiles(dir);
+
         facsimile.openDirectory(dir);
 
         facsimileView.setFacsimile(facsimile);
@@ -238,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * onCreateIptionMenu events routine
+     * onCreateOptionsMenu events routine
      * @param menu The menu.
      * @return true value.
      */
@@ -316,14 +331,16 @@ public class MainActivity extends AppCompatActivity {
                 view.PreciseCutClicked();
                 break;
             case R.id.action_goto:
-                view.gotoClicked();
+                if(view.document != null)
+                    view.gotoClicked();
                 break;
             case R.id.action_movement:
                 item.setIcon(R.drawable.movement_on);
                 view.movementClicked();
                 break;
             case R.id.action_settings:
-                view.settingsClicked();
+                if(view.document != null)
+                    view.settingsClicked();
                 break;
             case R.id.action_undo:
                 view.undoClicked();

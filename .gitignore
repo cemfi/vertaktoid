@@ -1,0 +1,11 @@
+# keystore files
+cemfi.keystore
+keystore.properties
+local.properties
+passwds.txt
+
+# IDE files
+.idea
+
+# markdown
+history.md

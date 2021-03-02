@@ -76,7 +76,7 @@ public class Facsimile implements Parcelable {
     }
 
     /**
-     * Adds measure to giving movement and page objects.
+     * Adds measure to giving movement and page object.
      * Creates references to the parent movement\page in measure.
      * @param measure new measure
      * @param movement target movement
@@ -89,6 +89,13 @@ public class Facsimile implements Parcelable {
         page.measures.add(measure);
     }
 
+    /**
+     * Adds measure to page object and calculated movement.
+     * Creates references to the parent movement\page in measure.
+     * The movement is calculated based on the position of the measure.
+     * @param measure new measure
+     * @param page target page
+     */
     public void addMeasure(Measure measure, Page page) {
         measure.page = page;
         page.measures.add(measure);
@@ -171,6 +178,7 @@ public class Facsimile implements Parcelable {
         File files[] = dir.listFiles();
         ArrayList<File> images = new ArrayList<>();
 
+        // files==null when folder doesn't exist
         for (int i = 0; i < files.length; i++) {
             if (!files[i].getName().startsWith(".")) {
                 if (files[i].getName().toLowerCase().endsWith(".jpg") || files[i].getName().toLowerCase().endsWith(".png")) {

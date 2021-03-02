@@ -54,7 +54,10 @@ public class MEIHelper {
      */
     public static boolean writeMEI(File meiFile, Facsimile document) {
         boolean returnValue = true;
+
+        //save in measures objects if last at system or page
         document.calculateBreaks();
+
         if(meiDocument == null) {
             meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
         }
@@ -195,10 +198,10 @@ public class MEIHelper {
             }
         }
 
-        ArrayList<Element> exitstingMdivs = new ArrayList<>();
+        ArrayList<Element> existingMdivs = new ArrayList<>();
         for(Movement movement : document.movements) {
             Element mdiv = findElementByUiid(mdivs, movement.mdivUuid);
-            exitstingMdivs.add(mdiv);
+            existingMdivs.add(mdiv);
             if(mdiv == null) {
                 mdiv = new Element("mdiv", Vertaktoid.MEI_NS);
                 body.appendChild(mdiv);
@@ -237,16 +240,27 @@ public class MEIHelper {
             for (int i = 0; i < pbs.size(); i++) {
                 section.removeChild(pbs.get(i));
             }
+
+
             ArrayList<MeasureElementPair> corrMeasureElems = new ArrayList<>();
             Elements measureElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
-            for(Measure measure : movement.measures) {
+            for(int i = 0; i < movement.measures.size(); i++) {
+                Measure measure = movement.measures.get(i);
                 Element measureElem = findElementByUiid(measureElems, measure.measureUuid);
                 if(measureElem == null) {
                     measureElem = new Element("measure", Vertaktoid.MEI_NS);
                 }
                 corrMeasureElems.add(new MeasureElementPair(measure, measureElem));
 
-                a = new Attribute("n", measure.manualSequenceNumber == null ?
+                //old
+                // a = new Attribute("n", measure.manualSequenceNumber == null ?
+                //        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
+
+                // calculation of a unique and sequent number n
+                a = new Attribute("n", "" + (i + 1));
+                measureElem.addAttribute(a);
+                // label will later be read and used to calculate the sequenceNumber
+                a = new Attribute("label", measure.manualSequenceNumber == null ?
                         String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
                 measureElem.addAttribute(a);
                 a = new Attribute("id", measure.measureUuid);
@@ -265,16 +279,21 @@ public class MEIHelper {
                 if(measure.lastAtPage) {
                     Element pb = new Element("pb", Vertaktoid.MEI_NS);
                     section.insertChild(pb, section.indexOf(measureElem) + 1);
+                    Element sb = new Element("sb", Vertaktoid.MEI_NS);
+                    section.insertChild(sb, section.indexOf(measureElem) + 1);
                 } else
                 if(measure.lastAtSystem) {
                     Element sb = new Element("sb", Vertaktoid.MEI_NS);
                     section.insertChild(sb, section.indexOf(measureElem) + 1);
                 }
             }
+            // add pb at the beginning
+            Element pb = new Element("pb", Vertaktoid.MEI_NS);
+            section.insertChild(pb, 0);
         }
 
         for(int i = 0; i < mdivs.size(); i++) {
-            if(!exitstingMdivs.contains(mdivs.get(i))) {
+            if(!existingMdivs.contains(mdivs.get(i))) {
                 body.removeChild(mdivs.get(i));
             }
         }
@@ -387,7 +406,7 @@ public class MEIHelper {
                     section.removeChild(element);
                 }
                 if (element.getLocalName().equals("measure")) {
-                    String name = element.getAttributeValue("n");
+                    String name = element.getAttributeValue("label");
                     Measure measure = new Measure();
                     measure.manualSequenceNumber = name;
                     a = element.getAttribute("facs");

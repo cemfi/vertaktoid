@@ -42,6 +42,7 @@ public class Page implements Parcelable {
      * @param number The sequence number.
      */
     public Page(File imageFile, int number) {
+        //Universally Unique Identifier
         surfaceUuid = Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString();
         graphicUuid = Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString();
         this.imageFile = imageFile;
@@ -51,6 +52,7 @@ public class Page implements Parcelable {
     }
 
     public Page() {
+        //Universally Unique Identifier
         surfaceUuid = Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString();
         graphicUuid = Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString();
         measures = new ArrayList<>();
@@ -148,6 +150,10 @@ public class Page implements Parcelable {
         }
     }
 
+    /**
+     * Calculates factor to downscale the image
+     * Example: inSampleSize == 4 for 1/4 of the width/height of the original
+     */
     private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         int inSampleSize = 1;
         final int height = options.outHeight;
