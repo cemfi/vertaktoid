@@ -9,3 +9,13 @@ passwds.txt
 
 # markdown
 history.md
+
+#gradle
+.gradle
+
+#build
+build
+
+#mac
+.DS_Store
+
