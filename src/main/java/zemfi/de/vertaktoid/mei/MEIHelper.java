@@ -1,20 +1,32 @@
 package zemfi.de.vertaktoid.mei;
 
+import android.os.ParcelFileDescriptor;
+import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import nu.xom.*;
+import nu.xom.Attribute;
+import nu.xom.Builder;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Elements;
+import nu.xom.ParsingException;
+import nu.xom.Serializer;
+import nu.xom.ValidityException;
+import zemfi.de.vertaktoid.MainActivity;
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.helpers.Point2D;
-import zemfi.de.vertaktoid.model.*;
+import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Movement;
+import zemfi.de.vertaktoid.model.Page;
 
 /**
  * MEI input\output routines.
@@ -52,7 +64,7 @@ public class MEIHelper {
      * @param document The data to be saved.
      * @return true if no exceptions.
      */
-    public static boolean writeMEI(File meiFile, Facsimile document) {
+    public static boolean writeMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
         boolean returnValue = true;
 
         //save in measures objects if last at system or page
@@ -298,13 +310,16 @@ public class MEIHelper {
             }
         }
 
-        File dir = meiFile.getParentFile();
-        dir.mkdirs();
-        if(meiFile.exists()) {
-            meiFile.delete();
+        if(meiFile == null) {
+            meiFile = dir.createFile("application/xml", dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
         }
+
         try {
-            FileOutputStream out = new FileOutputStream(meiFile);
+            ParcelFileDescriptor pfd = MainActivity.context.getContentResolver().
+                    openFileDescriptor(meiFile.getUri(), "w");
+            FileOutputStream out =
+                    new FileOutputStream(pfd.getFileDescriptor());
+
             Serializer serializer;
             try {
                 serializer = new Serializer(out, "UTF-8"); // connect serializer with FileOutputStream and specify encoding
@@ -320,6 +335,7 @@ public class MEIHelper {
             }
             out.flush();
             out.close();
+            pfd.close();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -333,8 +349,7 @@ public class MEIHelper {
      * @param document The facsimile.
      * @return true if properly readed.
      */
-    public static boolean readMEI(File meiFile, Facsimile document) {
-        File dir = meiFile.getParentFile();
+    public static boolean readMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
         Attribute a;
 
         if(!meiFile.exists()) {
@@ -344,7 +359,9 @@ public class MEIHelper {
         Builder builder = new Builder(false);
         meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
         try {
-            meiDocument = builder.build(meiFile);
+
+            InputStream inputStream = MainActivity.context.getContentResolver().openInputStream(meiFile.getUri());
+            meiDocument = builder.build(inputStream);
 
         }
         catch (ValidityException e) {
@@ -442,22 +459,13 @@ public class MEIHelper {
             Element surface = surfaces.get(i);
             Elements graphics = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
             Element graphic = graphics.get(0);
-            //final String filename = graphic.getAttributeValue("target", "http://www.w3.org/XML/1998/namespace");
-            final File file = new File(graphic.getAttributeValue("target"));
-            final String filename = file.getName();
-            File[] images = dir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File file, String s) {
-                    return s.equals(filename);
-                }
-            });
+            final String filename = graphic.getAttributeValue("target");
+            DocumentFile image = dir.findFile(filename);
             Page page;
-            if(images.length > 0) {
-                page = new Page(images[0], i + 1);
+            if(image == null) {
+                image = dir.createFile("image/" + filename.substring(filename.lastIndexOf(".")).toLowerCase(), filename);
             }
-            else {
-                page = new Page(new File(dir, filename), i + 1);
-            }
+            page = new Page(image, i + 1);
             page.imageWidth = Integer.parseInt(graphic.getAttributeValue("width"));
             page.imageHeight = Integer.parseInt(graphic.getAttributeValue("height"));
             a = surface.getAttribute("id", "http://www.w3.org/XML/1998/namespace");

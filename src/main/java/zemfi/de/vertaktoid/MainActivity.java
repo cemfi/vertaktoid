@@ -1,28 +1,24 @@
 package zemfi.de.vertaktoid;
 
-import android.content.ContentUris;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
+import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
+import android.os.ParcelFileDescriptor;
+import android.support.v4.provider.DocumentFile;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateFormat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-
-import java.io.File;
-import android.text.format.DateFormat;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -34,15 +30,14 @@ import zemfi.de.vertaktoid.helpers.Status;
 import zemfi.de.vertaktoid.helpers.StatusStrings;
 import zemfi.de.vertaktoid.model.Facsimile;
 
-import android.databinding.DataBindingUtil;
-
 public class MainActivity extends AppCompatActivity {
+
+    public static Activity context = null;
 
     final String TAG = "de.zemfi.vertaktoid";
     // bindable status for bar
     final Status status = new Status();
     Menu mainMenu;
-    String path = null;
 
     //autosave
     private Handler tmpSaveHandler = new Handler();
@@ -57,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private CustomViewPager viewPager;
     private Toolbar toolbar;
     private FacsimileView facsimileView;
+    private DocumentFile dir;
 
     /**
      * Creates temporary MEI file.
@@ -68,7 +64,11 @@ public class MainActivity extends AppCompatActivity {
             Date saveDate = new Date();
             String filename = "" + DateFormat.format("dd-MM-yyyy_kk-mm-ss", saveDate) + ".mei";
             if (view.getFacsimile() != null) {
-                boolean result = view.getFacsimile().saveToDisk(path + "/" + Vertaktoid.APP_SUBFOLDER, filename);
+                DocumentFile systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
+                if(systemDir == null)
+                    systemDir = dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
+
+                boolean result = view.getFacsimile().saveToDisk(systemDir, filename);
                 status.setDate(saveDate);
                 status.setAction(StatusStrings.ActionId.TMP_SAVED);
                 if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
@@ -78,17 +78,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /*private String getContentName(ContentResolver resolver, Uri uri){
-        Cursor cursor = resolver.query(uri, null, null, null, null);
-        cursor.moveToFirst();
-        int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-        if (nameIndex >= 0) {
-            return cursor.getString(nameIndex);
-        } else {
-            return null;
-        }
-    }*/
-
     /**
      * Android application lifecycle: onCreate event.
      * @param savedInstanceState The instance state bundle.
@@ -96,6 +85,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        context = this;
+
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         viewPager = (CustomViewPager) findViewById(R.id.view_pager);
         viewPager.setOffscreenPageLimit(1);
@@ -103,22 +95,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         facsimileView = (FacsimileView) findViewById(R.id.facsimile_view);
 
-        SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
-        path = prefs.getString("zemfi.de.vertaktoid.path", "");
-        File dir = new File(path);
-        File files[] = dir.listFiles();
-
-        if(path.equals("")) {
-            //important on start-up
-            //view.setImage(ImageSource.resource(R.drawable.handel));
-            Toast.makeText(this, "No folder selected. Please choose a file.", Toast.LENGTH_LONG).show();
-        } else if(files==null)
-        {
-            //important on moved folder
-            Toast.makeText(this, "Image file not found. Please choose a file.", Toast.LENGTH_LONG).show();
-        } else {
-            loadFacsimile(path);
-        }
+        Toast.makeText(this, "No folder selected. Please choose a file.", Toast.LENGTH_LONG).show();
 
         // link activity ui to facsimileView
         binding.setFview(facsimileView);
@@ -129,10 +106,9 @@ public class MainActivity extends AppCompatActivity {
         tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
     }
 
-    private void loadFacsimile(String path) {
+    private void loadFacsimile(DocumentFile dir) {
         // facsimile contains pages, movements, breaks
         Facsimile facsimile = new Facsimile();
-        File dir = new File(path);
 
         // create subfolder (for MEI) and dummy image file
         prepareApplicationFiles(dir);
@@ -160,10 +136,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        SharedPreferences prefs = this.getSharedPreferences("zemfi.de.vertaktoid", Context.MODE_PRIVATE);
-        SharedPreferences.Editor mEditor = prefs.edit();
-        mEditor.putString("zemfi.de.vertaktoid.path", path).apply();
-
         status.setDate(new Date());
         status.setAction(StatusStrings.ActionId.LOADED);
         status.setStatus(StatusStrings.StatusId.SUCCESS);
@@ -174,16 +146,20 @@ public class MainActivity extends AppCompatActivity {
      * The temporary MEI files will be stored in created subfolder.
      * @param dir The directory.
      */
-    private void prepareApplicationFiles(File dir) {
-        File systemDir = new File (dir, Vertaktoid.APP_SUBFOLDER);
-        if(!systemDir.exists()) {
-            systemDir.mkdir();
+    private void prepareApplicationFiles(DocumentFile dir) {
+
+        DocumentFile systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
+        if(systemDir == null || !systemDir.exists()) {
+            dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
+            systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
         }
-        File image404 = new File (systemDir, Vertaktoid.NOT_FOUND_STUBIMG);
-        if(!image404.exists()) {
+        DocumentFile image404 = systemDir.findFile(Vertaktoid.NOT_FOUND_STUBIMG);
+        if(image404 == null || !image404.exists()) {
             Bitmap bm = BitmapFactory.decodeResource( getResources(), R.drawable.facsimile404);
             try {
-                FileOutputStream outStream = new FileOutputStream(image404);
+                image404 = systemDir.createFile("image/png", Vertaktoid.NOT_FOUND_STUBIMG);
+                ParcelFileDescriptor pdf = getContentResolver().openFileDescriptor(image404.getUri(), "w");
+                FileOutputStream outStream = new FileOutputStream(pdf.getFileDescriptor());
                 bm.compress(Bitmap.CompressFormat.PNG, 100, outStream);
                 outStream.flush();
                 outStream.close();
@@ -204,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putString("path", path);
     }
 
     /**
@@ -215,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         try {
             super.onRestoreInstanceState(savedInstanceState);
-            path = savedInstanceState.getString("path");
         }
         catch (Exception e) {
 
@@ -358,12 +332,10 @@ public class MainActivity extends AppCompatActivity {
      * Shows the system file selection dialog.
      */
     private void actionOpen() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        Intent intent = new Intent((Intent.ACTION_OPEN_DOCUMENT_TREE));
 
         try {
-            startActivityForResult(Intent.createChooser(intent, "Choose Directory"), 0);
+            startActivityForResult(intent, 0);
         } catch (android.content.ActivityNotFoundException ex) {
             // Potentially direct the user to the Market with a Dialog
             Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
@@ -381,17 +353,14 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case 0:
                 if (resultCode == RESULT_OK) {
-                    Uri uri = data.getData();
-                    path = getPath(getApplicationContext(), uri);
-                    File dir = new File(path);
-                    if(path != null) {
-                        File jpgFile = new File(path);
-                        dir = new File(jpgFile.getParent());
-                        path = dir.getAbsolutePath();
+
+                    if (data != null) {
+                        dir = DocumentFile.fromTreeUri(this, data.getData());
+
+                        loadFacsimile(dir);
                     }
-                    loadFacsimile(path);
-                }
-                else {
+
+                } else {
                     status.setDate(new Date());
                     status.setAction(StatusStrings.ActionId.LOADED);
                     status.setStatus(StatusStrings.StatusId.FAIL);
@@ -400,134 +369,5 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    /**
-     * Get a file path from a Uri. This will get the the path for Storage Access
-     * Framework Documents, as well as the _data field for the MediaStore and
-     * other file-based ContentProviders.
-     *
-     * @param context The context.
-     * @param uri The Uri to query.
-     * @author paulburke
-     */
-    public static String getPath(final Context context, final Uri uri) {
-
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-
-        // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-            // ExternalStorageProvider
-            if (isExternalStorageDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
-                }
-
-                // TODO handle non-primary volumes
-            }
-            // DownloadsProvider
-            else if (isDownloadsDocument(uri)) {
-
-                final String id = DocumentsContract.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
-                return getDataColumn(context, contentUri, null, null);
-            }
-            // MediaProvider
-            else if (isMediaDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                }
-
-                final String selection = "_id=?";
-                final String[] selectionArgs = new String[] {
-                        split[1]
-                };
-
-                return getDataColumn(context, contentUri, selection, selectionArgs);
-            }
-        }
-        // MediaStore (and general)
-        else if ("content".equalsIgnoreCase(uri.getScheme())) {
-            return getDataColumn(context, uri, null, null);
-        }
-        // File
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            return uri.getPath();
-        }
-
-        return null;
-    }
-
-    /**
-     * Get the value of the data column for this Uri. This is useful for
-     * MediaStore Uris, and other file-based ContentProviders.
-     *
-     * @param context The context.
-     * @param uri The Uri to query.
-     * @param selection (Optional) Filter used in the query.
-     * @param selectionArgs (Optional) Selection arguments used in the query.
-     * @return The value of the _data column, which is typically a file path.
-     */
-    public static String getDataColumn(Context context, Uri uri, String selection,
-                                       String[] selectionArgs) {
-
-        Cursor cursor = null;
-        final String column = "_data";
-        final String[] projection = {
-                column
-        };
-
-        try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
-            if (cursor != null && cursor.moveToFirst()) {
-                final int column_index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(column_index);
-            }
-        } finally {
-            if (cursor != null)
-                cursor.close();
-        }
-        return null;
-    }
-
-
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is ExternalStorageProvider.
-     */
-    public static boolean isExternalStorageDocument(Uri uri) {
-        return "com.android.externalstorage.documents".equals(uri.getAuthority());
-    }
-
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is DownloadsProvider.
-     */
-    public static boolean isDownloadsDocument(Uri uri) {
-        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
-    }
-
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is MediaProvider.
-     */
-    public static boolean isMediaDocument(Uri uri) {
-        return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
 }

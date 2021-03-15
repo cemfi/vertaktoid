@@ -2,16 +2,15 @@ package zemfi.de.vertaktoid.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v4.provider.DocumentFile;
 
-import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import zemfi.de.vertaktoid.mei.MEIHelper;
 import zemfi.de.vertaktoid.Vertaktoid;
+import zemfi.de.vertaktoid.mei.MEIHelper;
 
 /**
  * Represents a scanned music source. Consists from pages. Contains movements.
@@ -20,7 +19,7 @@ import zemfi.de.vertaktoid.Vertaktoid;
 public class Facsimile implements Parcelable {
     public ArrayList<Page> pages;
     public ArrayList<Movement> movements;
-    public File dir;
+    public DocumentFile dir;
     public enum AnnotationType {ORTHOGONAL_BOX, ORIENTED_BOX, POLYGON}
     public AnnotationType nextAnnotationsType = AnnotationType.ORTHOGONAL_BOX;
 
@@ -173,10 +172,11 @@ public class Facsimile implements Parcelable {
      * Loads scanned music source and reads the MEI file if exists.
      * @param dir reference to directory
      */
-    public void openDirectory(File dir) {
+    public void openDirectory(DocumentFile dir) {
         this.dir = dir;
-        File files[] = dir.listFiles();
-        ArrayList<File> images = new ArrayList<>();
+
+        DocumentFile files[] = dir.listFiles();
+        ArrayList<DocumentFile> images = new ArrayList<>();
 
         // files==null when folder doesn't exist
         for (int i = 0; i < files.length; i++) {
@@ -188,11 +188,11 @@ public class Facsimile implements Parcelable {
         }
         Collections.sort(images, FILE_NAME_COMPARATOR); // make alphabetical order
 
-        File meiFile = new File(dir.getAbsolutePath() + "/" + dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
-        if(meiFile.exists()) {
+        DocumentFile meiFile = dir.findFile(dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
+        if(meiFile != null) {
             pages.clear();
             movements.clear();
-            MEIHelper.readMEI(meiFile, this);
+            MEIHelper.readMEI(dir, meiFile, this);
             for (Movement movement : movements) {
                 movement.calculateSequenceNumbers();
             }
@@ -218,28 +218,28 @@ public class Facsimile implements Parcelable {
      * @return true if the MEI output was properly saved
      */
     public boolean saveToDisk() {
-        File meiFile = new File(dir.getAbsolutePath() + "/" + dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
-        return MEIHelper.writeMEI(meiFile, this);
+        DocumentFile meiFile = dir.findFile(dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
+        return MEIHelper.writeMEI(dir, meiFile, this);
 
     }
 
     /**
      * Export the MEI to giving file at giving location. Creates the file if not exists.
-     * @param path path to location
+     * @param dir directory
      * @param filename name of file
      * @return true if the MEI output was properly saved
      */
-    public boolean saveToDisk(String path, String filename) {
-        File meiFile = new File(path + "/" + filename);
-        return MEIHelper.writeMEI(meiFile, this);
+    public boolean saveToDisk(DocumentFile dir, String filename) {
+        DocumentFile meiFile = dir.findFile(filename);
+        return MEIHelper.writeMEI(dir, meiFile, this);
     }
 
     /**
      * Compares the files alphabetically by their names.
      */
-    public static final Comparator<File> FILE_NAME_COMPARATOR = new Comparator<File>() {
+    public static final Comparator<DocumentFile> FILE_NAME_COMPARATOR = new Comparator<DocumentFile>() {
         @Override
-        public int compare(File f1, File f2) {
+        public int compare(DocumentFile f1, DocumentFile f2) {
             return f1.getName().compareTo(f2.getName());
         }
     };

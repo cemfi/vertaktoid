@@ -1,6 +1,7 @@
 package zemfi.de.vertaktoid;
 
 import android.app.Dialog;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -8,7 +9,8 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.net.Uri;
+import android.os.ParcelFileDescriptor;
+import android.support.v4.provider.DocumentFile;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -24,7 +26,9 @@ import android.widget.TextView;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
-import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +40,6 @@ import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
 import zemfi.de.vertaktoid.model.Page;
-import zemfi.de.vertaktoid.model.Zone;
 
 /**
  * Includes rendering functions, dialogs, touch functions.
@@ -309,13 +312,31 @@ public class PageImageView extends SubsamplingScaleImageView {
      * @return image source
      */
     ImageSource findImageForPage() {
-        File appSubFolder = new File(facsimile.dir, Vertaktoid.APP_SUBFOLDER);
-        File stubImg = new File(appSubFolder, Vertaktoid.NOT_FOUND_STUBIMG);
+        DocumentFile appSubFolder = facsimile.dir.findFile(Vertaktoid.APP_SUBFOLDER);
+        DocumentFile stubImg = appSubFolder.findFile(Vertaktoid.NOT_FOUND_STUBIMG);
         if(page == null) {
             return null;
         }
         if(!page.imageFile.exists()) {
-            return ImageSource.uri(Uri.fromFile(stubImg));
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = false;
+            ImageSource bitmap = null;
+
+            try {
+                ParcelFileDescriptor parcelFileDescriptor =
+                        MainActivity.context.getContentResolver().openFileDescriptor(stubImg.getUri(), "r");
+                FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+                bitmap = ImageSource.bitmap(BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options));
+                parcelFileDescriptor.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return bitmap;
         }
         else {
             return page.getImage();
