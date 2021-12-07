@@ -58,6 +58,12 @@
             android:title="Open"
             android:icon="@drawable/folderoutline"
             app:showAsAction="always" />
+        <item
+            android:id="@+id/action_download_IIIF"
+            android:title="IIIF manifest"
+            android:icon="@drawable/download"
+            app:showAsAction="always" />
+
 
         <item
             android:id="@+id/action_settings"

@@ -1,28 +1,50 @@
 package zemfi.de.vertaktoid;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
+import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.text.format.DateFormat;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
 
 import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
@@ -30,9 +52,21 @@ import zemfi.de.vertaktoid.helpers.Status;
 import zemfi.de.vertaktoid.helpers.StatusStrings;
 import zemfi.de.vertaktoid.model.Facsimile;
 
+
+
 public class MainActivity extends AppCompatActivity {
 
     public static Activity context = null;
+    public String url = "", ids;
+    private RequestQueue mQueue;
+    public String images[];
+    public static String imgs[];
+    public JSONObject canv, img,res,resource, item2, body, body2;
+    public JSONArray canvas, image, item1, item3;
+
+
+
+
 
     final String TAG = "de.zemfi.vertaktoid";
     // bindable status for bar
@@ -271,6 +305,9 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.action_precise_cut:
                         mainMenu.getItem(i).setIcon(R.drawable.precise_cut_off);
                         break;
+                    case R.id.action_download_IIIF:
+                        mainMenu.getItem(i).setIcon(android.R.drawable.stat_sys_download);
+                        break;
                     case R.id.action_movement:
                         mainMenu.getItem(i).setIcon(R.drawable.movement_off);
                         break;
@@ -322,6 +359,10 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_redo:
                 view.redoClicked();
                 break;
+            case R.id.action_download_IIIF:
+                actionDownload();
+                view.resetMenu();
+                break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -341,6 +382,199 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
         }
     }
+
+
+    // Popup to download images from IIIF manifest file
+    private void actionDownload(){
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("URL");
+
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
+
+
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                url = input.getText().toString();
+
+                download_image();
+
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
+
+    }
+
+    // Download images from IIIF manifest
+
+    public void download_image(){
+
+
+        mQueue = Volley.newRequestQueue(this);
+        imgs = new String[1];
+
+
+
+            // url = "https://iiif.harvardartmuseums.org/manifests/object/299843";
+
+
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+                    new Response.Listener<JSONObject>() {
+                        @RequiresApi(api = Build.VERSION_CODES.O)
+                        @Override
+                        public void onResponse(JSONObject response) {
+
+
+                            try {
+
+
+                                if (response.has("sequences")) {
+
+
+                                    JSONArray jsonArray = response.getJSONArray("sequences");
+
+
+
+
+                                    canv = jsonArray.getJSONObject(0);
+                                    canvas = canv.getJSONArray("canvases");
+
+                                    imgs = new String[canvas.length()];
+
+                                    for(int i=0; i< canvas.length(); i++){
+                                        img = canvas.getJSONObject(i);
+                                        image = img.getJSONArray("images");
+                                        res = image.getJSONObject(0);
+                                        resource = res.getJSONObject("resource");
+                                        ids = resource.getString("@id");
+                                        imgs[i] = ids;
+                                        downloadImageNew("test",imgs[i]);
+
+                                    }
+
+
+                                }else{
+
+                                    JSONArray jsonArray = response.getJSONArray("items");
+
+                                    imgs = new String[jsonArray.length()];
+
+
+                                    for (int i=0; i<jsonArray.length(); i++){
+
+                                        canv = jsonArray.getJSONObject(i);
+
+                                        image = canv.getJSONArray("items");
+                                        res = image.getJSONObject(0);
+                                        item1 = res.getJSONArray("items");
+                                        item2 = item1.getJSONObject(0);
+                                        item3 = item2.getJSONArray("items");
+                                        body = item3.getJSONObject(0);
+                                        body2 = body.getJSONObject("body");
+                                        ids = body2.getString("id");
+
+                                        imgs[i] = ids;
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            downloadImageNew("test",imgs[i]);
+                                        }
+
+
+                                    }
+
+                                    //canvas = c.getJSONArray("body");
+
+
+                                }
+
+
+                            } catch (JSONException | IOException e) {
+                                e.printStackTrace();
+
+
+
+                            }
+
+
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+
+                    display_popup();
+
+                    error.printStackTrace();
+                }
+
+            });
+
+
+
+
+            if(imgs == null){
+                display_popup();
+            }
+
+        mQueue.add(request);
+
+
+        }
+
+       @RequiresApi(api = Build.VERSION_CODES.O)
+       private void downloadImageNew(String filename, String downloadUrlOfImage) throws IOException {
+
+
+           try{
+
+
+               DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+               Uri downloadUri = Uri.parse(downloadUrlOfImage);
+               DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+               request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
+                       .setAllowedOverRoaming(false)
+                       .setTitle(filename)
+                       .setMimeType("image/jpeg")
+                       .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                       .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS , File.separator + filename + ".jpg");
+               dm.enqueue(request);
+               //Toast.makeText(this, "Image download started.", Toast.LENGTH_SHORT).show();
+           }catch (Exception e){
+               System.out.println(e);
+           }
+       }
+
+
+    // Wrong url error message display
+
+    public void display_popup(){
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Error");
+
+        // Set up the buttons
+        builder.setMessage("Wrong url input");
+
+        builder.show();
+    }
+
 
     /**
      * Processes the result of system file selection dialog.

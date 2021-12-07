@@ -12,7 +12,7 @@ import android.content.res.Resources;
 public class Vertaktoid extends Application implements Serializable {
     // Default MEI file name with extension.
     //public final static String DEFAULT_MEI_FILENAME = "mei.mei";
-    public final static String DEFAULT_MEI_EXTENSION = ".mei";
+    public final static String DEFAULT_MEI_EXTENSION = ".xml";
     // Not found stub image file name.
     public final static String NOT_FOUND_STUBIMG = "facsimile404.png";
     // Default subfolder name.

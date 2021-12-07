@@ -8,6 +8,36 @@ def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 
 // Load your keystore.properties file into the keystoreProperties object.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 
@@ -23,7 +53,7 @@ android {
     defaultConfig {
         applicationId "zemfi.de.vertaktoid"
         minSdkVersion 21
-        targetSdkVersion 28
+        targetSdkVersion 30
         versionCode 2
         versionName '3.0.0'
         versionNameSuffix '-rc'
@@ -57,13 +87,18 @@ android {
 }
 
 buildscript {
+    ext {
+        agp_version = '7.2.0-alpha05'
+        agp_version1 = '7.2.0-alpha05'
+        agp_version2 = '4.1.3'
+    }
     repositories {
         google()
         jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.3'
+        classpath "com.android.tools.build:gradle:$agp_version2"
     }
 }
 
@@ -78,4 +113,6 @@ dependencies {
         exclude module: 'xercesImpl'
         exclude module: 'xml-apis'
     }
+    implementation 'com.android.volley:volley:1.2.1'
+
 }
