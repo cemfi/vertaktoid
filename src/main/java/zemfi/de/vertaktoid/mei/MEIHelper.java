@@ -1,15 +1,22 @@
 package zemfi.de.vertaktoid.mei;
 
+import static zemfi.de.vertaktoid.Vertaktoid.VERTACTOID_VERSION;
+
 import android.os.ParcelFileDescriptor;
+import android.sax.TextElementListener;
 import android.support.v4.provider.DocumentFile;
+import android.text.format.DateFormat;
 import android.util.Log;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import nu.xom.Attribute;
@@ -76,6 +83,10 @@ public class MEIHelper {
         Element meiElement = meiDocument.getRootElement();
 
         Element meiHead = meiElement.getFirstChildElement("meiHead", Vertaktoid.MEI_NS);
+        Attribute a1;
+
+        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
         if(meiHead == null) {
             meiHead = new Element("meiHead", Vertaktoid.MEI_NS);
             meiElement.appendChild(meiHead);
@@ -86,6 +97,26 @@ public class MEIHelper {
             Element title = new Element("title", Vertaktoid.MEI_NS);
             Element pubStmt = new Element("pubStmt", Vertaktoid.MEI_NS);
             fileDesc.appendChild(pubStmt);
+            Element encodingDesc = new Element("encodingDesc", Vertaktoid.MEI_NS);
+            meiHead.appendChild(encodingDesc);
+            Element appInfo = new Element("appInfo", Vertaktoid.MEI_NS);
+            encodingDesc.appendChild(appInfo);
+            Element application = new Element("application", Vertaktoid.MEI_NS);
+            appInfo.appendChild(application);
+            a1 = new Attribute("id",Vertaktoid.MEI_APPLICATION_ID_PREFIX + UUID.randomUUID().toString());
+            a1.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
+            application.addAttribute(a1);
+
+            a1 = new Attribute("isodate",date.toString());
+            application.addAttribute(a1);
+
+            Element name = new Element("name", Vertaktoid.MEI_NS);
+            Element ptr = new Element("ptr", Vertaktoid.MEI_NS);
+            name.insertChild(VERTACTOID_VERSION,0);
+            application.appendChild(name);
+            application.appendChild(ptr);
+            a1 = new Attribute("target","https://github.com/cemfi/vertaktoid/releases/tag/v2.0.2");
+            ptr.addAttribute(a1);
         }
         Elements musics = meiElement.getChildElements("music", Vertaktoid.MEI_NS);
         Element music;
