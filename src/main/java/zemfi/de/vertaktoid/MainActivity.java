@@ -1,618 +1,607 @@
-package zemfi.de.vertaktoid.mei;
+package zemfi.de.vertaktoid;
 
-import static zemfi.de.vertaktoid.Vertaktoid.VERTACTOID_VERSION;
-
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DownloadManager;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.databinding.DataBindingUtil;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
 import android.os.ParcelFileDescriptor;
-import android.sax.TextElementListener;
+import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.text.format.DateFormat;
-import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
 
-import nu.xom.Attribute;
-import nu.xom.Builder;
-import nu.xom.Document;
-import nu.xom.Element;
-import nu.xom.Elements;
-import nu.xom.ParsingException;
-import nu.xom.Serializer;
-import nu.xom.ValidityException;
-import zemfi.de.vertaktoid.MainActivity;
-import zemfi.de.vertaktoid.Vertaktoid;
-import zemfi.de.vertaktoid.helpers.Point2D;
+import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
+import zemfi.de.vertaktoid.helpers.Status;
+import zemfi.de.vertaktoid.helpers.StatusStrings;
 import zemfi.de.vertaktoid.model.Facsimile;
-import zemfi.de.vertaktoid.model.Measure;
-import zemfi.de.vertaktoid.model.Movement;
-import zemfi.de.vertaktoid.model.Page;
 
-/**
- * MEI input\output routines.
- */
 
-public class MEIHelper {
 
-    public static Document meiDocument;
+public class MainActivity extends AppCompatActivity {
 
-    public static void clearDocument() {
-        meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
-    }
+    public static Activity context = null;
+    public String url = "", ids;
+    private RequestQueue mQueue;
+    public String images[];
+    public static String imgs[];
+    public JSONObject canv, img,res,resource, item2, body, body2;
+    public JSONArray canvas, image, item1, item3;
 
-    public static Element findElementByUiid(Elements elements, String uuid) {
-        for(int i = 0; i < elements.size(); i++) {
-            Element element = elements.get(i);
-            if(element.getAttribute("id", "http://www.w3.org/XML/1998/namespace") != null) {
-                Attribute attr = element.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
-                if(attr != null) {
-                    String elemUuid = element.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
-                    if (elemUuid.equals(uuid)) {
-                        return element;
-                    }
-                }
-            }
 
+
+
+
+    final String TAG = "de.zemfi.vertaktoid";
+    // bindable status for bar
+    final Status status = new Status();
+    Menu mainMenu;
+
+    //autosave
+    private Handler tmpSaveHandler = new Handler();
+    private Runnable tmpSaveRunnable = new Runnable() {
+        @Override
+        public void run() {
+            saveTemporaryMEI();
+            tmpSaveHandler.postDelayed(this, 300000);
         }
-        return null;
+    };
+
+    private CustomViewPager viewPager;
+    private Toolbar toolbar;
+    private FacsimileView facsimileView;
+    private DocumentFile dir;
+
+    /**
+     * Creates temporary MEI file.
+     * The file name will be set to current datetime plus ".mei" extension.
+     */
+    protected void saveTemporaryMEI() {
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        if(view.needToSave) {
+            Date saveDate = new Date();
+            String filename = "" + DateFormat.format("dd-MM-yyyy_kk-mm-ss", saveDate) + ".mei";
+            if (view.getFacsimile() != null) {
+                DocumentFile systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
+                if(systemDir == null)
+                    systemDir = dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
+
+                boolean result = view.getFacsimile().saveToDisk(systemDir, filename);
+                status.setDate(saveDate);
+                status.setAction(StatusStrings.ActionId.TMP_SAVED);
+                if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+                else status.setStatus(StatusStrings.StatusId.FAIL);
+            }
+            view.needToSave = false;
+        }
     }
 
     /**
-     * Exports data in MEI file. The initial structure of MEI file will be kept so far as possible.
-     * The comments will be lost.
-     * @param meiFile The path to file.
-     * @param document The data to be saved.
-     * @return true if no exceptions.
+     * Android application lifecycle: onCreate event.
+     * @param savedInstanceState The instance state bundle.
      */
-    public static boolean writeMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
-        boolean returnValue = true;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        //save in measures objects if last at system or page
-        document.calculateBreaks();
+        context = this;
 
-        if(meiDocument == null) {
-            meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
-        }
-        Element meiElement = meiDocument.getRootElement();
+        ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        viewPager = (CustomViewPager) findViewById(R.id.view_pager);
+        viewPager.setOffscreenPageLimit(1);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        facsimileView = (FacsimileView) findViewById(R.id.facsimile_view);
 
-        Element meiHead = meiElement.getFirstChildElement("meiHead", Vertaktoid.MEI_NS);
-        Attribute a1;
+        Toast.makeText(this, "No folder selected. Please choose a file.", Toast.LENGTH_LONG).show();
 
-        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        // link activity ui to facsimileView
+        binding.setFview(facsimileView);
+        status.setStatus(StatusStrings.StatusId.SUCCESS);
+        status.setAction(StatusStrings.ActionId.STARTED);
+        binding.setCstatus(status);
 
-        if(meiHead == null) {
-            meiHead = new Element("meiHead", Vertaktoid.MEI_NS);
-            meiElement.appendChild(meiHead);
-            Element fileDesc = new Element("fileDesc", Vertaktoid.MEI_NS);
-            meiHead.appendChild(fileDesc);
-            Element titleStmt = new Element("titleStmt", Vertaktoid.MEI_NS);
-            fileDesc.appendChild(titleStmt);
-            Element title = new Element("title", Vertaktoid.MEI_NS);
-            Element pubStmt = new Element("pubStmt", Vertaktoid.MEI_NS);
-            fileDesc.appendChild(pubStmt);
-            Element encodingDesc = new Element("encodingDesc", Vertaktoid.MEI_NS);
-            meiHead.appendChild(encodingDesc);
-            Element appInfo = new Element("appInfo", Vertaktoid.MEI_NS);
-            encodingDesc.appendChild(appInfo);
-            Element application = new Element("application", Vertaktoid.MEI_NS);
-            appInfo.appendChild(application);
-            a1 = new Attribute("id",Vertaktoid.MEI_APPLICATION_ID_PREFIX + UUID.randomUUID().toString());
-            a1.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
-            application.addAttribute(a1);
+        tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
+    }
 
-            a1 = new Attribute("isodate",date.toString());
-            application.addAttribute(a1);
+    private void loadFacsimile(DocumentFile dir) {
+        // facsimile contains pages, movements, breaks
+        Facsimile facsimile = new Facsimile();
 
-            Element name = new Element("name", Vertaktoid.MEI_NS);
-            Element ptr = new Element("ptr", Vertaktoid.MEI_NS);
-            name.insertChild(VERTACTOID_VERSION,0);
-            application.appendChild(name);
-            application.appendChild(ptr);
-            a1 = new Attribute("target","https://github.com/cemfi/vertaktoid/releases/tag/v2.0.2");
-            ptr.addAttribute(a1);
-        }
-        Elements musics = meiElement.getChildElements("music", Vertaktoid.MEI_NS);
-        Element music;
-        if(musics.size() == 0) {
-            music = new Element("music", Vertaktoid.MEI_NS);
-            meiElement.appendChild(music);
+        // create subfolder (for MEI) and dummy image file
+        prepareApplicationFiles(dir);
 
-        } else {
-            music = musics.get(0);
-        }
-        Elements facsimiles = music.getChildElements("facsimile", Vertaktoid.MEI_NS);
-        Element facsimile;
-        if(facsimiles.size() == 0) {
-            facsimile = new Element("facsimile", Vertaktoid.MEI_NS);
-            music.appendChild(facsimile);
-        } else {
-            facsimile = facsimiles.get(0);
-        }
+        facsimile.openDirectory(dir);
 
-        Elements bodies = music.getChildElements("body", Vertaktoid.MEI_NS);
-        Element body;
-        if(bodies.size() == 0) {
-            body = new Element("body", Vertaktoid.MEI_NS);
-            music.appendChild(body);
-
-        } else {
-            body = bodies.get(0);
-        }
-
-        Elements surfaces = facsimile.getChildElements("surface", Vertaktoid.MEI_NS);
-        Elements mdivs = body.getChildElements("mdiv", Vertaktoid.MEI_NS);
-
-        Attribute a;
-
-        for(int i = 0; i < document.pages.size(); i++) {
-            Page page = document.pages.get(i);
-
-            Element surface = findElementByUiid(surfaces, page.surfaceUuid);
-            if(surface == null) {
-                surface = new Element("surface", Vertaktoid.MEI_NS);
-                facsimile.appendChild(surface);
-            }
-            a = new Attribute("id", page.surfaceUuid);
-            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
-            surface.addAttribute(a);
-            a = new Attribute("n", "" + (i + 1));
-            surface.addAttribute(a);
-            a = new Attribute("ulx", "" + 0);
-            surface.addAttribute(a);
-            a = new Attribute("uly", "" + 0);
-            surface.addAttribute(a);
-            a = new Attribute("lrx", "" + page.imageWidth);
-            surface.addAttribute(a);
-            a = new Attribute("lry", "" + page.imageHeight);
-            surface.addAttribute(a);
-
-            Elements graphics = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
-            Element graphic = findElementByUiid(graphics, page.graphicUuid);
-            if(graphic == null) {
-                graphic = new Element("graphic", Vertaktoid.MEI_NS);
-                surface.appendChild(graphic);
-            }
-            a = new Attribute("id", page.graphicUuid);
-            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
-            graphic.addAttribute(a);
-            a = new Attribute("target", page.imageFile.getName());
-            //a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-            graphic.addAttribute(a);
-            a = new Attribute("type", "facsimile");
-            graphic.addAttribute(a);
-            a = new Attribute("width", "" + page.imageWidth);
-            graphic.addAttribute(a);
-            a = new Attribute("height", "" + page.imageHeight);
-            graphic.addAttribute(a);
-
-            ArrayList<Element> existingZones = new ArrayList<>();
-            Elements zones = surface.getChildElements("zone", Vertaktoid.MEI_NS);
-            for(Measure measure : page.measures) {
-                Element zone = findElementByUiid(zones, measure.zone.zoneUuid);
-                existingZones.add(zone);
-                if(zone == null) {
-                    zone = new Element("zone", Vertaktoid.MEI_NS);
-                    surface.appendChild(zone);
-                }
-                zone.removeChildren();
-                a = new Attribute("id", measure.zone.zoneUuid);
-                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
-                zone.addAttribute(a);
-                a = new Attribute("type", "measure");
-                zone.addAttribute(a);
-                a = new Attribute("ulx", "" + toSourceCoords(measure.zone.getBoundLeft(), page.getInSampleSize(),
-                        page.imageWidth * page.getInSampleSize()));
-                zone.addAttribute(a);
-                a = new Attribute("uly", "" + toSourceCoords(measure.zone.getBoundTop(), page.getInSampleSize(),
-                        page.imageHeight * page.getInSampleSize()));
-                zone.addAttribute(a);
-                a = new Attribute("lrx", "" + toSourceCoords(measure.zone.getBoundRight(), page.getInSampleSize(),
-                        page.imageWidth * page.getInSampleSize()));
-                zone.addAttribute(a);
-                a = new Attribute("lry", "" + toSourceCoords(measure.zone.getBoundBottom(), page.getInSampleSize(),
-                        page.imageHeight * page.getInSampleSize()));
-                zone.addAttribute(a);
-                if(measure.zone.getAnnotationType() != Facsimile.AnnotationType.ORTHOGONAL_BOX) {
-                    for(Point2D vertex : measure.zone.getVertices()) {
-                        Element point = new Element("point", Vertaktoid.MEI_NS);
-                        a = new Attribute("x","" + toSourceCoords(vertex.x(), page.getInSampleSize(),
-                                page.imageWidth * page.getInSampleSize()));
-                        point.addAttribute(a);
-                        a = new Attribute("y","" + toSourceCoords(vertex.y(), page.getInSampleSize(),
-                                page.imageHeight * page.getInSampleSize()));
-                        point.addAttribute(a);
-                        zone.appendChild(point);
-                    }
-                }
+        facsimileView.setFacsimile(facsimile);
+        viewPager.setAdapter(new CustomPagerAdapter(facsimileView));
+        viewPager.clearOnPageChangeListeners();
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
             }
 
-            for(int j = 0; j < zones.size(); j++) {
-                if(!existingZones.contains(zones.get(j))) {
-                    surface.removeChild(zones.get(j));
-                }
-            }
-        }
-
-        ArrayList<Element> existingMdivs = new ArrayList<>();
-        for(Movement movement : document.movements) {
-            Element mdiv = findElementByUiid(mdivs, movement.mdivUuid);
-            existingMdivs.add(mdiv);
-            if(mdiv == null) {
-                mdiv = new Element("mdiv", Vertaktoid.MEI_NS);
-                body.appendChild(mdiv);
-            }
-            a = new Attribute("id", movement.mdivUuid);
-            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
-            mdiv.addAttribute(a);
-            a = new Attribute("n", "" + (document.movements.indexOf(movement) + 1));
-            mdiv.addAttribute(a);
-            a = new Attribute("label", movement.label);
-            mdiv.addAttribute(a);
-
-            Element score = mdiv.getFirstChildElement("score", Vertaktoid.MEI_NS);
-            if(score == null) {
-                score = new Element("score", Vertaktoid.MEI_NS);
-                mdiv.appendChild(score);
+            @Override
+            public void onPageSelected(int position) {
+                facsimileView.pageNumber.set(position);
+                facsimileView.refresh();
             }
 
-            Element scoreDef = score.getFirstChildElement("scoreDef", Vertaktoid.MEI_NS);
-            if(scoreDef == null) {
-                scoreDef = new Element("scoreDef", Vertaktoid.MEI_NS);
-                score.appendChild(scoreDef);
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
             }
+        });
 
-            Element section = score.getFirstChildElement("section", Vertaktoid.MEI_NS);
-            if(section == null) {
-                section = new Element("section", Vertaktoid.MEI_NS);
-                score.appendChild(section);
-            }
-
-            Elements sbs = section.getChildElements("sb", Vertaktoid.MEI_NS);
-            Elements pbs = section.getChildElements("pb", Vertaktoid.MEI_NS);
-            for(int i = 0; i < sbs.size(); i++) {
-                section.removeChild(sbs.get(i));
-            }
-            for (int i = 0; i < pbs.size(); i++) {
-                section.removeChild(pbs.get(i));
-            }
-
-
-            ArrayList<MeasureElementPair> corrMeasureElems = new ArrayList<>();
-            Elements measureElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
-            for(int i = 0; i < movement.measures.size(); i++) {
-                Measure measure = movement.measures.get(i);
-                Element measureElem = findElementByUiid(measureElems, measure.measureUuid);
-                if(measureElem == null) {
-                    measureElem = new Element("measure", Vertaktoid.MEI_NS);
-                }
-                corrMeasureElems.add(new MeasureElementPair(measure, measureElem));
-
-                //old
-                // a = new Attribute("n", measure.manualSequenceNumber == null ?
-                //        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
-
-                // calculation of a unique and sequent number n
-                a = new Attribute("n", "" + (i + 1));
-                measureElem.addAttribute(a);
-                // label will later be read and used to calculate the sequenceNumber
-                a = new Attribute("label", measure.manualSequenceNumber == null ?
-                        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
-                measureElem.addAttribute(a);
-                a = new Attribute("id", measure.measureUuid);
-                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-                measureElem.addAttribute(a);
-                a = new Attribute("facs", "#" + measure.zone.zoneUuid);
-                measureElem.addAttribute(a);
-            }
-            section.removeChildren();
-            Collections.sort(corrMeasureElems, MeasureElementPair.MEASURE_ELEMENT_PAIR_COMPARATOR);
-
-            for(int i = 0; i < corrMeasureElems.size(); i++) {
-                Element measureElem = corrMeasureElems.get(i).getElement();
-                Measure measure = corrMeasureElems.get(i).getMeasure();
-                section.appendChild(measureElem);
-                if(measure.lastAtPage) {
-                    Element pb = new Element("pb", Vertaktoid.MEI_NS);
-                    section.insertChild(pb, section.indexOf(measureElem) + 1);
-                    Element sb = new Element("sb", Vertaktoid.MEI_NS);
-                    section.insertChild(sb, section.indexOf(measureElem) + 1);
-                } else
-                if(measure.lastAtSystem) {
-                    Element sb = new Element("sb", Vertaktoid.MEI_NS);
-                    section.insertChild(sb, section.indexOf(measureElem) + 1);
-                }
-            }
-            // add pb at the beginning
-            Element pb = new Element("pb", Vertaktoid.MEI_NS);
-            section.insertChild(pb, 0);
-        }
-
-        for(int i = 0; i < mdivs.size(); i++) {
-            if(!existingMdivs.contains(mdivs.get(i))) {
-                body.removeChild(mdivs.get(i));
-            }
-        }
-
-        if(meiFile == null) {
-            meiFile = dir.createFile("application/xml", dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
-        }
-
-        try {
-            ParcelFileDescriptor pfd = MainActivity.context.getContentResolver().
-                    openFileDescriptor(meiFile.getUri(), "w");
-            FileOutputStream out =
-                    new FileOutputStream(pfd.getFileDescriptor());
-
-            Serializer serializer;
-            try {
-                serializer = new Serializer(out, "UTF-8"); // connect serializer with FileOutputStream and specify encoding
-                serializer.setIndent(4);                                // specify indents in xml code
-                serializer.write(meiDocument);                             // write data from mei to file
-            } catch (IOException e) {
-                Log.v("Vertaktoid", "IOException");
-                e.printStackTrace();
-                returnValue = false;
-            } catch (NullPointerException e) {
-                e.printStackTrace();
-                returnValue = false;
-            }
-            out.flush();
-            out.close();
-            pfd.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return returnValue;
+        status.setDate(new Date());
+        status.setAction(StatusStrings.ActionId.LOADED);
+        status.setStatus(StatusStrings.StatusId.SUCCESS);
     }
 
     /**
-     * Reads the data from MEI file.
-     * @param meiFile The MEI file.
-     * @param document The facsimile.
-     * @return true if properly readed.
+     * Creates subfolder and dummy image file for not founded pages.
+     * The temporary MEI files will be stored in created subfolder.
+     * @param dir The directory.
      */
-    public static boolean readMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
-        Attribute a;
+    private void prepareApplicationFiles(DocumentFile dir) {
 
-        if(!meiFile.exists()) {
-            return false;
+        DocumentFile systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
+        if(systemDir == null || !systemDir.exists()) {
+            dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
+            systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
         }
-
-        Builder builder = new Builder(false);
-        meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
-        try {
-
-            InputStream inputStream = MainActivity.context.getContentResolver().openInputStream(meiFile.getUri());
-            meiDocument = builder.build(inputStream);
-
-        }
-        catch (ValidityException e) {
-            e.printStackTrace();
-            for (int i=0; i < e.getErrorCount(); i++) {
-                System.out.println(e.getValidityError(i));
-            }
-        } catch (ParsingException e) {
-            e.printStackTrace();
-            return false;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        Element meiElement = meiDocument.getRootElement();
-        Elements musics = meiElement.getChildElements("music", Vertaktoid.MEI_NS);
-        Element music = musics.get(0);
-        Elements facsimiles = music.getChildElements("facsimile", Vertaktoid.MEI_NS);
-        Element facsimile = facsimiles.get(0);
-        Elements surfaces = facsimile.getChildElements("surface", Vertaktoid.MEI_NS);
-        Elements bodies = music.getChildElements("body", Vertaktoid.MEI_NS);
-        Element body = bodies.get(0);
-        Elements mdivs = body.getChildElements("mdiv", Vertaktoid.MEI_NS);
-
-        for(int j = 0; j < mdivs.size(); j++) {
-            Element mdiv = mdivs.get(j);
-            Movement movement = new Movement();
-            a = mdiv.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
-            if(a != null) {
-                if(a.getValue().substring(0, 1).matches("\\d")) {
-                    a.setValue(Vertaktoid.MEI_MDIV_ID_PREFIX + a.getValue());
-                }
-            } else {
-                a = new Attribute("id", Vertaktoid.MEI_MDIV_ID_PREFIX + UUID.randomUUID().toString());
-                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-                mdiv.addAttribute(a);
-            }
-            movement.mdivUuid = mdiv.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
-            String movementN = mdiv.getAttributeValue("n");
+        DocumentFile image404 = systemDir.findFile(Vertaktoid.NOT_FOUND_STUBIMG);
+        if(image404 == null || !image404.exists()) {
+            Bitmap bm = BitmapFactory.decodeResource( getResources(), R.drawable.facsimile404);
             try {
-                movement.number = Integer.getInteger(movementN);
+                image404 = systemDir.createFile("image/png", Vertaktoid.NOT_FOUND_STUBIMG);
+                ParcelFileDescriptor pdf = getContentResolver().openFileDescriptor(image404.getUri(), "w");
+                FileOutputStream outStream = new FileOutputStream(pdf.getFileDescriptor());
+                bm.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+                outStream.flush();
+                outStream.close();
             }
-            catch (Exception e) {
-                movement.number = j + 1;
-            }
-            movement.label = mdiv.getAttributeValue("label");
+            catch (FileNotFoundException ex) {
 
-            Elements scores = mdiv.getChildElements("score", Vertaktoid.MEI_NS);
-            Element score = scores.get(0);
-            Elements sections = score.getChildElements("section", Vertaktoid.MEI_NS);
-            Element section = sections.get(0);
-            Elements insideSection = section.getChildElements();
-            for (int i = 0; i < insideSection.size(); i++) {
-                Element element = insideSection.get(i);
-                if(element.getLocalName().equals("sb")) {
-                    section.removeChild(element);
-                }
-                if(element.getLocalName().equals("pb")) {
-                    section.removeChild(element);
-                }
-                if (element.getLocalName().equals("measure")) {
-                    String name = element.getAttributeValue("label");
-                    Measure measure = new Measure();
-                    measure.manualSequenceNumber = name;
-                    a = element.getAttribute("facs");
-                    if(a != null) {
-                        measure.zone.zoneUuid = element.getAttributeValue("facs");
-                        if (measure.zone.zoneUuid.startsWith("#")) {
-                            measure.zone.zoneUuid = measure.zone.zoneUuid.substring(1);
-                        }
-                        if (measure.zone.zoneUuid.substring(0, 1).matches("\\d")) {
-                            measure.zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + measure.zone.zoneUuid;
-                            a.setValue("#" + measure.zone.zoneUuid);
-                        }
-                    }
-                    a = element.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
-                    if(a != null) {
-                        if(a.getValue().substring(0, 1).matches("\\d")) {
-                            a.setValue(Vertaktoid.MEI_MEASURE_ID_PREFIX + a.getValue());
-                        }
-                    } else {
-                        a = new Attribute("id", Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString());
-                        a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-                        element.addAttribute(a);
-                    }
-                    measure.measureUuid = element.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
-                    measure.movement = movement;
-                    movement.measures.add(measure);
-                }
             }
-            document.movements.add(movement);
+            catch (IOException ex) {
+
+            }
         }
+    }
 
-        for(int i = 0; i < surfaces.size(); i++) {
-            Element surface = surfaces.get(i);
-            Elements graphics = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
-            Element graphic = graphics.get(0);
-            final String filename = graphic.getAttributeValue("target");
-            DocumentFile image = dir.findFile(filename);
-            Page page;
-            if(image == null) {
-                image = dir.createFile("image/" + filename.substring(filename.lastIndexOf(".")).toLowerCase(), filename);
-            }
-            page = new Page(image, i + 1);
-            page.imageWidth = Integer.parseInt(graphic.getAttributeValue("width"));
-            page.imageHeight = Integer.parseInt(graphic.getAttributeValue("height"));
-            a = surface.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
-            if(a != null) {
-                if(a.getValue().substring(0, 1).matches("\\d")) {
-                    a.setValue(Vertaktoid.MEI_SURFACE_ID_PREFIX + a.getValue());
-                }
-            } else {
-                a = new Attribute("id", Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString());
-                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-                surface.addAttribute(a);
-            }
-            page.surfaceUuid = surface.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
+    /**
+     * Android application lifecycle: onSaveInstanceState event.
+     * @param savedInstanceState The instance state bundle.
+     */
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+    }
 
-            a = graphic.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
-            if(a != null) {
-                if(a.getValue().substring(0, 1).matches("\\d")) {
-                    a.setValue(Vertaktoid.MEI_GRAPHIC_ID_PREFIX + a.getValue());
-                }
-            } else {
-                a = new Attribute("id", Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString());
-                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-                graphic.addAttribute(a);
-            }
-            page.graphicUuid = graphic.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
-
-            Elements zones = surface.getChildElements("zone", Vertaktoid.MEI_NS);
-
-            for(int j = 0; j < zones.size(); j++) {
-                Element zone = zones.get(j);
-                float ulx = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("ulx")), page.getInSampleSize(),
-                        page.imageWidth / page.getInSampleSize());
-                float uly = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("uly")), page.getInSampleSize(),
-                        page.imageHeight / page.getInSampleSize() );
-                float lrx = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("lrx")), page.getInSampleSize(),
-                        page.imageWidth / page.getInSampleSize());
-                float lry = fromSourceCoords(Float.parseFloat(zone.getAttributeValue("lry")), page.getInSampleSize(),
-                        page.imageHeight / page.getInSampleSize());
-                List<Point2D> vertices = new ArrayList<>();
-                Elements points = zone.getChildElements("point", Vertaktoid.MEI_NS);
-                for(int l = 0; l < points.size(); l++) {
-                    Element point = points.get(l);
-                    float x = fromSourceCoords(Float.parseFloat(point.getAttributeValue("x")), page.getInSampleSize(),
-                            page.imageWidth / page.getInSampleSize());
-                    float y = fromSourceCoords(Float.parseFloat(point.getAttributeValue("y")), page.getInSampleSize(),
-                            page.imageHeight / page.getInSampleSize());
-                    vertices.add(new Point2D(x, y));
-                }
-                a = zone.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
-                if(a != null) {
-                    if(a.getValue().substring(0, 1).matches("\\d")) {
-                        a.setValue(Vertaktoid.MEI_ZONE_ID_PREFIX + a.getValue());
-                    }
-                } else {
-                    a = new Attribute("id", Vertaktoid.MEI_ZONE_ID_PREFIX + UUID.randomUUID().toString());
-                    a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-                    zone.addAttribute(a);
-                }
-                String uuidZone = zone.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
-
-                Measure measure = findMeasureFor(uuidZone, document.movements);
-                if(measure != null) {
-                    if(vertices.size() == 4) {
-                        measure.zone.setVertices(vertices);
-                        measure.zone.setAnnotationType(Facsimile.AnnotationType.ORIENTED_BOX);
-                    } else if(vertices.size() != 4 && vertices.size() > 0)  {
-                        measure.zone.setVertices(vertices);
-                        measure.zone.setAnnotationType(Facsimile.AnnotationType.POLYGON);
-                    }
-                    else {
-                        vertices.clear();
-                        vertices.add(new Point2D(ulx, uly));
-                        vertices.add(new Point2D(ulx, lry));
-                        vertices.add(new Point2D(lrx, lry));
-                        vertices.add(new Point2D(lrx, uly));
-                        measure.zone.setVertices(vertices);
-                        measure.zone.setAnnotationType(Facsimile.AnnotationType.ORTHOGONAL_BOX);
-                    }
-                    measure.page = page;
-                    page.measures.add(measure);
-                }
-
-            }
-            document.pages.add(page);
+    /**
+     * Android application lifecycle: onRestoreInstanceState event.
+     * @param savedInstanceState The instance state bundle.
+     */
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        try {
+            super.onRestoreInstanceState(savedInstanceState);
         }
-        for (Movement movement : document.movements) {
-            movement.sortMeasures();
+        catch (Exception e) {
+
         }
-        for (Page page : document.pages) {
-            page.sortMeasures();
+    }
+
+    /**
+     * Android application lifecycle: onResume event.
+     */
+    @Override
+    protected void onResume() {
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        viewPager.restore();
+        /*if(view.document != null) {
+            view.setImage(view.findImageForPage(view.pageNumber.get()));
+        }*/
+        super.onResume();
+    }
+
+    /**
+     * Android application lifecycle: onPause event.
+     */
+    @Override
+    protected void onPause() {
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        if (view.getFacsimile() != null) {
+            boolean result = view.getFacsimile().saveToDisk();
+            status.setDate(new Date());
+            status.setAction(StatusStrings.ActionId.SAVED);
+            if(result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+            else status.setStatus(StatusStrings.StatusId.FAIL);
+            viewPager.recycle();
         }
+        super.onPause();
+    }
+
+    /**
+     * onCreateOptionsMenu events routine
+     * @param menu The menu.
+     * @return true value.
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the ActionId bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        mainMenu = menu;
+        facsimileView.setMenu(menu);
         return true;
     }
 
-    private static long toSourceCoords(double value, int inSampleSize, long max) {
-        long result = Math.round(value * inSampleSize);
-        if(result <= 0) return 0;
-        if(result >= max) return max;
-        return result;
-    }
+    /**
+     * Processes selection in menu. Calls the corresponding methods in FacsimileView.
+     * @param item The selected menu item.
+     * @return The boolean value defined in parent.
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle ActionId bar item clicks here. The ActionId bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
 
-    private static long fromSourceCoords(double value, int inSampleSize, long max) {
-        long result = Math.round(value / inSampleSize);
-        if(result <= 0) return 0;
-        if(result >= max) return max;
-        return result;
-    }
-
-    private static Measure findMeasureFor(String uuidZone, ArrayList<Movement> movements) {
-        for(Movement movement : movements) {
-            for (Measure measure : movement.measures) {
-                if(measure.zone.zoneUuid.equals(uuidZone)) {
-                    return measure;
+        int id = item.getItemId();
+        if (id != R.id.action_goto && id != R.id.action_undo && id != R.id.action_redo) {
+            for (int i = 0; i < mainMenu.size(); i++) {
+                // Set default icons
+                switch (mainMenu.getItem(i).getItemId()) {
+                    case R.id.action_erase:
+                        mainMenu.getItem(i).setIcon(R.drawable.eraser_off);
+                        break;
+                    case R.id.action_type:
+                        mainMenu.getItem(i).setIcon(R.drawable.textbox_off);
+                        break;
+                    case R.id.action_brush:
+                        mainMenu.getItem(i).setIcon(R.drawable.brush_off);
+                        break;
+                    case R.id.action_orthogonal_cut:
+                        mainMenu.getItem(i).setIcon(R.drawable.orthogonal_cut_off);
+                        break;
+                    case R.id.action_precise_cut:
+                        mainMenu.getItem(i).setIcon(R.drawable.precise_cut_off);
+                        break;
+                    case R.id.action_download_IIIF:
+                        mainMenu.getItem(i).setIcon(android.R.drawable.stat_sys_download);
+                        break;
+                    case R.id.action_movement:
+                        mainMenu.getItem(i).setIcon(R.drawable.movement_off);
+                        break;
                 }
             }
         }
-        return null;
+
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        switch (id) {
+            case R.id.action_erase:
+                item.setIcon(R.drawable.eraser_on);
+                view.eraseClicked();
+                return true;
+            case R.id.action_type:
+                item.setIcon(R.drawable.textbox_on);
+                view.typeClicked();
+                return true;
+            case R.id.action_brush:
+                item.setIcon(R.drawable.brush_on);
+                view.brushClicked();
+                return true;
+            case R.id.action_open:
+                actionOpen();
+                view.resetMenu();
+                break;
+            case R.id.action_orthogonal_cut:
+                item.setIcon(R.drawable.orthogonal_cut_on);
+                view.OrthogonalCutClicked();
+                break;
+            case R.id.action_precise_cut:
+                item.setIcon(R.drawable.precise_cut_on);
+                view.PreciseCutClicked();
+                break;
+            case R.id.action_goto:
+                if(view.document != null)
+                    view.gotoClicked();
+                break;
+            case R.id.action_movement:
+                item.setIcon(R.drawable.movement_on);
+                view.movementClicked();
+                break;
+            case R.id.action_settings:
+                if(view.document != null)
+                    view.settingsClicked();
+                break;
+            case R.id.action_undo:
+                view.undoClicked();
+                break;
+            case R.id.action_redo:
+                view.redoClicked();
+                break;
+            case R.id.action_download_IIIF:
+                actionDownload();
+                view.resetMenu();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    /**
+     * Shows the system file selection dialog.
+     */
+    private void actionOpen() {
+        Intent intent = new Intent((Intent.ACTION_OPEN_DOCUMENT_TREE));
+
+        try {
+            startActivityForResult(intent, 0);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    // Popup to download images from IIIF manifest file
+    private void actionDownload(){
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("URL");
+
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
+
+
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                url = input.getText().toString();
+
+                download_image();
+
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
+
+    }
+
+    // Download images from IIIF manifest
+
+    public void download_image(){
+
+
+        mQueue = Volley.newRequestQueue(this);
+        imgs = new String[1];
+
+
+
+        // url = "https://iiif.harvardartmuseums.org/manifests/object/299843";
+
+
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+                new Response.Listener<JSONObject>() {
+                    @RequiresApi(api = Build.VERSION_CODES.O)
+                    @Override
+                    public void onResponse(JSONObject response) {
+
+
+                        try {
+
+
+                            if (response.has("sequences")) {
+
+
+                                JSONArray jsonArray = response.getJSONArray("sequences");
+
+
+
+
+                                canv = jsonArray.getJSONObject(0);
+                                canvas = canv.getJSONArray("canvases");
+
+                                imgs = new String[canvas.length()];
+
+                                for(int i=0; i< canvas.length(); i++){
+                                    img = canvas.getJSONObject(i);
+                                    image = img.getJSONArray("images");
+                                    res = image.getJSONObject(0);
+                                    resource = res.getJSONObject("resource");
+                                    ids = resource.getString("@id");
+                                    imgs[i] = ids;
+                                    downloadImageNew("test",imgs[i]);
+
+                                }
+
+
+                            }else{
+
+                                JSONArray jsonArray = response.getJSONArray("items");
+
+                                imgs = new String[jsonArray.length()];
+
+
+                                for (int i=0; i<jsonArray.length(); i++){
+
+                                    canv = jsonArray.getJSONObject(i);
+
+                                    image = canv.getJSONArray("items");
+                                    res = image.getJSONObject(0);
+                                    item1 = res.getJSONArray("items");
+                                    item2 = item1.getJSONObject(0);
+                                    item3 = item2.getJSONArray("items");
+                                    body = item3.getJSONObject(0);
+                                    body2 = body.getJSONObject("body");
+                                    ids = body2.getString("id");
+
+                                    imgs[i] = ids;
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        downloadImageNew("test",imgs[i]);
+                                    }
+
+
+                                }
+
+                                //canvas = c.getJSONArray("body");
+
+
+                            }
+
+
+                        } catch (JSONException | IOException e) {
+                            e.printStackTrace();
+
+
+
+                        }
+
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                display_popup();
+
+                error.printStackTrace();
+            }
+
+        });
+
+
+
+
+        if(imgs == null){
+            display_popup();
+        }
+
+        mQueue.add(request);
+
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void downloadImageNew(String filename, String downloadUrlOfImage) throws IOException {
+
+
+        try{
+
+
+            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            Uri downloadUri = Uri.parse(downloadUrlOfImage);
+            DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
+                    .setAllowedOverRoaming(false)
+                    .setTitle(filename)
+                    .setMimeType("image/jpeg")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS , File.separator + filename + ".jpg");
+            dm.enqueue(request);
+            //Toast.makeText(this, "Image download started.", Toast.LENGTH_SHORT).show();
+        }catch (Exception e){
+            System.out.println(e);
+        }
+    }
+
+
+    // Wrong url error message display
+
+    public void display_popup(){
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Error");
+
+        // Set up the buttons
+        builder.setMessage("Wrong url input");
+
+        builder.show();
+    }
+
+
+    /**
+     * Processes the result of system file selection dialog.
+     * @param requestCode request code
+     * @param resultCode result code
+     * @param data intent
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case 0:
+                if (resultCode == RESULT_OK) {
+
+                    if (data != null) {
+                        dir = DocumentFile.fromTreeUri(this, data.getData());
+
+                        loadFacsimile(dir);
+                    }
+
+                } else {
+                    status.setDate(new Date());
+                    status.setAction(StatusStrings.ActionId.LOADED);
+                    status.setStatus(StatusStrings.StatusId.FAIL);
+
+                }
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }
