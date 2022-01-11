@@ -61,7 +61,7 @@
         <item
             android:id="@+id/action_download_IIIF"
             android:title="IIIF manifest"
-            android:icon="@drawable/download"
+            android:icon="@android:drawable/stat_sys_download"
             app:showAsAction="always" />
 
 
