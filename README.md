@@ -14,7 +14,7 @@ Download: http://www.cemfi.de/wp-content/papercite-data/pdf/mexin-2017-vertaktoi
 
 <h3>Requirements:</h3>
 <ul>
-	<li>Android 5.0 (Lollipop)</li>
+	<li>Android 9.0</li>
 	<li>Stylus</li>
 	<li>At least 10" screen size</li>
 </ul>
