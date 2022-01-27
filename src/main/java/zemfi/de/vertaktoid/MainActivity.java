@@ -1,19 +1,12 @@
 package zemfi.de.vertaktoid;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.DownloadManager;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.RequiresApi;
@@ -21,30 +14,16 @@ import android.support.v4.provider.DocumentFile;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.InputType;
 import android.text.format.DateFormat;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
 
 import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
@@ -52,25 +31,12 @@ import zemfi.de.vertaktoid.helpers.Status;
 import zemfi.de.vertaktoid.helpers.StatusStrings;
 import zemfi.de.vertaktoid.model.Facsimile;
 
-
-
 public class MainActivity extends AppCompatActivity {
 
     public static Activity context = null;
-    public String url = "", ids;
-    private RequestQueue mQueue;
-    public String images[];
-    public static String imgs[];
-    public JSONObject canv, img,res,resource, item2, body, body2;
-    public JSONArray canvas, image, item1, item3;
-
-
-
-
-
-    final String TAG = "de.zemfi.vertaktoid";
-    // bindable status for bar
     final Status status = new Status();
+
+    IiifManifest iiifManifestObj = new IiifManifest() ;
     Menu mainMenu;
 
     //autosave
@@ -87,19 +53,22 @@ public class MainActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private FacsimileView facsimileView;
     private DocumentFile dir;
+    private DocumentFile dir2;
+    private ArrayList < String > imageUrl = new ArrayList();
 
     /**
      * Creates temporary MEI file.
      * The file name will be set to current datetime plus ".mei" extension.
      */
     protected void saveTemporaryMEI() {
+
         FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
-        if(view.needToSave) {
+        if (view.needToSave) {
             Date saveDate = new Date();
             String filename = "" + DateFormat.format("dd-MM-yyyy_kk-mm-ss", saveDate) + ".mei";
             if (view.getFacsimile() != null) {
                 DocumentFile systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
-                if(systemDir == null)
+                if (systemDir == null)
                     systemDir = dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
 
                 boolean result = view.getFacsimile().saveToDisk(systemDir, filename);
@@ -183,13 +152,13 @@ public class MainActivity extends AppCompatActivity {
     private void prepareApplicationFiles(DocumentFile dir) {
 
         DocumentFile systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
-        if(systemDir == null || !systemDir.exists()) {
+        if (systemDir == null || !systemDir.exists()) {
             dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
             systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
         }
         DocumentFile image404 = systemDir.findFile(Vertaktoid.NOT_FOUND_STUBIMG);
-        if(image404 == null || !image404.exists()) {
-            Bitmap bm = BitmapFactory.decodeResource( getResources(), R.drawable.facsimile404);
+        if (image404 == null || !image404.exists()) {
+            Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.facsimile404);
             try {
                 image404 = systemDir.createFile("image/png", Vertaktoid.NOT_FOUND_STUBIMG);
                 ParcelFileDescriptor pdf = getContentResolver().openFileDescriptor(image404.getUri(), "w");
@@ -197,11 +166,9 @@ public class MainActivity extends AppCompatActivity {
                 bm.compress(Bitmap.CompressFormat.PNG, 100, outStream);
                 outStream.flush();
                 outStream.close();
-            }
-            catch (FileNotFoundException ex) {
+            } catch (FileNotFoundException ex) {
 
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
 
             }
         }
@@ -224,8 +191,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         try {
             super.onRestoreInstanceState(savedInstanceState);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
 
         }
     }
@@ -253,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
             boolean result = view.getFacsimile().saveToDisk();
             status.setDate(new Date());
             status.setAction(StatusStrings.ActionId.SAVED);
-            if(result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+            if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
             else status.setStatus(StatusStrings.StatusId.FAIL);
             viewPager.recycle();
         }
@@ -284,6 +250,8 @@ public class MainActivity extends AppCompatActivity {
         // Handle ActionId bar item clicks here. The ActionId bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+
+
 
         int id = item.getItemId();
         if (id != R.id.action_goto && id != R.id.action_undo && id != R.id.action_redo) {
@@ -330,7 +298,7 @@ public class MainActivity extends AppCompatActivity {
                 view.brushClicked();
                 return true;
             case R.id.action_open:
-                actionOpen();
+                actionOpen(0);
                 view.resetMenu();
                 break;
             case R.id.action_orthogonal_cut:
@@ -342,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
                 view.PreciseCutClicked();
                 break;
             case R.id.action_goto:
-                if(view.document != null)
+                if (view.document != null)
                     view.gotoClicked();
                 break;
             case R.id.action_movement:
@@ -350,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
                 view.movementClicked();
                 break;
             case R.id.action_settings:
-                if(view.document != null)
+                if (view.document != null)
                     view.settingsClicked();
                 break;
             case R.id.action_undo:
@@ -360,221 +328,33 @@ public class MainActivity extends AppCompatActivity {
                 view.redoClicked();
                 break;
             case R.id.action_download_IIIF:
-                actionDownload();
-                view.resetMenu();
-                break;
+                 iiifManifestObj.urlInputPopup();
+                 view.resetMenu();
+                 break;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
 
+
     /**
      * Shows the system file selection dialog.
      */
-    private void actionOpen() {
+
+    public void actionOpen(int requestCode) {
+
+        Activity activity = (Activity) context;
         Intent intent = new Intent((Intent.ACTION_OPEN_DOCUMENT_TREE));
 
+
         try {
-            startActivityForResult(intent, 0);
+            activity.startActivityForResult(intent, requestCode);
         } catch (android.content.ActivityNotFoundException ex) {
             // Potentially direct the user to the Market with a Dialog
             Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
         }
     }
-
-
-    // Popup to download images from IIIF manifest file
-    private void actionDownload(){
-
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("URL");
-
-
-        // Set up the input
-        final EditText input = new EditText(this);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
-
-
-        builder.setView(input);
-
-        // Set up the buttons
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                url = input.getText().toString();
-
-                download_image();
-
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-
-        builder.show();
-
-
-    }
-
-    // Download images from IIIF manifest
-
-    public void download_image(){
-
-
-        mQueue = Volley.newRequestQueue(this);
-        imgs = new String[1];
-
-
-
-        // url = "https://iiif.harvardartmuseums.org/manifests/object/299843";
-
-
-
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONObject>() {
-                    @RequiresApi(api = Build.VERSION_CODES.O)
-                    @Override
-                    public void onResponse(JSONObject response) {
-
-
-                        try {
-
-
-                            if (response.has("sequences")) {
-
-
-                                JSONArray jsonArray = response.getJSONArray("sequences");
-
-
-
-
-                                canv = jsonArray.getJSONObject(0);
-                                canvas = canv.getJSONArray("canvases");
-
-                                imgs = new String[canvas.length()];
-
-                                for(int i=0; i< canvas.length(); i++){
-                                    img = canvas.getJSONObject(i);
-                                    image = img.getJSONArray("images");
-                                    res = image.getJSONObject(0);
-                                    resource = res.getJSONObject("resource");
-                                    ids = resource.getString("@id");
-                                    imgs[i] = ids;
-                                    downloadImageNew("test",imgs[i]);
-
-                                }
-
-
-                            }else{
-
-                                JSONArray jsonArray = response.getJSONArray("items");
-
-                                imgs = new String[jsonArray.length()];
-
-
-                                for (int i=0; i<jsonArray.length(); i++){
-
-                                    canv = jsonArray.getJSONObject(i);
-
-                                    image = canv.getJSONArray("items");
-                                    res = image.getJSONObject(0);
-                                    item1 = res.getJSONArray("items");
-                                    item2 = item1.getJSONObject(0);
-                                    item3 = item2.getJSONArray("items");
-                                    body = item3.getJSONObject(0);
-                                    body2 = body.getJSONObject("body");
-                                    ids = body2.getString("id");
-
-                                    imgs[i] = ids;
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                        downloadImageNew("test",imgs[i]);
-                                    }
-
-
-                                }
-
-                                //canvas = c.getJSONArray("body");
-
-
-                            }
-
-
-                        } catch (JSONException | IOException e) {
-                            e.printStackTrace();
-
-
-
-                        }
-
-
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-                display_popup();
-
-                error.printStackTrace();
-            }
-
-        });
-
-
-
-
-        if(imgs == null){
-            display_popup();
-        }
-
-        mQueue.add(request);
-
-
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void downloadImageNew(String filename, String downloadUrlOfImage) throws IOException {
-
-
-        try{
-
-
-            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-            Uri downloadUri = Uri.parse(downloadUrlOfImage);
-            DownloadManager.Request request = new DownloadManager.Request(downloadUri);
-            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
-                    .setAllowedOverRoaming(false)
-                    .setTitle(filename)
-                    .setMimeType("image/jpeg")
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS , File.separator + filename + ".jpg");
-            dm.enqueue(request);
-            //Toast.makeText(this, "Image download started.", Toast.LENGTH_SHORT).show();
-        }catch (Exception e){
-            System.out.println(e);
-        }
-    }
-
-
-    // Wrong url error message display
-
-    public void display_popup(){
-
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Error");
-
-        // Set up the buttons
-        builder.setMessage("Wrong url input");
-
-        builder.show();
-    }
-
 
     /**
      * Processes the result of system file selection dialog.
@@ -582,8 +362,10 @@ public class MainActivity extends AppCompatActivity {
      * @param resultCode result code
      * @param data intent
      */
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         switch (requestCode) {
             case 0:
                 if (resultCode == RESULT_OK) {
@@ -598,9 +380,19 @@ public class MainActivity extends AppCompatActivity {
                     status.setDate(new Date());
                     status.setAction(StatusStrings.ActionId.LOADED);
                     status.setStatus(StatusStrings.StatusId.FAIL);
-
                 }
                 break;
+            case 1:
+                if (resultCode == Activity.RESULT_OK) {
+                    dir2 = DocumentFile.fromTreeUri(this, data.getData());
+
+                    try {
+                        iiifManifestObj.downloadImage(dir2);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }

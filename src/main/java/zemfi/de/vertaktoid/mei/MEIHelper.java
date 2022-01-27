@@ -42,6 +42,8 @@ import zemfi.de.vertaktoid.model.Page;
 public class MEIHelper {
 
     public static Document meiDocument;
+    public static String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
 
     public static void clearDocument() {
         meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
@@ -84,8 +86,6 @@ public class MEIHelper {
 
         Element meiHead = meiElement.getFirstChildElement("meiHead", Vertaktoid.MEI_NS);
         Attribute a1;
-
-        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
         if(meiHead == null) {
             meiHead = new Element("meiHead", Vertaktoid.MEI_NS);
