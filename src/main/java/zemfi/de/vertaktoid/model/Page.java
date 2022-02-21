@@ -1,22 +1,15 @@
 package zemfi.de.vertaktoid.model;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Parcel;
-import android.os.ParcelFileDescriptor;
-import android.os.Parcelable;
-import android.support.v4.provider.DocumentFile;
-
-import com.davemorrissey.labs.subscaleview.ImageSource;
-
-import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.io.File;
 import java.util.Collections;
 import java.util.UUID;
 
-import zemfi.de.vertaktoid.MainActivity;
+import android.graphics.BitmapFactory;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import com.davemorrissey.labs.subscaleview.ImageSource;
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.helpers.Geometry;
 import zemfi.de.vertaktoid.helpers.Point2D;
@@ -30,7 +23,7 @@ public class Page implements Parcelable {
     // Related movements.
     public ArrayList<Measure> measures;
     // Image file.
-    public DocumentFile imageFile;
+    public File imageFile;
     // Sequence number of the page.
     public int number;
 
@@ -48,7 +41,7 @@ public class Page implements Parcelable {
      * @param imageFile The image file.
      * @param number The sequence number.
      */
-    public Page(DocumentFile imageFile, int number) {
+    public Page(File imageFile, int number) {
         //Universally Unique Identifier
         surfaceUuid = Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString();
         graphicUuid = Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString();
@@ -163,7 +156,6 @@ public class Page implements Parcelable {
      */
     private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         int inSampleSize = 1;
-
         final int height = options.outHeight;
         final int width = options.outWidth;
 
@@ -182,33 +174,14 @@ public class Page implements Parcelable {
      * Read the dimensions from image file.
      */
     private void calculateDimensions() {
-
         BitmapFactory.Options options = new BitmapFactory.Options();
         //The option inJustDecodeBounds is very important here.
         //Without this option the Bitmap will be read and stored in the memory, what cause the memory leaks.
         options.inJustDecodeBounds = true;
-
         if(imageFile != null) {
-
-            try {
-                ParcelFileDescriptor parcelFileDescriptor =
-                        MainActivity.context.getContentResolver().openFileDescriptor(imageFile.getUri(), "r");
-                FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-                Bitmap bmp = BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
-                parcelFileDescriptor.close();
-
-                imageHeight = options.outHeight;
-                imageWidth = options.outWidth;
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                imageHeight = 0;
-                imageWidth = 0;
-            } catch (IOException e) {
-                e.printStackTrace();
-                imageHeight = 0;
-                imageWidth = 0;
-            }
+            BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+            imageHeight = options.outHeight;
+            imageWidth = options.outWidth;
         }
         else {
             imageHeight = 0;
@@ -220,27 +193,10 @@ public class Page implements Parcelable {
     }
 
     public ImageSource getImage() {
-
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = false;
         options.inSampleSize = inSampleSize;
-
-        ImageSource bitmap = null;
-
-        try {
-            ParcelFileDescriptor parcelFileDescriptor =
-                    MainActivity.context.getContentResolver().openFileDescriptor(imageFile.getUri(), "r");
-            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-            bitmap = ImageSource.bitmap(BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options));
-            parcelFileDescriptor.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return bitmap;
+        return ImageSource.bitmap(BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options));
     }
 
     @Override
