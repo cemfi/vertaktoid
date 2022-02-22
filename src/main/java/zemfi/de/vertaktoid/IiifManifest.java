@@ -1,15 +1,26 @@
 package zemfi.de.vertaktoid;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.IntentFilter;
+import android.database.Cursor;
+import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.text.InputType;
 import android.widget.EditText;
+import android.widget.PopupWindow;
+import android.widget.Toast;
+import android.support.v4.view.ViewPager;
+
+
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -25,7 +36,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
+
+import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 
 
@@ -35,7 +50,7 @@ import zemfi.de.vertaktoid.mei.MEIHelper;
 /**
  * Download Images from IIIF Manifest
  */
-public class IiifManifest {
+public class IiifManifest extends Activity{
 
     public String url = "", ids;
     private RequestQueue mQueue;
@@ -43,10 +58,16 @@ public class IiifManifest {
     public JSONObject canv, img, res, resource, item2, body, body2;
     public JSONArray canvas, image, item1, item3;
     public ArrayList<String> imageUrl = new ArrayList();
+    private CustomViewPager viewPager;
 
+
+    PopupWindow popUp;
+    boolean click = true;
     /**
      * Display popup input window to insert url of IIIF manifest
      */
+
+
 
     public void urlInputPopup() {
 
@@ -202,34 +223,105 @@ public class IiifManifest {
      * Download images into the selected folder
      */
 
-    public void downloadImage(DocumentFile df) throws IOException {
+    public void downloadImage(DocumentFile df) throws IOException, InterruptedException {
 
         String directorypath = df.getUri().toString();
         String decodedurl = URLDecoder.decode(directorypath, "UTF-8");
-        String trimedurl = decodedurl.replace(":","/");
+        String trimedurl = decodedurl.replace(":", "/");
         String parseurl = trimedurl.substring(trimedurl.indexOf("document/primary/"));
         String finalurl = parseurl.replace("document/primary/", "");
+        String[] parts = finalurl.split("/");
+        String subPath = "";
+
+        System.out.println(parts[0]);
+        if(parts.length>1){
+            for(int i=1; i< parts.length; i++){
+                subPath = subPath  + "/" + parts[i];
+            }
+        }
 
 
-        for(int i=0; i< imageUrl.size(); i++){
 
+
+        System.out.println("number of images " + imageUrl.size());
+        long downloadI;
+
+        for (int i = 0; i < imageUrl.size(); i++) {
             try{
+
                 DownloadManager dm = (DownloadManager) MainActivity.context.getSystemService(Context.DOWNLOAD_SERVICE);
+
                 Uri downloadUri = Uri.parse(imageUrl.get(i));
                 DownloadManager.Request request = new DownloadManager.Request(downloadUri);
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
                         .setAllowedOverRoaming(false)
                         .setTitle(MEIHelper.date)
-                        .setMimeType("image/jpeg")
+                        .setMimeType("image/jpg")
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        .setDestinationInExternalPublicDir(finalurl, File.separator + MEIHelper.date + ".jpg");
-                dm.enqueue(request);
-            }catch (Exception e){
-                System.out.println(e);
-            }
+                        .setDestinationInExternalPublicDir(parts[0],   "/" + subPath+ "/" + leadingZeros(i) + ".jpg");
+                long downloadId=dm.enqueue(request);
 
+                final Timer timer = new Timer();
+                Cursor cursor = dm.query(new DownloadManager.Query().setFilterById(downloadId));
+
+                if (cursor != null && cursor.moveToNext()) {
+                    int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                    cursor.close();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+
+                            if (status == DownloadManager.STATUS_PENDING || status == DownloadManager.STATUS_SUCCESSFUL) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        // update UI
+                                        System.out.println("it is downloading");
+
+                                    }
+                                });
+                                timer.cancel();
+                            }
+                        }
+                    }, 1000);
+                   if(status == DownloadManager.STATUS_PENDING){
+
+                       System.out.println("Still pending");
+                   }else{
+                       System.out.println("I do not know what this is");
+                   }
+
+
+                }
+
+            } finally {
+
+
+
+                
+            }
         }
+
         imageUrl.clear();
-        chooseDownloadDirectory(0);
+
     }
+
+
+    private String leadingZeros(int i) {
+        if(i < 10)
+            return "0000" + i;
+        if(i < 100)
+            return "000" + i;
+        if(i < 1000)
+            return "00" + i;
+        if(i < 10000)
+            return "0" + i;
+
+        return "" + i;
+
+    }
+
 }
+
+
+

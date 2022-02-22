@@ -28,7 +28,6 @@ public class CustomViewPager extends ViewPager {
         }
         return false;
     }
-
     public void recycle(){
         ((CustomPagerAdapter)getAdapter()).recycle();
     }

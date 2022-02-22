@@ -42,13 +42,15 @@ public class MainActivity extends AppCompatActivity {
     //autosave
     private Handler tmpSaveHandler = new Handler();
     private Runnable tmpSaveRunnable = new Runnable() {
+
+        long start1 = System.nanoTime();
         @Override
         public void run() {
             saveTemporaryMEI();
             tmpSaveHandler.postDelayed(this, 300000);
         }
     };
-
+    long end = System.nanoTime();
     private CustomViewPager viewPager;
     private Toolbar toolbar;
     private FacsimileView facsimileView;
@@ -388,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
 
                     try {
                         iiifManifestObj.downloadImage(dir2);
-                    } catch (IOException e) {
+                    } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
 
