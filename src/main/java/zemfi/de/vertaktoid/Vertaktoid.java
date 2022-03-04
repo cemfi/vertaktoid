@@ -1,9 +1,9 @@
 package zemfi.de.vertaktoid;
 
 import android.app.Application;
+import android.content.res.Resources;
 
 import java.io.Serializable;
-import android.content.res.Resources;
 
 /**
  * Application class containing some default strings.
@@ -20,15 +20,12 @@ public class Vertaktoid extends Application implements Serializable {
     // Default MEI name space.
     public final static String MEI_NS = "http://www.music-encoding.org/ns/mei";
     public final static String VERTACTOID_VERSION = "Vertaktoid v2.0.2";
-
     public final static String MEI_ZONE_ID_PREFIX = "zone_";
     public final static String MEI_MEASURE_ID_PREFIX = "measure_";
     public final static String MEI_MDIV_ID_PREFIX = "page_";
     public final static String MEI_GRAPHIC_ID_PREFIX = "graphic_";
     public final static String MEI_SURFACE_ID_PREFIX = "surface_";
     public final static String MEI_APPLICATION_ID_PREFIX = "application_";
-
-
     public final static int DEFAULT_UNDOREDO_STACK_SIZE = 50;
 
     public void onCreate() {

@@ -2,25 +2,24 @@ package zemfi.de.vertaktoid;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.IntentFilter;
 import android.database.Cursor;
-import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.text.InputType;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.PopupWindow;
-import android.widget.Toast;
-import android.support.v4.view.ViewPager;
-
-
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -32,41 +31,38 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-
-import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
 import zemfi.de.vertaktoid.mei.MEIHelper;
-
-
-
-
 
 /**
  * Download Images from IIIF Manifest
  */
-public class IiifManifest extends Activity{
+public class IiifManifest extends Activity {
 
     public String url = "", ids;
     private RequestQueue mQueue;
-    public static String imgs[];
+    public static String[] imgs;
     public JSONObject canv, img, res, resource, item2, body, body2;
     public JSONArray canvas, image, item1, item3;
     public ArrayList<String> imageUrl = new ArrayList();
-    private CustomViewPager viewPager;
+    public int progress = 0;
+    public Dialog downloadProgressDialogue = null;
+    public ProgressBar text;
+    public TextView text2;
+
+    public ArrayList<Long> downloadIds = new ArrayList<>();
+    public DownloadManager dm;
+    public boolean canceled = false;
 
 
-    PopupWindow popUp;
-    boolean click = true;
     /**
      * Display popup input window to insert url of IIIF manifest
      */
-
 
 
     public void urlInputPopup() {
@@ -209,7 +205,7 @@ public class IiifManifest extends Activity{
      * Display error message for wrong url
      */
 
-    public void displayError(){
+    public void displayError() {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.context);
         builder.setTitle("Error");
         // Set up the buttons
@@ -233,95 +229,169 @@ public class IiifManifest extends Activity{
         String[] parts = finalurl.split("/");
         String subPath = "";
 
+        progress = 0;
+        downloadIds = new ArrayList<>();
+        dm = (DownloadManager) MainActivity.context.getSystemService(Context.DOWNLOAD_SERVICE);
+        canceled = false;
+
+
         System.out.println(parts[0]);
-        if(parts.length>1){
-            for(int i=1; i< parts.length; i++){
-                subPath = subPath  + "/" + parts[i];
+        if (parts.length > 1) {
+            for (int i = 1; i < parts.length; i++) {
+                subPath = subPath + "/" + parts[i];
             }
         }
-
-
-
+        final String subPathFinal = subPath;
 
         System.out.println("number of images " + imageUrl.size());
         long downloadI;
 
-        for (int i = 0; i < imageUrl.size(); i++) {
-            try{
 
-                DownloadManager dm = (DownloadManager) MainActivity.context.getSystemService(Context.DOWNLOAD_SERVICE);
+       downloadProgressDialogue = new Dialog(MainActivity.context);
+       downloadProgressDialogue.requestWindowFeature(Window.FEATURE_NO_TITLE);
+       downloadProgressDialogue.setCancelable(false);
+       downloadProgressDialogue.setContentView(R.layout.download_progress);
 
-                Uri downloadUri = Uri.parse(imageUrl.get(i));
-                DownloadManager.Request request = new DownloadManager.Request(downloadUri);
-                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
-                        .setAllowedOverRoaming(false)
-                        .setTitle(MEIHelper.date)
-                        .setMimeType("image/jpg")
-                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        .setDestinationInExternalPublicDir(parts[0],   "/" + subPath+ "/" + leadingZeros(i) + ".jpg");
-                long downloadId=dm.enqueue(request);
+        text = (ProgressBar) downloadProgressDialogue.findViewById(R.id.progress_horizontal);
+        text.setMax(imageUrl.size());
+        text2 = (TextView) downloadProgressDialogue.findViewById(R.id.value123);
+        text2.setText("0");
 
-                final Timer timer = new Timer();
-                Cursor cursor = dm.query(new DownloadManager.Query().setFilterById(downloadId));
+        Button cancel = (Button) downloadProgressDialogue.findViewById(R.id.cancel);
+        cancel.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View view) {
 
-                if (cursor != null && cursor.moveToNext()) {
-                    int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                    cursor.close();
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
+               canceled = true;
+               ArrayList<Long> clone = (ArrayList<Long>) downloadIds.clone();
 
-                            if (status == DownloadManager.STATUS_PENDING || status == DownloadManager.STATUS_SUCCESSFUL) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        // update UI
-                                        System.out.println("it is downloading");
-
-                                    }
-                                });
-                                timer.cancel();
-                            }
-                        }
-                    }, 1000);
-                   if(status == DownloadManager.STATUS_PENDING){
-
-                       System.out.println("Still pending");
-                   }else{
-                       System.out.println("I do not know what this is");
+               try {
+                   for(long l : clone) {
+                       dm.remove(l);
                    }
+               }catch (Exception e) {
+                   System.out.println(e);
+               }
 
+               downloadProgressDialogue.dismiss();
+           }
+       });
+        downloadProgressDialogue.show();
+        Window window = downloadProgressDialogue.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < imageUrl.size(); i++) {
+
+                    if(canceled) break;
+
+                    try {
+
+                        Uri downloadUri = Uri.parse(imageUrl.get(i));
+                        DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+                        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
+                                .setAllowedOverRoaming(false)
+                                .setTitle(MEIHelper.date)
+                                .setMimeType("image/jpg")
+                                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                .setDestinationInExternalPublicDir(parts[0], "/" + subPathFinal + "/" + leadingZeros(i) + ".jpg");
+                        if(canceled) break;
+                        long downloadId = dm.enqueue(request);
+                        downloadIds.add(0, downloadId);
+
+                        getDownloadStatus(downloadId, imageUrl.size(), dm);
+
+                    } finally {
+
+                    }
                 }
-
-            } finally {
-
-
-
-                
+                imageUrl.clear();
             }
-        }
-
-        imageUrl.clear();
-
+        }).start();
     }
 
 
     private String leadingZeros(int i) {
-        if(i < 10)
+        if (i < 10)
             return "0000" + i;
-        if(i < 100)
+        if (i < 100)
             return "000" + i;
-        if(i < 1000)
+        if (i < 1000)
             return "00" + i;
-        if(i < 10000)
+        if (i < 10000)
             return "0" + i;
 
         return "" + i;
 
     }
 
+    public void updateProgressBar(int totalImage){
+
+                progress++;
+                if (progress == totalImage){
+                    downloadProgressDialogue.dismiss();
+                    return;
+                }
+                text.setProgress(progress);
+                text2.setText(String.valueOf(Math.round(((float) progress/(float)totalImage)*100.00)));
+    }
+
+
+    private void getDownloadStatus(long downloadId, int totalImage, DownloadManager dm) {
+
+
+        DownloadManager.Query query = new DownloadManager.Query();
+        query.setFilterById(downloadId);
+        Cursor cursor = ((DownloadManager) MainActivity.context.getSystemService(Context.DOWNLOAD_SERVICE))
+                .query(query);
+
+        if (cursor.moveToFirst())
+        {
+            cursor.close();
+            final Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+
+                    if(canceled) {
+                        timer.cancel();
+                        return;
+                    }
+
+                    query.setFilterById(downloadId);
+                    Cursor cursor = ((DownloadManager)MainActivity.context.getSystemService(Context.DOWNLOAD_SERVICE))
+                            .query(query);
+                    cursor.moveToFirst();
+
+                    try {
+                        int status=cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                        cursor.close();
+
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            timer.cancel();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateProgressBar(totalImage);
+                                }
+                            });
+                        }
+                    }catch(Exception e) {
+                        timer.cancel();
+                        System.out.println(e);
+                    }
+                }
+            }, 100,1);
+        }
+    }
+
 }
+
+
+
+
 
 
 

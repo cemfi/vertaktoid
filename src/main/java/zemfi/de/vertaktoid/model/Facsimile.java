@@ -1,5 +1,6 @@
 package zemfi.de.vertaktoid.model;
 
+import android.app.Dialog;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.provider.DocumentFile;
@@ -9,6 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import zemfi.de.vertaktoid.MainActivity;
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 
@@ -175,7 +177,7 @@ public class Facsimile implements Parcelable {
     public void openDirectory(DocumentFile dir) {
         this.dir = dir;
 
-        DocumentFile files[] = dir.listFiles();
+        DocumentFile[] files = dir.listFiles();
         ArrayList<DocumentFile> images = new ArrayList<>();
 
         // files==null when folder doesn't exist
@@ -192,6 +194,12 @@ public class Facsimile implements Parcelable {
         if(meiFile != null) {
             pages.clear();
             movements.clear();
+
+            //start loading here
+            final Dialog loading = new Dialog(MainActivity.context);
+            loading.show();
+            loading.setCancelable(false);
+
             MEIHelper.readMEI(dir, meiFile, this);
             for (Movement movement : movements) {
                 movement.calculateSequenceNumbers();
@@ -200,6 +208,9 @@ public class Facsimile implements Parcelable {
             for (int i = pages.size(); i < images.size(); i++) {
                 pages.add(new Page(images.get(i), i + 1));
             }
+
+            loading.dismiss();
+
         }
         else {
             pages.clear();

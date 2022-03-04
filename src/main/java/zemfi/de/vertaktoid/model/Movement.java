@@ -3,7 +3,6 @@ package zemfi.de.vertaktoid.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
@@ -89,7 +88,7 @@ public class Movement implements Parcelable {
                 try {
                     String modified = measure.manualSequenceNumber.replaceAll("[\\D]", " ");
                     modified = modified.trim();
-                    String mnumStrs[] = modified.split(" ");
+                    String[] mnumStrs = modified.split(" ");
                     // if no number recognized (only non-digit)
                     if(mnumStrs.length == 0) {
                         measure.sequenceNumber = num;

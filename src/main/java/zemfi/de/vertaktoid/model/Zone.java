@@ -2,18 +2,19 @@ package zemfi.de.vertaktoid.model;
 
 
 //import android.graphics.PointF;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.goebl.simplify.PointExtractor;
 import com.goebl.simplify.Simplify;
-//import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import zemfi.de.vertaktoid.helpers.RotatingCalipers;
+
 import zemfi.de.vertaktoid.helpers.Point2D;
+import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 
 public class Zone implements Comparable<Zone>, Parcelable {
     public String zoneUuid = null;
