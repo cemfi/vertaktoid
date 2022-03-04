@@ -8,6 +8,7 @@
     <string name="dialog_goto_titel">Go To Page</string>
     <string name="dialog_settings_horover_label">Horizontal overlapping:</string>
     <string name="dialog_settings_titel">Settings</string>
+    <string name="dialog_download_progress_titel">Download Progress</string>
     <string name="dialog_settings_undosize_label">Max. size for undo/redo stack:</string>
     <string name="dialog_settings_percents">percents of page width</string>
     <string name="dialog_settings_points">points</string>

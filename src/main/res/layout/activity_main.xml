@@ -28,20 +28,33 @@
         tools:context="zemfi.de.vertaktoid.MainActivity">
 
         <android.support.design.widget.AppBarLayout
+            android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:theme="@style/AppTheme.AppBarOverlay">
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                app:popupTheme="@style/AppTheme.PopupOverlay" />
-
         </android.support.design.widget.AppBarLayout>
 
-        <include bind:fview="@{fview}" bind:cstatus="@{cstatus}" layout="@layout/content_main" />
+        <include
+            layout="@layout/content_main"
+            bind:cstatus="@{cstatus}"
+            bind:fview="@{fview}" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="259dp"
+            android:layout_height="711dp"
+            android:text="TextView"
+            android:background="#00FFFFCC"/>
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:layout_anchor="@+id/appBarLayout"
+            app:layout_anchorGravity="center"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
 
 
     </zemfi.de.vertaktoid.FacsimileView>

@@ -19,7 +19,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,21 +39,23 @@ public class MainActivity extends AppCompatActivity {
     Menu mainMenu;
 
     //autosave
-    private Handler tmpSaveHandler = new Handler();
-    private Runnable tmpSaveRunnable = new Runnable() {
+    private final Handler tmpSaveHandler = new Handler();
+    private final Runnable tmpSaveRunnable = new Runnable() {
+
+        final long start1 = System.nanoTime();
         @Override
         public void run() {
             saveTemporaryMEI();
             tmpSaveHandler.postDelayed(this, 300000);
         }
     };
-
+    long end = System.nanoTime();
     private CustomViewPager viewPager;
     private Toolbar toolbar;
     private FacsimileView facsimileView;
     private DocumentFile dir;
     private DocumentFile dir2;
-    private ArrayList < String > imageUrl = new ArrayList();
+    private final ArrayList < String > imageUrl = new ArrayList();
 
     /**
      * Creates temporary MEI file.
@@ -108,6 +109,15 @@ public class MainActivity extends AppCompatActivity {
 
         tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
     }
+
+    public void viewProgress(){
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        System.out.println("it was here");
+        view.displayDownloadProgress();
+
+
+    }
+
 
     private void loadFacsimile(DocumentFile dir) {
         // facsimile contains pages, movements, breaks
@@ -388,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
 
                     try {
                         iiifManifestObj.downloadImage(dir2);
-                    } catch (IOException e) {
+                    } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
 
