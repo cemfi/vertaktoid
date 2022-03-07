@@ -49,7 +49,7 @@ import zemfi.de.vertaktoid.model.Page;
 public class PageImageView extends SubsamplingScaleImageView {
 
     private final FacsimileView facsimileView;
-    private Facsimile facsimile;
+    private final Facsimile facsimile;
     private final Page page;
     private Path boundingPath;
     private Path verticesPath;
@@ -57,19 +57,19 @@ public class PageImageView extends SubsamplingScaleImageView {
     private Paint selectionPaint;
     private Paint cutLinePaint;
     private Paint drawPaint;
-    private Paint largeTextPaint = new Paint();
-    private Paint smallTextPaint = new Paint();
-    private Rect pageNameRect = new Rect();
-    private Rect measureNameRect = new Rect();
-    private Rect movementNameRect = new Rect();
+    private final Paint largeTextPaint = new Paint();
+    private final Paint smallTextPaint = new Paint();
+    private final Rect pageNameRect = new Rect();
+    private final Rect measureNameRect = new Rect();
+    private final Rect movementNameRect = new Rect();
     private List<Measure> selectedMeasures = new ArrayList<>();
-    private int selectionColor = 0xff404040;
-    private int cutLineColor = 0xff0f0f0f;
+    private final int selectionColor = 0xff404040;
+    private final int cutLineColor = 0xff0f0f0f;
     HSLColor fillColor;
-    private float s = 100f;
-    private float l = 30f;
-    private float a = 1f;
-    private float brushSize = 5;
+    private final float s = 100f;
+    private final float l = 30f;
+    private final float a = 1f;
+    private final float brushSize = 5;
     Path grayPath;
     Path polygonHoverPath;
     Point2D firstDrawPoint;
@@ -697,10 +697,10 @@ public class PageImageView extends SubsamplingScaleImageView {
         float touchY = event.getY();
         touchBitmapPosition = new Point2D(viewToSourceCoord(touchX, touchY));
 
-        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
+       /* if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
         {
             return super.onTouchEvent(event);
-        }
+        } */
 
         final ArrayList<Measure> measures = page.getMeasuresAt(touchBitmapPosition);
         final Measure measure = page.getMeasureAt(touchBitmapPosition);
@@ -870,4 +870,6 @@ public class PageImageView extends SubsamplingScaleImageView {
             invalidate();
         }
     }
+
+
 }
