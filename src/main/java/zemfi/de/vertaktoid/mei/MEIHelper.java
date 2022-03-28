@@ -3,9 +3,7 @@ package zemfi.de.vertaktoid.mei;
 import static zemfi.de.vertaktoid.Vertaktoid.VERTACTOID_VERSION;
 
 import android.os.ParcelFileDescriptor;
-import android.sax.TextElementListener;
 import android.support.v4.provider.DocumentFile;
-import android.text.format.DateFormat;
 import android.util.Log;
 
 import java.io.FileOutputStream;
@@ -182,7 +180,7 @@ public class MEIHelper {
             a = new Attribute("id", page.graphicUuid);
             a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
             graphic.addAttribute(a);
-            a = new Attribute("target", page.imageFile.getName());
+            a = new Attribute("target", page.getImageFileName());
             //a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
             graphic.addAttribute(a);
             a = new Attribute("type", "facsimile");
@@ -382,7 +380,6 @@ public class MEIHelper {
      */
     public static boolean readMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
         Attribute a;
-
         if(!meiFile.exists()) {
             return false;
         }
@@ -487,16 +484,13 @@ public class MEIHelper {
         }
 
         for(int i = 0; i < surfaces.size(); i++) {
+
+
             Element surface = surfaces.get(i);
             Elements graphics = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
             Element graphic = graphics.get(0);
             final String filename = graphic.getAttributeValue("target");
-            DocumentFile image = dir.findFile(filename);
-            Page page;
-            if(image == null) {
-                image = dir.createFile("image/" + filename.substring(filename.lastIndexOf(".")).toLowerCase(), filename);
-            }
-            page = new Page(image, i + 1);
+            Page page= new Page(dir,filename, i+1);
             page.imageWidth = Integer.parseInt(graphic.getAttributeValue("width"));
             page.imageHeight = Integer.parseInt(graphic.getAttributeValue("height"));
             a = surface.getAttribute("id", "http://www.w3.org/XML/1998/namespace");

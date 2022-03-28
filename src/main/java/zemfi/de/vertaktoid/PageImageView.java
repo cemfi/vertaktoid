@@ -317,8 +317,8 @@ public class PageImageView extends SubsamplingScaleImageView {
         if(page == null) {
             return null;
         }
-        if(!page.imageFile.exists()) {
 
+        if(!page.imageExists()) {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = false;
             ImageSource bitmap = null;
@@ -367,10 +367,10 @@ public class PageImageView extends SubsamplingScaleImageView {
         facsimileView.generateColors();
 
         // if image is missing draw Name
-        if (!page.imageFile.exists()) {
-            largeTextPaint.getTextBounds(page.imageFile.getName(), 0,
-                    page.imageFile.getName().length(), pageNameRect);
-            canvas.drawText("" + page.imageFile.getName(),
+        if (!page.imageExists()) {
+            largeTextPaint.getTextBounds(page.getImageFileName(), 0,
+                    page.getImageFileName().length(), pageNameRect);
+            canvas.drawText("" + page.getImageFileName(),
                     (this.getRight() - this.getLeft()) / 2  - pageNameRect.centerX(), 100, largeTextPaint);
             return;
         }

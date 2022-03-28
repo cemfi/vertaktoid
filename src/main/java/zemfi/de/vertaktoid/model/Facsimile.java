@@ -177,19 +177,6 @@ public class Facsimile implements Parcelable {
     public void openDirectory(DocumentFile dir) {
         this.dir = dir;
 
-        DocumentFile[] files = dir.listFiles();
-        ArrayList<DocumentFile> images = new ArrayList<>();
-
-        // files==null when folder doesn't exist
-        for (int i = 0; i < files.length; i++) {
-            if (!files[i].getName().startsWith(".")) {
-                if (files[i].getName().toLowerCase().endsWith(".jpg") || files[i].getName().toLowerCase().endsWith(".png")) {
-                    images.add(files[i]);
-                }
-            }
-        }
-        Collections.sort(images, FILE_NAME_COMPARATOR); // make alphabetical order
-
         DocumentFile meiFile = dir.findFile(dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
         if(meiFile != null) {
             pages.clear();
@@ -205,9 +192,6 @@ public class Facsimile implements Parcelable {
                 movement.calculateSequenceNumbers();
             }
 
-            for (int i = pages.size(); i < images.size(); i++) {
-                pages.add(new Page(images.get(i), i + 1));
-            }
 
             loading.dismiss();
 
@@ -216,6 +200,19 @@ public class Facsimile implements Parcelable {
             pages.clear();
             movements.clear();
             MEIHelper.clearDocument();
+            DocumentFile[] files = dir.listFiles();
+            ArrayList<DocumentFile> images = new ArrayList<>();
+
+            // files==null when folder doesn't exist
+            for (int i = 0; i < files.length; i++) {
+                if (!files[i].getName().startsWith(".")) {
+                    if (files[i].getName().toLowerCase().endsWith(".jpg") || files[i].getName().toLowerCase().endsWith(".png")) {
+                        images.add(files[i]);
+                    }
+                }
+            }
+            Collections.sort(images, FILE_NAME_COMPARATOR); // make alphabetical order
+
             for (int i = 0; i < images.size(); i++) {
                 pages.add(new Page(images.get(i), i + 1));
             }
