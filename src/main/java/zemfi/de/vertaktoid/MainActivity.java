@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void viewProgress(){
         FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
-        System.out.println("it was here");
+
 
 
     }
@@ -218,7 +218,17 @@ public class MainActivity extends AppCompatActivity {
         }*/
         super.onResume();
     }
-
+    protected void saveclicked() {
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        if (view.getFacsimile() != null) {
+            boolean result = view.getFacsimile().saveToDisk();
+            status.setDate(new Date());
+            status.setAction(StatusStrings.ActionId.SAVED);
+            if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+            else status.setStatus(StatusStrings.StatusId.FAIL);
+        }
+        pause = true;
+    }
     /**
      * Android application lifecycle: onPause event.
      */
@@ -368,13 +378,12 @@ public class MainActivity extends AppCompatActivity {
                 view.redoClicked();
                 break;
             case R.id.action_download_IIIF:
-                 iiifManifestObj.urlInputPopup();
-                 mainMenu.getItem(10).setIcon(R.drawable.save_off);
+                iiifManifestObj.urlInputPopup();
                 view.resetMenu();
                  break;
             case R.id.action_save:
                 item.setIcon(R.drawable.save_on);
-                view.saveclicked();
+                saveclicked();
         }
 
         return super.onOptionsItemSelected(item);

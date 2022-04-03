@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
 import java.util.ArrayList;
 
 import zemfi.de.vertaktoid.commands.CommandManager;
@@ -321,6 +322,7 @@ public class FacsimileView extends CoordinatorLayout {
      * Menu entry "erase" clicked.
      */
     public void eraseClicked() {
+
         refresh();
         nextAction = Action.ERASE;
     }
@@ -385,8 +387,6 @@ public class FacsimileView extends CoordinatorLayout {
         adjustHistoryNavigation();
         refresh();
     }
-
-
 
     /**
      * Reset current menu state to default "brush" entry
