@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.text.InputType;
@@ -235,7 +234,6 @@ public class IiifManifest extends Activity {
         canceled = false;
 
 
-        System.out.println(parts[0]);
         if (parts.length > 1) {
             for (int i = 1; i < parts.length; i++) {
                 subPath = subPath + "/" + parts[i];
@@ -243,19 +241,7 @@ public class IiifManifest extends Activity {
         }
         final String subPathFinal = subPath;
 
-        System.out.println("number of images " + imageUrl.size());
-        long downloadI;
-
-
-       downloadProgressDialogue = new Dialog(MainActivity.context);
-       downloadProgressDialogue.requestWindowFeature(Window.FEATURE_NO_TITLE);
-       downloadProgressDialogue.setCancelable(false);
-       downloadProgressDialogue.setContentView(R.layout.download_progress);
-
-        text = (ProgressBar) downloadProgressDialogue.findViewById(R.id.progress_horizontal);
-        text.setMax(imageUrl.size());
-        text2 = (TextView) downloadProgressDialogue.findViewById(R.id.value123);
-        text2.setText("0");
+        progressBarContent();
 
         Button cancel = (Button) downloadProgressDialogue.findViewById(R.id.cancel);
         cancel.setOnClickListener(new View.OnClickListener() {
@@ -276,9 +262,8 @@ public class IiifManifest extends Activity {
                downloadProgressDialogue.dismiss();
            }
        });
-        downloadProgressDialogue.show();
-        Window window = downloadProgressDialogue.getWindow();
-        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+        displayProgress();
+
 
         new Thread(new Runnable() {
             @Override
@@ -312,7 +297,24 @@ public class IiifManifest extends Activity {
         }).start();
     }
 
+    public void progressBarContent(){
 
+        downloadProgressDialogue = new Dialog(MainActivity.context);
+        downloadProgressDialogue.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        downloadProgressDialogue.setCancelable(false);
+        downloadProgressDialogue.setContentView(R.layout.download_progress);
+
+        text = (ProgressBar) downloadProgressDialogue.findViewById(R.id.progress_horizontal);
+        text.setMax(imageUrl.size());
+        text2 = (TextView) downloadProgressDialogue.findViewById(R.id.value123);
+        text2.setText("0");
+
+    }
+    public void displayProgress(){
+        downloadProgressDialogue.show();
+        Window window = downloadProgressDialogue.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+    }
     private String leadingZeros(int i) {
         if (i < 10)
             return "0000" + i;

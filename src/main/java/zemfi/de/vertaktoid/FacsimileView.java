@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
 import java.util.ArrayList;
 
 import zemfi.de.vertaktoid.commands.CommandManager;
@@ -73,6 +74,8 @@ public class FacsimileView extends CoordinatorLayout {
     public Action nextAction = Action.DRAW;
     public boolean isFirstPoint = true;
     public ArrayList<HSLColor> movementColors;
+    public Menu menu;
+
 
 
     /**
@@ -376,16 +379,6 @@ public class FacsimileView extends CoordinatorLayout {
         adjustHistoryNavigation();
         refresh();
     }
-    public void downloadClicked() {
-        int pageIndex = commandManager.redo();
-        if(pageIndex != -1 && pageIndex != pageNumber.get()) {
-            pageNumber.set(pageIndex);
-            setPage(pageIndex);
-        }
-        adjustHistoryNavigation();
-        refresh();
-    }
-
 
 
     /**
@@ -408,7 +401,6 @@ public class FacsimileView extends CoordinatorLayout {
     }
 
 
-    Menu menu;
 
     /**
      * Setter for menu.

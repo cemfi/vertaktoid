@@ -2,11 +2,16 @@ package zemfi.de.vertaktoid.mei;
 
 import static zemfi.de.vertaktoid.Vertaktoid.VERTACTOID_VERSION;
 
+import android.app.Dialog;
 import android.os.ParcelFileDescriptor;
-import android.sax.TextElementListener;
 import android.support.v4.provider.DocumentFile;
-import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,6 +33,7 @@ import nu.xom.ParsingException;
 import nu.xom.Serializer;
 import nu.xom.ValidityException;
 import zemfi.de.vertaktoid.MainActivity;
+import zemfi.de.vertaktoid.R;
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.helpers.Point2D;
 import zemfi.de.vertaktoid.model.Facsimile;
@@ -43,6 +49,8 @@ public class MEIHelper {
 
     public static Document meiDocument;
     public static String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+
 
 
     public static void clearDocument() {
@@ -74,7 +82,12 @@ public class MEIHelper {
      * @return true if no exceptions.
      */
     public static boolean writeMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
+
         boolean returnValue = true;
+        Dialog downloadProgressDialogue = null;
+        ProgressBar text;
+        TextView text2;
+        final Boolean[] canceled = new Boolean[1];
 
         //save in measures objects if last at system or page
         document.calculateBreaks();
@@ -150,8 +163,41 @@ public class MEIHelper {
         Elements mdivs = body.getChildElements("mdiv", Vertaktoid.MEI_NS);
 
         Attribute a;
+        int progress = 0;
 
+        downloadProgressDialogue = new Dialog(MainActivity.context);
+        downloadProgressDialogue.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        downloadProgressDialogue.setCancelable(false);
+        downloadProgressDialogue.setContentView(R.layout.download_progress);
+
+        text = (ProgressBar) downloadProgressDialogue.findViewById(R.id.progress_horizontal);
+        text.setMax(document.pages.size());
+        text2 = (TextView) downloadProgressDialogue.findViewById(R.id.value123);
+        text2.setText("Hiu");
+
+        Button cancel = (Button) downloadProgressDialogue.findViewById(R.id.cancel);
+        Dialog finalDownloadProgressDialogue = downloadProgressDialogue;
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                canceled[0] = true;
+
+                finalDownloadProgressDialogue.dismiss();
+            }
+        });
+
+        downloadProgressDialogue.show();
+        Window window = downloadProgressDialogue.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
         for(int i = 0; i < document.pages.size(); i++) {
+
+            if (i == document.pages.size()-1){
+                downloadProgressDialogue.dismiss();
+            }
+            text.setProgress(progress);
+            text2.setText(String.valueOf(Math.round(((float) progress/(float)document.pages.size())*100.00)));
+
             Page page = document.pages.get(i);
 
             Element surface = findElementByUiid(surfaces, page.surfaceUuid);
@@ -182,7 +228,7 @@ public class MEIHelper {
             a = new Attribute("id", page.graphicUuid);
             a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
             graphic.addAttribute(a);
-            a = new Attribute("target", page.imageFile.getName());
+            a = new Attribute("target", page.getImageFileName());
             //a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
             graphic.addAttribute(a);
             a = new Attribute("type", "facsimile");
@@ -341,6 +387,7 @@ public class MEIHelper {
             }
         }
 
+
         if(meiFile == null) {
             meiFile = dir.createFile("application/xml", dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
         }
@@ -374,6 +421,7 @@ public class MEIHelper {
         return returnValue;
     }
 
+
     /**
      * Reads the data from MEI file.
      * @param meiFile The MEI file.
@@ -382,7 +430,6 @@ public class MEIHelper {
      */
     public static boolean readMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
         Attribute a;
-
         if(!meiFile.exists()) {
             return false;
         }
@@ -487,18 +534,16 @@ public class MEIHelper {
         }
 
         for(int i = 0; i < surfaces.size(); i++) {
+
+
             Element surface = surfaces.get(i);
             Elements graphics = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
             Element graphic = graphics.get(0);
             final String filename = graphic.getAttributeValue("target");
-            DocumentFile image = dir.findFile(filename);
-            Page page;
-            if(image == null) {
-                image = dir.createFile("image/" + filename.substring(filename.lastIndexOf(".")).toLowerCase(), filename);
-            }
-            page = new Page(image, i + 1);
+            Page page= new Page(dir,filename, i+1);
             page.imageWidth = Integer.parseInt(graphic.getAttributeValue("width"));
             page.imageHeight = Integer.parseInt(graphic.getAttributeValue("height"));
+            page.setInSampleSize(page.calculateInSampleSize(page.imageWidth, page.imageHeight));
             a = surface.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
             if(a != null) {
                 if(a.getValue().substring(0, 1).matches("\\d")) {

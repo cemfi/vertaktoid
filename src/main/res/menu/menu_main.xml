@@ -64,7 +64,11 @@
             android:icon="@android:drawable/stat_sys_download"
             app:showAsAction="always" />
 
-
+        <item
+            android:id="@+id/action_save"
+            android:title="Save"
+            android:icon="@drawable/save_off"
+            app:showAsAction="always" />
         <item
             android:id="@+id/action_settings"
             android:title="Settings"

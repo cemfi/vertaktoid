@@ -1,8 +1,10 @@
 package zemfi.de.vertaktoid.model;
 
 import android.app.Dialog;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 
 import java.util.ArrayList;
@@ -170,27 +172,29 @@ public class Facsimile implements Parcelable {
         }
     }
 
+
     /**
      * Loads scanned music source and reads the MEI file if exists.
      * @param dir reference to directory
      */
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void openDirectory(DocumentFile dir) {
         this.dir = dir;
 
-        DocumentFile[] files = dir.listFiles();
-        ArrayList<DocumentFile> images = new ArrayList<>();
-
-        // files==null when folder doesn't exist
-        for (int i = 0; i < files.length; i++) {
-            if (!files[i].getName().startsWith(".")) {
-                if (files[i].getName().toLowerCase().endsWith(".jpg") || files[i].getName().toLowerCase().endsWith(".png")) {
-                    images.add(files[i]);
-                }
+        DocumentFile meiFile = dir.findFile(dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
+        DocumentFile tempMeiDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
+        DocumentFile tempMeiFile = tempMeiDir.findFile(tempMeiDir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
+        if(meiFile != null && tempMeiFile != null){
+            if(meiFile.lastModified() < tempMeiFile.lastModified()){
+                meiFile = tempMeiFile;
             }
         }
-        Collections.sort(images, FILE_NAME_COMPARATOR); // make alphabetical order
+        if(meiFile == null && tempMeiFile != null){
+            meiFile = tempMeiFile;
+        }
 
-        DocumentFile meiFile = dir.findFile(dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
+       // String formattedDate = today.format(DateTimeFormatter.ofPattern("dd-MMM-yy"));
+
         if(meiFile != null) {
             pages.clear();
             movements.clear();
@@ -205,9 +209,6 @@ public class Facsimile implements Parcelable {
                 movement.calculateSequenceNumbers();
             }
 
-            for (int i = pages.size(); i < images.size(); i++) {
-                pages.add(new Page(images.get(i), i + 1));
-            }
 
             loading.dismiss();
 
@@ -216,6 +217,19 @@ public class Facsimile implements Parcelable {
             pages.clear();
             movements.clear();
             MEIHelper.clearDocument();
+            DocumentFile[] files = dir.listFiles();
+            ArrayList<DocumentFile> images = new ArrayList<>();
+
+            // files==null when folder doesn't exist
+            for (int i = 0; i < files.length; i++) {
+                if (!files[i].getName().startsWith(".")) {
+                    if (files[i].getName().toLowerCase().endsWith(".jpg") || files[i].getName().toLowerCase().endsWith(".png")) {
+                        images.add(files[i]);
+                    }
+                }
+            }
+            Collections.sort(images, FILE_NAME_COMPARATOR); // make alphabetical order
+
             for (int i = 0; i < images.size(); i++) {
                 pages.add(new Page(images.get(i), i + 1));
             }

@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static Activity context = null;
     final Status status = new Status();
+    public boolean pause = false;
 
     IiifManifest iiifManifestObj = new IiifManifest() ;
     Menu mainMenu;
@@ -72,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
                 if (systemDir == null)
                     systemDir = dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
 
-                boolean result = view.getFacsimile().saveToDisk(systemDir, filename);
+                System.out.println("file name " + filename);
+                boolean result = view.getFacsimile().saveToDisk(systemDir, Vertaktoid.APP_SUBFOLDER+Vertaktoid.DEFAULT_MEI_EXTENSION);
                 status.setDate(saveDate);
                 status.setAction(StatusStrings.ActionId.TMP_SAVED);
                 if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
@@ -107,16 +109,11 @@ public class MainActivity extends AppCompatActivity {
         status.setAction(StatusStrings.ActionId.STARTED);
         binding.setCstatus(status);
 
-        tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
     }
 
-    public void viewProgress(){
-        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
-        System.out.println("it was here");
-        view.displayDownloadProgress();
 
 
-    }
+
 
 
     private void loadFacsimile(DocumentFile dir) {
@@ -218,7 +215,17 @@ public class MainActivity extends AppCompatActivity {
         }*/
         super.onResume();
     }
-
+    protected void saveclicked() {
+        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+        if (view.getFacsimile() != null) {
+            boolean result = view.getFacsimile().saveToDisk();
+            status.setDate(new Date());
+            status.setAction(StatusStrings.ActionId.SAVED);
+            if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+            else status.setStatus(StatusStrings.StatusId.FAIL);
+        }
+        pause = true;
+    }
     /**
      * Android application lifecycle: onPause event.
      */
@@ -233,7 +240,25 @@ public class MainActivity extends AppCompatActivity {
             else status.setStatus(StatusStrings.StatusId.FAIL);
             viewPager.recycle();
         }
+        pause = true;
         super.onPause();
+    }
+    @Override
+    protected void onDestroy() {
+
+            FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
+            if (view.getFacsimile() != null) {
+                boolean result = view.getFacsimile().saveToDisk();
+                status.setDate(new Date());
+                status.setAction(StatusStrings.ActionId.SAVED);
+                if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
+                else status.setStatus(StatusStrings.StatusId.FAIL);
+                viewPager.recycle();
+                System.out.println("saved");
+            }
+            super.onDestroy();
+
+
     }
 
     /**
@@ -289,6 +314,8 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.action_movement:
                         mainMenu.getItem(i).setIcon(R.drawable.movement_off);
                         break;
+                    case R.id.action_save:
+                        mainMenu.getItem(i).setIcon(R.drawable.save_off);
                 }
             }
         }
@@ -297,26 +324,32 @@ public class MainActivity extends AppCompatActivity {
         switch (id) {
             case R.id.action_erase:
                 item.setIcon(R.drawable.eraser_on);
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.eraseClicked();
                 return true;
             case R.id.action_type:
                 item.setIcon(R.drawable.textbox_on);
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.typeClicked();
                 return true;
             case R.id.action_brush:
                 item.setIcon(R.drawable.brush_on);
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.brushClicked();
                 return true;
             case R.id.action_open:
                 actionOpen(0);
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.resetMenu();
                 break;
             case R.id.action_orthogonal_cut:
                 item.setIcon(R.drawable.orthogonal_cut_on);
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.OrthogonalCutClicked();
                 break;
             case R.id.action_precise_cut:
                 item.setIcon(R.drawable.precise_cut_on);
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.PreciseCutClicked();
                 break;
             case R.id.action_goto:
@@ -325,27 +358,33 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.action_movement:
                 item.setIcon(R.drawable.movement_on);
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.movementClicked();
                 break;
             case R.id.action_settings:
                 if (view.document != null)
                     view.settingsClicked();
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 break;
             case R.id.action_undo:
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.undoClicked();
                 break;
             case R.id.action_redo:
+                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.redoClicked();
                 break;
             case R.id.action_download_IIIF:
-                 iiifManifestObj.urlInputPopup();
-                 view.resetMenu();
+                iiifManifestObj.urlInputPopup();
+                view.resetMenu();
                  break;
+            case R.id.action_save:
+                item.setIcon(R.drawable.save_on);
+                saveclicked();
         }
 
         return super.onOptionsItemSelected(item);
     }
-
 
 
     /**

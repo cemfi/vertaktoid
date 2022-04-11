@@ -31,6 +31,8 @@ public class Page implements Parcelable {
     public ArrayList<Measure> measures;
     // Image file.
     public DocumentFile imageFile;
+    private DocumentFile dir;
+    private String imageFileName;
     // Sequence number of the page.
     public int number;
 
@@ -45,9 +47,18 @@ public class Page implements Parcelable {
 
     /**
      * The constructor.
-     * @param imageFile The image file.
+     * @param imageFileName The image file.
      * @param number The sequence number.
      */
+    public Page(DocumentFile dir, String imageFileName, int number) {
+        //Universally Unique Identifier
+        surfaceUuid = Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString();
+        graphicUuid = Vertaktoid.MEI_GRAPHIC_ID_PREFIX + UUID.randomUUID().toString();
+        this.dir = dir;
+        this.imageFileName = imageFileName;
+        measures = new ArrayList<>();
+        this.number = number;
+    }
     public Page(DocumentFile imageFile, int number) {
         //Universally Unique Identifier
         surfaceUuid = Vertaktoid.MEI_SURFACE_ID_PREFIX + UUID.randomUUID().toString();
@@ -55,7 +66,6 @@ public class Page implements Parcelable {
         this.imageFile = imageFile;
         measures = new ArrayList<>();
         this.number = number;
-        calculateDimensions();
     }
 
     public Page() {
@@ -77,6 +87,10 @@ public class Page implements Parcelable {
 
     public int getInSampleSize() {
         return inSampleSize;
+    }
+
+    public void setInSampleSize(int inSampleSize) {
+        this.inSampleSize = inSampleSize;
     }
 
     public static final Creator<Page> CREATOR = new Creator<Page>() {
@@ -157,6 +171,23 @@ public class Page implements Parcelable {
         }
     }
 
+    public int calculateInSampleSize(int imgWidth, int imgHeight) {
+        int inSampleSize = 1;
+
+        int reqWidth = Vertaktoid.defWidth * Vertaktoid.defBitmapResScaleFactor;
+        int reqHeight = Vertaktoid.defHeight * Vertaktoid.defBitmapResScaleFactor;
+
+        if(imgHeight > reqHeight || imgWidth > reqWidth) {
+            while ((imgHeight / inSampleSize) >= reqHeight &&
+                    (imgWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+
+        }
+
+        return inSampleSize;
+    }
+
     /**
      * Calculates factor to downscale the image
      * Example: inSampleSize == 4 for 1/4 of the width/height of the original
@@ -168,10 +199,10 @@ public class Page implements Parcelable {
         final int width = options.outWidth;
 
         if(height > reqHeight || width > reqWidth) {
-             while ((height / inSampleSize) >= reqHeight &&
-                     (width / inSampleSize) >= reqWidth) {
-                 inSampleSize *= 2;
-             }
+            while ((height / inSampleSize) >= reqHeight &&
+                    (width / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
 
         }
 
@@ -218,8 +249,31 @@ public class Page implements Parcelable {
                 Vertaktoid.defWidth * Vertaktoid.defBitmapResScaleFactor,
                 Vertaktoid.defHeight * Vertaktoid.defBitmapResScaleFactor);
     }
+    public boolean imageExists(){
+        if(imageFile == null) {
+            imageFile = dir.findFile(imageFileName);
+            if (imageFile == null) {
+                imageFile = dir.createFile("image/" + imageFileName.substring(imageFileName.lastIndexOf(".")).toLowerCase(), imageFileName);
+            }
+        }
+        calculateDimensions();
+        return imageFile.exists();
 
+    }
+    public String getImageFileName(){
+        if(imageFile == null){
+            return imageFileName;
+        }
+        return imageFile.getName();
+    }
     public ImageSource getImage() {
+        if(imageFile == null) {
+            imageFile = dir.findFile(imageFileName);
+            if (imageFile == null) {
+                imageFile = dir.createFile("image/" + imageFileName.substring(imageFileName.lastIndexOf(".")).toLowerCase(), imageFileName);
+            }
+        }
+        calculateDimensions();
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = false;
