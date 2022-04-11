@@ -74,6 +74,8 @@ public class FacsimileView extends CoordinatorLayout {
     public Action nextAction = Action.DRAW;
     public boolean isFirstPoint = true;
     public ArrayList<HSLColor> movementColors;
+    public Menu menu;
+
 
 
     /**
@@ -322,7 +324,6 @@ public class FacsimileView extends CoordinatorLayout {
      * Menu entry "erase" clicked.
      */
     public void eraseClicked() {
-
         refresh();
         nextAction = Action.ERASE;
     }
@@ -378,15 +379,7 @@ public class FacsimileView extends CoordinatorLayout {
         adjustHistoryNavigation();
         refresh();
     }
-    public void downloadClicked() {
-        int pageIndex = commandManager.redo();
-        if(pageIndex != -1 && pageIndex != pageNumber.get()) {
-            pageNumber.set(pageIndex);
-            setPage(pageIndex);
-        }
-        adjustHistoryNavigation();
-        refresh();
-    }
+
 
     /**
      * Reset current menu state to default "brush" entry
@@ -408,7 +401,6 @@ public class FacsimileView extends CoordinatorLayout {
     }
 
 
-    Menu menu;
 
     /**
      * Setter for menu.

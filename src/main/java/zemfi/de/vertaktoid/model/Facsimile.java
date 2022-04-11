@@ -1,8 +1,10 @@
 package zemfi.de.vertaktoid.model;
 
 import android.app.Dialog;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 
 import java.util.ArrayList;
@@ -170,14 +172,29 @@ public class Facsimile implements Parcelable {
         }
     }
 
+
     /**
      * Loads scanned music source and reads the MEI file if exists.
      * @param dir reference to directory
      */
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void openDirectory(DocumentFile dir) {
         this.dir = dir;
 
         DocumentFile meiFile = dir.findFile(dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
+        DocumentFile tempMeiDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
+        DocumentFile tempMeiFile = tempMeiDir.findFile(tempMeiDir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
+        if(meiFile != null && tempMeiFile != null){
+            if(meiFile.lastModified() < tempMeiFile.lastModified()){
+                meiFile = tempMeiFile;
+            }
+        }
+        if(meiFile == null && tempMeiFile != null){
+            meiFile = tempMeiFile;
+        }
+
+       // String formattedDate = today.format(DateTimeFormatter.ofPattern("dd-MMM-yy"));
+
         if(meiFile != null) {
             pages.clear();
             movements.clear();

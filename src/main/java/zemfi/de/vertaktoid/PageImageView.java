@@ -864,6 +864,7 @@ public class PageImageView extends SubsamplingScaleImageView {
         return true;
     } // end onTouchEvent
 
+
     private void eraseMeasures(List<Measure> measures){
         if(measures.size() > 0) {
             facsimileView.commandManager.processRemoveMeasuresCommand(measures, facsimile);

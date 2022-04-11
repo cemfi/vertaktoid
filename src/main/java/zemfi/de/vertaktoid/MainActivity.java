@@ -73,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
                 if (systemDir == null)
                     systemDir = dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
 
-                boolean result = view.getFacsimile().saveToDisk(systemDir, filename);
+                System.out.println("file name " + filename);
+                boolean result = view.getFacsimile().saveToDisk(systemDir, Vertaktoid.APP_SUBFOLDER+Vertaktoid.DEFAULT_MEI_EXTENSION);
                 status.setDate(saveDate);
                 status.setAction(StatusStrings.ActionId.TMP_SAVED);
                 if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
@@ -108,15 +109,11 @@ public class MainActivity extends AppCompatActivity {
         status.setAction(StatusStrings.ActionId.STARTED);
         binding.setCstatus(status);
 
-        tmpSaveHandler.postDelayed(tmpSaveRunnable, 300000);
     }
 
-    public void viewProgress(){
-        FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
 
 
 
-    }
 
 
     private void loadFacsimile(DocumentFile dir) {

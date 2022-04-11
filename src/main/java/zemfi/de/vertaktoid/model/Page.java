@@ -89,6 +89,10 @@ public class Page implements Parcelable {
         return inSampleSize;
     }
 
+    public void setInSampleSize(int inSampleSize) {
+        this.inSampleSize = inSampleSize;
+    }
+
     public static final Creator<Page> CREATOR = new Creator<Page>() {
         @Override
         public Page createFromParcel(Parcel in) {
@@ -165,6 +169,23 @@ public class Page implements Parcelable {
         for(Measure measure : measures) {
             removeMeasure(measure);
         }
+    }
+
+    public int calculateInSampleSize(int imgWidth, int imgHeight) {
+        int inSampleSize = 1;
+
+        int reqWidth = Vertaktoid.defWidth * Vertaktoid.defBitmapResScaleFactor;
+        int reqHeight = Vertaktoid.defHeight * Vertaktoid.defBitmapResScaleFactor;
+
+        if(imgHeight > reqHeight || imgWidth > reqWidth) {
+            while ((imgHeight / inSampleSize) >= reqHeight &&
+                    (imgWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+
+        }
+
+        return inSampleSize;
     }
 
     /**
