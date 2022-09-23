@@ -3,7 +3,6 @@ package zemfi.de.vertaktoid.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
 import java.util.Comparator;
 import java.util.UUID;
 
@@ -43,7 +42,15 @@ public class Measure implements Comparable<Measure>, Parcelable {
         zone = new Zone();
         zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
+        }
+    public Measure(int size) {
+
+        zone = new Zone();
+        sequenceNumber = size;
+        zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
+        measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
     }
+
 
     protected Measure(Parcel in) {
         zone = in.readParcelable(Zone.class.getClassLoader());
@@ -54,6 +61,7 @@ public class Measure implements Comparable<Measure>, Parcelable {
         lastAtSystem = in.readByte() != 0;
         lastAtPage = in.readByte() != 0;
     }
+
 
     public static final Creator<Measure> CREATOR = new Creator<Measure>() {
         @Override
@@ -121,6 +129,7 @@ public class Measure implements Comparable<Measure>, Parcelable {
             return manualSequenceNumber;
         else return "" + sequenceNumber;
     }
+
 
     /**
      * Compare the measures by their sequence number by default.

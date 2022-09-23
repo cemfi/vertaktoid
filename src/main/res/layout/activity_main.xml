@@ -52,10 +52,9 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:layout_anchor="@+id/appBarLayout"
+            app:layout_anchor="@+id/toolbar"
             app:layout_anchorGravity="center"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
-
 
     </zemfi.de.vertaktoid.FacsimileView>
 

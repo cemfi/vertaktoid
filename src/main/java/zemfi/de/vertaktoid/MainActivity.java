@@ -73,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
                 if (systemDir == null)
                     systemDir = dir.createDirectory(Vertaktoid.APP_SUBFOLDER);
 
-                System.out.println("file name " + filename);
                 boolean result = view.getFacsimile().saveToDisk(systemDir, Vertaktoid.APP_SUBFOLDER+Vertaktoid.DEFAULT_MEI_EXTENSION);
                 status.setDate(saveDate);
                 status.setAction(StatusStrings.ActionId.TMP_SAVED);
@@ -116,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void loadFacsimile(DocumentFile dir) {
         // facsimile contains pages, movements, breaks
         Facsimile facsimile = new Facsimile();
@@ -219,10 +219,13 @@ public class MainActivity extends AppCompatActivity {
         FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
         if (view.getFacsimile() != null) {
             boolean result = view.getFacsimile().saveToDisk();
+
             status.setDate(new Date());
             status.setAction(StatusStrings.ActionId.SAVED);
             if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
             else status.setStatus(StatusStrings.StatusId.FAIL);
+        }else{
+
         }
         pause = true;
     }
@@ -254,7 +257,6 @@ public class MainActivity extends AppCompatActivity {
                 if (result) status.setStatus(StatusStrings.StatusId.SUCCESS);
                 else status.setStatus(StatusStrings.StatusId.FAIL);
                 viewPager.recycle();
-                System.out.println("saved");
             }
             super.onDestroy();
 
@@ -311,8 +313,14 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.action_download_IIIF:
                         mainMenu.getItem(i).setIcon(android.R.drawable.stat_sys_download);
                         break;
+                    case R.id.action_measure_detector:
+                        mainMenu.getItem(i).setIcon(R.drawable.ruler);
+                        break;
                     case R.id.action_movement:
                         mainMenu.getItem(i).setIcon(R.drawable.movement_off);
+                        break;
+                    case R.id.action_erase_page:
+                        mainMenu.getItem(i).setIcon(R.drawable.eraser_off);
                         break;
                     case R.id.action_save:
                         mainMenu.getItem(i).setIcon(R.drawable.save_off);
@@ -324,32 +332,26 @@ public class MainActivity extends AppCompatActivity {
         switch (id) {
             case R.id.action_erase:
                 item.setIcon(R.drawable.eraser_on);
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.eraseClicked();
                 return true;
             case R.id.action_type:
                 item.setIcon(R.drawable.textbox_on);
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.typeClicked();
                 return true;
             case R.id.action_brush:
                 item.setIcon(R.drawable.brush_on);
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.brushClicked();
                 return true;
             case R.id.action_open:
                 actionOpen(0);
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.resetMenu();
                 break;
             case R.id.action_orthogonal_cut:
                 item.setIcon(R.drawable.orthogonal_cut_on);
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.OrthogonalCutClicked();
                 break;
             case R.id.action_precise_cut:
                 item.setIcon(R.drawable.precise_cut_on);
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.PreciseCutClicked();
                 break;
             case R.id.action_goto:
@@ -358,29 +360,47 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.action_movement:
                 item.setIcon(R.drawable.movement_on);
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.movementClicked();
                 break;
             case R.id.action_settings:
                 if (view.document != null)
                     view.settingsClicked();
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 break;
             case R.id.action_undo:
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.undoClicked();
                 break;
             case R.id.action_redo:
-                mainMenu.getItem(10).setIcon(R.drawable.save_off);
                 view.redoClicked();
                 break;
             case R.id.action_download_IIIF:
                 iiifManifestObj.urlInputPopup();
                 view.resetMenu();
                  break;
+            case R.id.action_measure_detector:
+                item.setIcon(R.drawable.ruler);
+                try {
+                    view.measurPageClicked();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                view.resetMenu();
+                break;
+            case R.id.action_erase_page:
+                item.setIcon(R.drawable.eraser_on);
+                view.erasePageClicked();
+                break;
+            case R.id.action_erase_all:
+                item.setIcon(R.drawable.eraser_on);
+                view.eraseAllClicked();
+                break;
+            case R.id.action_measure_detector_all:
+                item.setIcon(R.drawable.ruler);
+                view.measureAllClicked();
+                break;
             case R.id.action_save:
                 item.setIcon(R.drawable.save_on);
                 saveclicked();
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -421,7 +441,6 @@ public class MainActivity extends AppCompatActivity {
 
                     if (data != null) {
                         dir = DocumentFile.fromTreeUri(this, data.getData());
-
                         loadFacsimile(dir);
                     }
 

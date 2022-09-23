@@ -30,6 +30,7 @@ public class Movement implements Parcelable {
         measures = new ArrayList<>();
     }
 
+
     protected Movement(Parcel in) {
         measures = in.createTypedArrayList(Measure.CREATOR);
         number = in.readInt();
@@ -72,11 +73,14 @@ public class Movement implements Parcelable {
      */
     public void calculateSequenceNumbers() {
         if(measures.size() == 0) return;
+
         Measure measure;
+
         int num = 1;
         for (int i = 0; i < measures.size(); i++) {
             measure = measures.get(i);
             // Calculate the next sequence number by default
+
             if(i > 0) {
                 // sequent number
                 num = measures.get(i-1).sequenceNumber + (measures.get(i-1).rest > 1 ? measures.get(i-1).rest : 1);
@@ -115,6 +119,7 @@ public class Movement implements Parcelable {
                 measure.sequenceNumber = num;
             }
         }
+
     }
 
     /**

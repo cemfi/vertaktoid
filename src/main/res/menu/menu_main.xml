@@ -63,7 +63,26 @@
             android:title="IIIF manifest"
             android:icon="@android:drawable/stat_sys_download"
             app:showAsAction="always" />
-
+        <item
+            android:id="@+id/action_measure_detector"
+            android:title="Auto measure for current page"
+            android:icon="@drawable/ruler"
+            app:showAsAction="never"/>
+        <item
+            android:id="@+id/action_measure_detector_all"
+            android:title="Auto Measure All Pages"
+            android:icon="@drawable/ruler"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/action_erase_page"
+            android:title="Erase Currrent Page"
+            android:icon="@drawable/eraser_off"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/action_erase_all"
+            android:title="Erase All Pages"
+            android:icon="@drawable/eraser_off"
+            app:showAsAction="never" />
         <item
             android:id="@+id/action_save"
             android:title="Save"
@@ -74,6 +93,7 @@
             android:title="Settings"
             android:icon="@drawable/settings"
             app:showAsAction="always" />
+
     </group>
 
     <group android:id="@+id/group_navigation">
@@ -82,5 +102,6 @@
             android:title="GoTo"
             android:icon="@drawable/gotopage"
             app:showAsAction="always" />
+
     </group>
 </menu>

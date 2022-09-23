@@ -48,6 +48,7 @@ public class MEIHelper {
 
 
 
+
     public static void clearDocument() {
         meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
     }
@@ -77,7 +78,7 @@ public class MEIHelper {
      * @return true if no exceptions.
      */
     public static boolean writeMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
-
+        System.out.println("number of measures when writing on the file " + document.movements.size());
         boolean returnValue = true;
         Dialog downloadProgressDialogue = null;
         ProgressBar text;
@@ -321,6 +322,7 @@ public class MEIHelper {
                 measureElem.addAttribute(a);
             }
             section.removeChildren();
+
             Collections.sort(corrMeasureElems, MeasureElementPair.MEASURE_ELEMENT_PAIR_COMPARATOR);
 
             for(int i = 0; i < corrMeasureElems.size(); i++) {
@@ -356,7 +358,7 @@ public class MEIHelper {
 
         try {
             ParcelFileDescriptor pfd = MainActivity.context.getContentResolver().
-                    openFileDescriptor(meiFile.getUri(), "w");
+                    openFileDescriptor(meiFile.getUri(), "wt");
             FileOutputStream out =
                     new FileOutputStream(pfd.getFileDescriptor());
 
@@ -376,14 +378,11 @@ public class MEIHelper {
             out.flush();
             out.close();
             pfd.close();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
         return returnValue;
     }
-
-
     /**
      * Reads the data from MEI file.
      * @param meiFile The MEI file.
@@ -401,7 +400,7 @@ public class MEIHelper {
         try {
 
             InputStream inputStream = MainActivity.context.getContentResolver().openInputStream(meiFile.getUri());
-            meiDocument = builder.build(inputStream);
+            meiDocument = builder.build(inputStream );
 
         }
         catch (ValidityException e) {
@@ -452,6 +451,7 @@ public class MEIHelper {
             Elements scores = mdiv.getChildElements("score", Vertaktoid.MEI_NS);
             Element score = scores.get(0);
             Elements sections = score.getChildElements("section", Vertaktoid.MEI_NS);
+            System.out.println("this is number of sections in read file " + sections.size());
             Element section = sections.get(0);
             Elements insideSection = section.getChildElements();
             for (int i = 0; i < insideSection.size(); i++) {
@@ -621,5 +621,43 @@ public class MEIHelper {
             }
         }
         return null;
+    }
+
+    public static void getMeasureDetector(float uly, float lry, float ulx, float lrx, ArrayList<Movement> movements, Facsimile facsimile, Page page, ArrayList<Measure> measures) {
+
+       float ulx2 = fromSourceCoords(ulx, page.getInSampleSize(),
+               page.imageWidth / page.getInSampleSize());
+       float uly2 = fromSourceCoords(uly, page.getInSampleSize(),
+               page.imageHeight / page.getInSampleSize());
+       float lrx2 = fromSourceCoords(lrx, page.getInSampleSize(),
+               page.imageWidth / page.getInSampleSize());
+       float lry2 = fromSourceCoords(lry, page.getInSampleSize(),
+               page.imageHeight /page.getInSampleSize());
+
+       List<Point2D> vertices = new ArrayList<>();
+       vertices.add(new Point2D(ulx2, uly2));
+       vertices.add(new Point2D(ulx2, lry2));
+       vertices.add(new Point2D(lrx2, lry2));
+       vertices.add(new Point2D(lrx2, uly2));
+
+       Measure measure = new Measure();
+        measure.zone.setVertices(vertices);
+        measure.page = page;
+
+        page.measures.add(measure);
+        //page.setMeasures(measures);
+        measure.movement = new Movement();
+        facsimile.addMeasure(measure,page);
+        measure.sequenceNumber = facsimile.measuresCount();
+
+   }
+    public static void sortMeasures(Facsimile facsimile) {
+        for (Movement movement : facsimile.movements) {
+            movement.sortMeasures();
+            movement.calculateSequenceNumbers();
+        }
+        for (Page page : facsimile.pages) {
+            page.sortMeasures();
+        }
     }
 }

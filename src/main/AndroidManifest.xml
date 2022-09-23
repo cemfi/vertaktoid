@@ -10,6 +10,7 @@
     <application
         android:name="zemfi.de.vertaktoid.Vertaktoid"
         android:allowBackup="true"
+        android:requestLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:icon="@mipmap/ic_launcher"

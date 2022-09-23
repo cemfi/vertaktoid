@@ -11,12 +11,12 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     repositories {
         google()
         mavenCentral()
         jcenter()
-        maven { url 'https://repo.spring.io/plugins-release/' }
+        maven { url 'https://repo.spring.io/plugins-release/'}
     }
 
     defaultConfig {
@@ -83,5 +83,12 @@ dependencies {
         exclude module: 'xml-apis'
     }
     implementation 'com.android.volley:volley:1.2.1'
+    implementation "com.squareup.okhttp3:okhttp:4.9.3"
+    implementation(platform ("com.squareup.okhttp3:okhttp-bom:4.9.3"))
+
+    // define any required OkHttp artifacts without version
+    implementation "com.squareup.okhttp3:okhttp"
+    implementation "com.squareup.okhttp3:logging-interceptor"
 
 }
+

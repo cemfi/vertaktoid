@@ -28,4 +28,14 @@
     <string name="dialog_settings_mei_canonical">orthogonal box</string>
     <string name="dialog_settings_mei_extended">oriented box</string>
     <string name="dialog_settings_mei_polygonal">polygon</string>
+    <string-array name="measure_type">
+            <item>Mercury</item>
+            <item>Venus</item>
+            <item>Earth</item>
+            <item>Mars</item>
+            <item>Jupiter</item>
+            <item>Saturn</item>
+            <item>Uranus</item>
+            <item>Neptune</item>
+    </string-array>
 </resources>

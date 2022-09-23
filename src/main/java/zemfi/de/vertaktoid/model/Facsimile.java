@@ -1,6 +1,5 @@
 package zemfi.de.vertaktoid.model;
 
-import android.app.Dialog;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -12,7 +11,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import zemfi.de.vertaktoid.MainActivity;
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 
@@ -198,20 +196,10 @@ public class Facsimile implements Parcelable {
         if(meiFile != null) {
             pages.clear();
             movements.clear();
-
-            //start loading here
-            final Dialog loading = new Dialog(MainActivity.context);
-            loading.show();
-            loading.setCancelable(false);
-
             MEIHelper.readMEI(dir, meiFile, this);
             for (Movement movement : movements) {
                 movement.calculateSequenceNumbers();
             }
-
-
-            loading.dismiss();
-
         }
         else {
             pages.clear();

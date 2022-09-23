@@ -24,6 +24,7 @@ public class PageView extends RelativeLayout {
                 RelativeLayout.LayoutParams.MATCH_PARENT);
     }
 
+
     public void recycle() {
         pageImageView.recycle();
     }
