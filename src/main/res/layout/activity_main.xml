@@ -55,6 +55,11 @@
             app:layout_anchor="@+id/toolbar"
             app:layout_anchorGravity="center"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
+        <ImageView
+            android:id="@+id/iiifimage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
 
     </zemfi.de.vertaktoid.FacsimileView>
 

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="400dp"
+    android:layout_height="wrap_content">
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:labelFor="@+id/dialog_iiif_horover_input"
+        android:text="@string/dialog_iiif_horover_label"
+        android:digits="0123456789,."
+        android:layout_marginStart="10dp"/>
+    <RadioGroup
+        android:id="@+id/regions"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <RadioButton android:id="@+id/region_full"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_iiif_full" />
+        <RadioButton android:id="@+id/region_square"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_iiif_square" />
+        <RadioButton android:id="@+id/region_points"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_iiif_points" />
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content">
+            <EditText
+                android:id="@+id/iiif_right"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+
+            <EditText
+                android:id="@+id/iiif_top"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+            <EditText
+                android:id="@+id/iiif_width"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+            <EditText
+                android:id="@+id/iiif_height"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+        </LinearLayout>
+        <RadioButton android:id="@+id/region_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dialog_iiif_percent"
+            />
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content">
+            <EditText
+                android:id="@+id/iiif_right_percent"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+
+            <EditText
+                android:id="@+id/iiif_top_percent"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+            <EditText
+                android:id="@+id/iiif_width_percent"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+            <EditText
+                android:id="@+id/iiif_height_percent"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:digits="0123456789,."
+                android:enabled="false"/>
+        </LinearLayout>
+    </RadioGroup>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:labelFor="@+id/dialog_iiif_size_type"
+        android:text="@string/dialog_iiif_size_label"
+        android:layout_marginStart="10dp"/>
+    <EditText
+        android:id="@+id/dialog_iiif_size_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:labelFor="@+id/dialog_iiif_rotation"
+        android:text="@string/dialog_iiif_rotation_label"
+        android:layout_marginStart="10dp"/>
+    <EditText
+        android:id="@+id/dialog_iiif_rotation_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:labelFor="@+id/dialog_iiif_quality"
+        android:text="@string/dialog_iiif_quality_label"
+        android:layout_marginStart="10dp"/>
+    <RadioGroup
+        android:id="@+id/quality"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton android:id="@+id/iiif_quality_defualt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/iiif_quality_defualt_label" />
+        <RadioButton android:id="@+id/iiif_quality_color"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/iiif_quality_color_label" />
+        <RadioButton android:id="@+id/iiif_quality_gray"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/iiif_quality_gray_label" />
+        <RadioButton android:id="@+id/iiif_quality_bitonal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/iiif_quality_bitonal_label" />
+    </RadioGroup>
+    <LinearLayout
+        style="?android:attr/buttonBarStyle"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:id="@+id/dialog_settings_button_negative"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dialog_button_negative"/>
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:id="@+id/dialog_settings_button_positive"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dialog_button_positive"/>
+    </LinearLayout>
+
+
+</LinearLayout>

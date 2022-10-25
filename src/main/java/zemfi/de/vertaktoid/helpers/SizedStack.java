@@ -2,18 +2,8 @@ package zemfi.de.vertaktoid.helpers;
 
 import java.util.Stack;
 
-/**
- * Created by eugen on 15.03.17.
- */
-
-import java.util.Stack;
-
 public class SizedStack<T> extends Stack<T> {
     private int maxSize;
-
-    public int getMaxSize() {
-        return maxSize;
-    }
 
     public void setMaxSize(int maxSize) {
         this.maxSize = maxSize;

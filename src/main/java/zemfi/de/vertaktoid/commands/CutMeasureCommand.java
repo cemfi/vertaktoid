@@ -24,10 +24,6 @@ public class CutMeasureCommand implements ICommand, Parcelable {
         this.measure2 = measure2;
     }
 
-    public CutMeasureCommand() {
-
-    }
-
     protected CutMeasureCommand(Parcel in) {
         facsimile = in.readParcelable(Facsimile.class.getClassLoader());
         oldMeasure = in.readParcelable(Measure.class.getClassLoader());
@@ -53,30 +49,6 @@ public class CutMeasureCommand implements ICommand, Parcelable {
 
     public void setFacsimile(Facsimile facsimile) {
         this.facsimile = facsimile;
-    }
-
-    public Measure getOldMeasure() {
-        return oldMeasure;
-    }
-
-    public void setOldMeasure(Measure oldMeasure) {
-        this.oldMeasure = oldMeasure;
-    }
-
-    public Measure getMeasure1() {
-        return measure1;
-    }
-
-    public void setMeasure1(Measure measure1) {
-        this.measure1 = measure1;
-    }
-
-    public Measure getMeasure2() {
-        return measure2;
-    }
-
-    public void setMeasure2(Measure measure2) {
-        this.measure2 = measure2;
     }
 
     @Override

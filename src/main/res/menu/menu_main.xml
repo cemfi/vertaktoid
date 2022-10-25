@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
 
-    <group android:id="@+id/group_other">
+    <group>
         <item
             android:id="@+id/action_brush"
             android:title="Brush"
@@ -65,24 +65,29 @@
             app:showAsAction="always" />
         <item
             android:id="@+id/action_measure_detector"
-            android:title="Auto measure for current page"
+            android:title="Add measures on Current Page"
             android:icon="@drawable/ruler"
             app:showAsAction="never"/>
         <item
             android:id="@+id/action_measure_detector_all"
-            android:title="Auto Measure All Pages"
+            android:title="Add Measures on All Pages"
             android:icon="@drawable/ruler"
             app:showAsAction="never" />
         <item
             android:id="@+id/action_erase_page"
-            android:title="Erase Currrent Page"
+            android:title="Erase Measures From Current Page"
             android:icon="@drawable/eraser_off"
             app:showAsAction="never" />
         <item
             android:id="@+id/action_erase_all"
-            android:title="Erase All Pages"
+            android:title="Erase Measures From All Pages"
             android:icon="@drawable/eraser_off"
             app:showAsAction="never" />
+        <item
+            android:id="@+id/iiif_view"
+            android:title="Erase Measures From All Pages"
+            android:icon="@drawable/eraser_off"
+            app:showAsAction="always" />
         <item
             android:id="@+id/action_save"
             android:title="Save"
@@ -96,7 +101,7 @@
 
     </group>
 
-    <group android:id="@+id/group_navigation">
+    <group>
         <item
             android:id="@+id/action_goto"
             android:title="GoTo"

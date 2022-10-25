@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,21 +15,25 @@ import android.support.v4.provider.DocumentFile;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.format.DateFormat;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.ceylonlabs.imageviewpopup.ImagePopup;
+
+import org.json.JSONException;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 
 import zemfi.de.vertaktoid.databinding.ActivityMainBinding;
 import zemfi.de.vertaktoid.helpers.Status;
 import zemfi.de.vertaktoid.helpers.StatusStrings;
 import zemfi.de.vertaktoid.model.Facsimile;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
     private final Handler tmpSaveHandler = new Handler();
     private final Runnable tmpSaveRunnable = new Runnable() {
 
-        final long start1 = System.nanoTime();
         @Override
         public void run() {
             saveTemporaryMEI();
@@ -56,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     private FacsimileView facsimileView;
     private DocumentFile dir;
     private DocumentFile dir2;
-    private final ArrayList < String > imageUrl = new ArrayList();
 
     /**
      * Creates temporary MEI file.
@@ -67,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
         FacsimileView view = (FacsimileView) findViewById(R.id.facsimile_view);
         if (view.needToSave) {
             Date saveDate = new Date();
-            String filename = "" + DateFormat.format("dd-MM-yyyy_kk-mm-ss", saveDate) + ".mei";
             if (view.getFacsimile() != null) {
                 DocumentFile systemDir = dir.findFile(Vertaktoid.APP_SUBFOLDER);
                 if (systemDir == null)
@@ -108,12 +110,10 @@ public class MainActivity extends AppCompatActivity {
         status.setAction(StatusStrings.ActionId.STARTED);
         binding.setCstatus(status);
 
+
+
+
     }
-
-
-
-
-
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void loadFacsimile(DocumentFile dir) {
@@ -282,6 +282,7 @@ public class MainActivity extends AppCompatActivity {
      * @param item The selected menu item.
      * @return The boolean value defined in parent.
      */
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle ActionId bar item clicks here. The ActionId bar will
@@ -398,12 +399,37 @@ public class MainActivity extends AppCompatActivity {
                 view.measureAllClicked();
                 break;
             case R.id.action_save:
-                item.setIcon(R.drawable.save_on);
+                item.setIcon(R.drawable.save_off);
                 saveclicked();
-
+                break;
+            case R.id.iiif_view:
+                try {
+                    view.iiif_view();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void iiif_view() {
+        ImagePopup imagePopup = new ImagePopup(this);
+
+
+        imagePopup.setWindowHeight(800); // Optional
+        imagePopup.setWindowWidth(800); // Optional
+        imagePopup.setBackgroundColor(Color.WHITE);  // Optional
+        imagePopup.setFullScreen(true); // Optional
+        imagePopup.setHideCloseIcon(true);  // Optional
+        imagePopup.setImageOnClickClose(true);  // Optional
+
+        ImageView imageView = (ImageView) findViewById(R.id.iiifimage);
+
+        imagePopup.initiatePopupWithPicasso("https://ids.lib.harvard.edu/ids/iiif/437958013/125,15,200,200/!800,800/0/default.jpg"); // Load Image from Drawable
+        imagePopup.viewPopup();
+
+
     }
 
 
@@ -456,7 +482,7 @@ public class MainActivity extends AppCompatActivity {
 
                     try {
                         iiifManifestObj.downloadImage(dir2);
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException | InterruptedException | JSONException e) {
                         e.printStackTrace();
                     }
 

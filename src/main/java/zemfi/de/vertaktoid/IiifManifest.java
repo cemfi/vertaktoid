@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.text.InputType;
@@ -34,6 +35,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -116,25 +120,18 @@ public class IiifManifest extends Activity {
     /*
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.context);
         builder.setTitle("Please insert your username and password");
-
         // Set up the username
         final EditText username = new EditText(MainActivity.context);
         final EditText password = new EditText(MainActivity.context);
-
         // Specify the type of username expected; this, for example, sets the username as a password, and will mask the text
         username.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
         password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
-
-
         builder.setView(username);
         builder.setView(password);
-
         // Set up the buttons
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
-
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -143,10 +140,8 @@ public class IiifManifest extends Activity {
                 dialog.cancel();
             }
         });
-
         builder.show();
         */
-        System.out.println("try it at 142");
         final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.context);
 
         LinearLayout lila1= new LinearLayout(MainActivity.context);
@@ -162,7 +157,6 @@ public class IiifManifest extends Activity {
         alert.setView(lila1);
 
         alert.setTitle("Login");
-        System.out.println("try it at 156");
         alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 String authorization = username.getText().toString()+":"+password.getText().toString();
@@ -173,8 +167,8 @@ public class IiifManifest extends Activity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         dialog.cancel();    }     });
-       alert.show();
-}
+        alert.show();
+    }
 
     /**
      * Parse manifest file from the given url
@@ -185,7 +179,6 @@ public class IiifManifest extends Activity {
         if (autherization == null){
 
         }else  {
-            System.out.println("188 " + autherization);
             setUsernamePasswordBase64(Base64.getEncoder().encodeToString(autherization.getBytes()));
         }
 
@@ -193,18 +186,12 @@ public class IiifManifest extends Activity {
 
         mQueue = Volley.newRequestQueue(MainActivity.context);
         imgs = new String[1];
-        System.out.println("authentication " + autherization);
-
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void onResponse(JSONObject response) {
-
-                        System.out.println("check at line 196");
-                        System.out.println(response.toString());
-
                         try {
                             if (response.has("sequences")) {
                                 JSONArray jsonArray = response.getJSONArray("sequences");
@@ -251,7 +238,9 @@ public class IiifManifest extends Activity {
                                     }
 
                                 }
-
+                                for (String image : imgs) {
+                                    System.out.println("this is url of image " + image);
+                                }
                             }
                             chooseDownloadDirectory(1);
 
@@ -264,26 +253,27 @@ public class IiifManifest extends Activity {
                     }
                 },
                 new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
 
-                if(volleyError.toString().contains("Bad URL")){
-                    displayError();
-                }
-                else if(volleyError.networkResponse.statusCode == 401){
-                    authenticationPopup();
-                }
-            }
-        }) {/**
-             * Passing some request headers
-             */
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                // headers.put("Content-Type", "application/json");
-                headers.put("Authorization", "Basic " + getUsernamePasswordBase64());
-                return headers;
-            }
+                        if(volleyError.toString().contains("Bad URL")){
+                            displayError();
+                        }
+                        else if(volleyError.networkResponse.statusCode == 401){
+                            authenticationPopup();
+                        }
+                    }
+                })
+        {/**
+         * Passing some request headers
+         */
+        @Override
+        public Map<String, String> getHeaders() throws AuthFailureError {
+            HashMap<String, String> headers = new HashMap<String, String>();
+            // headers.put("Content-Type", "application/json");
+            headers.put("Authorization", "Basic " + getUsernamePasswordBase64());
+            return headers;
+        }
         };
 
         if (imgs == null) {
@@ -335,7 +325,7 @@ public class IiifManifest extends Activity {
      * Download images into the selected folder
      */
 
-    public void downloadImage(DocumentFile df) throws IOException, InterruptedException {
+    public void downloadImage(DocumentFile df) throws IOException, InterruptedException, JSONException {
 
         String directorypath = df.getUri().toString();
         String decodedurl = URLDecoder.decode(directorypath, "UTF-8");
@@ -344,12 +334,10 @@ public class IiifManifest extends Activity {
         String finalurl = parseurl.replace("document/primary/", "");
         String[] parts = finalurl.split("/");
         String subPath = "";
-        System.out.println("Line 342");
         progress = 0;
         downloadIds = new ArrayList<>();
         dm = (DownloadManager) MainActivity.context.getSystemService(Context.DOWNLOAD_SERVICE);
         canceled = false;
-        System.out.println("Line 347");
 
 
         if (parts.length > 1) {
@@ -358,29 +346,46 @@ public class IiifManifest extends Activity {
             }
         }
         final String subPathFinal = subPath;
-        System.out.println("Line 356");
 
         progressBarContent(imageUrl.size());
 
+        JSONArray jsonArray = new JSONArray();
+        int count = 1;
+        for(String url : imageUrl){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id",  count);
+            jsonObject.put("url", url);
+            jsonArray.put(jsonObject);
+            count++;
+        }
+        JSONObject urls = new JSONObject();
+        urls.put("urls", jsonArray);
+        String jsonStr = urls.toString();
+
+        File file = new File(String.valueOf(Environment.getExternalStoragePublicDirectory(finalurl)), "iiif.json");
+        FileWriter fileWriter = new FileWriter(file, true);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        bufferedWriter.write(jsonStr);
+        bufferedWriter.close();
+
         Button cancel = (Button) downloadProgressDialogue.findViewById(R.id.cancel);
         cancel.setOnClickListener(new View.OnClickListener() {
-           @Override
-           public void onClick(View view) {
+            @Override
+            public void onClick(View view) {
 
-               canceled = true;
-               ArrayList<Long> clone = (ArrayList<Long>) downloadIds.clone();
+                canceled = true;
+                ArrayList<Long> clone = (ArrayList<Long>) downloadIds.clone();
 
-               try {
-                   for(long l : clone) {
-                       dm.remove(l);
-                   }
-               }catch (Exception e) {
-                   System.out.println(e);
-               }
-
-               downloadProgressDialogue.dismiss();
-           }
-       });
+                try {
+                    for(long l : clone) {
+                        dm.remove(l);
+                    }
+                }catch (Exception e) {
+                    System.out.println(e);
+                }
+                downloadProgressDialogue.dismiss();
+            }
+        });
         displayProgress();
 
         new Thread(new Runnable() {
@@ -407,7 +412,7 @@ public class IiifManifest extends Activity {
                         long downloadId = dm.enqueue(request);
                         downloadIds.add(0, downloadId);
 
-                        getDownloadStatus(downloadId, imageUrl.size(), dm);
+                        getDownloadStatus(downloadId, imageUrl.size());
 
                     }catch (Exception e){
                         System.out.println("Failed with error " + e);
@@ -454,17 +459,17 @@ public class IiifManifest extends Activity {
 
     public void updateProgressBar(int totalImage){
 
-                progress++;
-                if (progress == totalImage){
-                    downloadProgressDialogue.dismiss();
-                    return;
-                }
-                text.setProgress(progress);
-                text2.setText(String.valueOf(Math.round(((float) progress/(float)totalImage)*100.00)));
+        progress++;
+        if (progress == totalImage){
+            downloadProgressDialogue.dismiss();
+            return;
+        }
+        text.setProgress(progress);
+        text2.setText(String.valueOf(Math.round(((float) progress/(float)totalImage)*100.00)));
     }
 
 
-    private void getDownloadStatus(long downloadId, int totalImage, DownloadManager dm) {
+    private void getDownloadStatus(long downloadId, int totalImage) {
 
         DownloadManager.Query query = new DownloadManager.Query();
         query.setFilterById(downloadId);
@@ -504,7 +509,6 @@ public class IiifManifest extends Activity {
                             });
                         }else {
 
-                            // System.out.println("error is occured here " +  reason);
                         }
                     }catch(Exception e) {
                         timer.cancel();
@@ -516,10 +520,3 @@ public class IiifManifest extends Activity {
     }
 
 }
-
-
-
-
-
-
-

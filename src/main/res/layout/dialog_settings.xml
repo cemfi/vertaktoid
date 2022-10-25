@@ -5,12 +5,11 @@
     android:layout_height="wrap_content">
 
     <TextView
-        android:id="@+id/dialog_settings_horover_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
         android:labelFor="@+id/dialog_settings_horover_input"
-        android:text="@string/dialog_settings_horover_label"
+        android:text="@string/dialog_iiif_horover_label"
         android:layout_marginStart="10dp"/>
     <EditText
         android:id="@+id/dialog_settings_horover_input"
@@ -22,7 +21,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-        <RadioButton android:id="@+id/dialog_settings_horover_type_points"
+        <RadioButton android:id="@+id/regions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/dialog_settings_points" />
@@ -32,7 +31,6 @@
             android:text="@string/dialog_settings_percents" />
     </RadioGroup>
     <TextView
-        android:id="@+id/dialog_settings_undosize_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -45,7 +43,6 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"/>
     <TextView
-        android:id="@+id/dialog_settings_mei_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"

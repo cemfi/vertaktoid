@@ -133,7 +133,6 @@ public class Page implements Parcelable {
      */
     public ArrayList<Measure> getMeasuresAt(Point2D point) {
         ArrayList<Measure> result = new ArrayList<>();
-        System.out.println(result.size() + "  The size of result from page");
         for (Measure measure : measures) {
             if (Geometry.polygonContainsPoint(measure.zone.getVertices(), point)) {
                 result.add(measure);

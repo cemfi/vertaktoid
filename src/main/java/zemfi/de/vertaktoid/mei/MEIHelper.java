@@ -45,10 +45,6 @@ public class MEIHelper {
     public static Document meiDocument;
     public static String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
-
-
-
-
     public static void clearDocument() {
         meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
     }
@@ -78,7 +74,6 @@ public class MEIHelper {
      * @return true if no exceptions.
      */
     public static boolean writeMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
-        System.out.println("number of measures when writing on the file " + document.movements.size());
         boolean returnValue = true;
         Dialog downloadProgressDialogue = null;
         ProgressBar text;
@@ -350,8 +345,6 @@ public class MEIHelper {
                 body.removeChild(mdivs.get(i));
             }
         }
-
-
         if(meiFile == null) {
             meiFile = dir.createFile("application/xml", dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
         }
@@ -451,7 +444,6 @@ public class MEIHelper {
             Elements scores = mdiv.getChildElements("score", Vertaktoid.MEI_NS);
             Element score = scores.get(0);
             Elements sections = score.getChildElements("section", Vertaktoid.MEI_NS);
-            System.out.println("this is number of sections in read file " + sections.size());
             Element section = sections.get(0);
             Elements insideSection = section.getChildElements();
             for (int i = 0; i < insideSection.size(); i++) {

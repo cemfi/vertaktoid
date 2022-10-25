@@ -7,8 +7,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Looper;
 import android.os.Parcelable;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.CoordinatorLayout;
 import android.text.InputType;
 import android.util.AttributeSet;
@@ -21,14 +25,25 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.ceylonlabs.imageviewpopup.ImagePopup;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+
+import javax.net.ssl.SSLHandshakeException;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -51,6 +66,7 @@ public class FacsimileView extends CoordinatorLayout {
 
     CommandManager commandManager;
     public String fullResponse;
+    public JSONObject currentPageUrlId;
 
 
     /**
@@ -64,6 +80,8 @@ public class FacsimileView extends CoordinatorLayout {
         commandManager = new CommandManager();
         movementColors = new ArrayList<>();
     }
+
+
 
     public void generateColors() {
         int colorsToGenerate = document.movements.size() - movementColors.size();
@@ -89,7 +107,11 @@ public class FacsimileView extends CoordinatorLayout {
     public final ObservableField<String> currentPath = new ObservableField<>();
     public final ObservableInt maxPageNumber = new ObservableInt(0);
     public boolean needToSave = false;
-    public enum Action {DRAW, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, ADJUST_MOVEMENT}
+
+
+
+    public enum Action {DRAW, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, IIIFZOOM, ADJUST_MOVEMENT;
+    }
 
     public Action nextAction = Action.DRAW;
     public boolean isFirstPoint = true;
@@ -238,7 +260,7 @@ public class FacsimileView extends CoordinatorLayout {
         settingsHoroverInput.setHint("" + cutOverlapping);
         settingsHoroverInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         final RadioGroup settingsHoroverType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_horover_type);
-        settingsHoroverType.check(R.id.dialog_settings_horover_type_points);
+        settingsHoroverType.check(R.id.regions);
         final EditText settingsUndosizeInput = (EditText) settingsDialog.findViewById(R.id.dialog_settings_undosize_input);
         settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
         settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -273,7 +295,7 @@ public class FacsimileView extends CoordinatorLayout {
                     }
                     String horover = settingsHoroverInput.getText().toString();
                     if (!horover.equals("")) {
-                        if (settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_points) {
+                        if (settingsHoroverType.getCheckedRadioButtonId() == R.id.regions) {
                             cutOverlapping = Integer.parseInt(settingsHoroverInput.getText().toString());
                         } else if (settingsHoroverType.getCheckedRadioButtonId() == R.id.dialog_settings_horover_type_percents) {
                             float percent = Float.parseFloat(settingsHoroverInput.getText().toString());
@@ -339,12 +361,209 @@ public class FacsimileView extends CoordinatorLayout {
         nextAction = Action.DRAW;
         refresh();
     }
+    public void iiif_view() throws JSONException {
+        resetState();
+        final Dialog settingsDialog = new Dialog(getContext());
+        Window window = settingsDialog.getWindow();
+        WindowManager.LayoutParams wlp = window.getAttributes();
+        wlp.gravity = Gravity.TOP;
+        window.setAttributes(wlp);
+        settingsDialog.setContentView(R.layout.iiif_layout);
+        settingsDialog.setTitle(R.string.dialog_iifs_titel);
+        final String[] regionUrl = new String[1];
+        final String[] sizeurl = new String[1];
+        final String[] rotationurl =  new String[1];
+        final String[] iiifquality =  new String[1];
+
+        final EditText iiif_right = (EditText) settingsDialog.findViewById(R.id.iiif_right);
+        final EditText iiif_top = (EditText) settingsDialog.findViewById(R.id.iiif_top);
+        final EditText iiif_width = (EditText) settingsDialog.findViewById(R.id.iiif_width);
+        final EditText iiif_height = (EditText) settingsDialog.findViewById(R.id.iiif_height);
+
+        final EditText iiif_right_percent = (EditText) settingsDialog.findViewById(R.id.iiif_right_percent);
+        final EditText iiif_top_percent = (EditText) settingsDialog.findViewById(R.id.iiif_top_percent);
+        final EditText iiif_width_percent= (EditText) settingsDialog.findViewById(R.id.iiif_width_percent);
+        final EditText iiif_height_percent = (EditText) settingsDialog.findViewById(R.id.iiif_height_percent);
+
+        final EditText iiifSize = (EditText) settingsDialog.findViewById(R.id.dialog_iiif_size_input);
+
+        final EditText iiifrotation = (EditText) settingsDialog.findViewById(R.id.dialog_iiif_rotation_input);
+
+        final RadioGroup region = (RadioGroup) settingsDialog.findViewById(R.id.regions);
+        final RadioGroup quality = (RadioGroup) settingsDialog.findViewById(R.id.quality);
+
+
+
+        region.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                    if (region.getCheckedRadioButtonId() == R.id.region_points) {
+                        iiif_right.setEnabled(true);
+                        iiif_top.setEnabled(true);
+                        iiif_width.setEnabled(true);
+                        iiif_height.setEnabled(true);
+
+                    }
+                    else if (region.getCheckedRadioButtonId() == R.id.region_percent) {
+                        iiif_right_percent.setEnabled(true);
+                        iiif_top_percent.setEnabled(true);
+                        iiif_width_percent.setEnabled(true);
+                        iiif_height_percent.setEnabled(true);
+                }
+            }
+        });
+
+        Button settingsButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
+
+        settingsButtonNegative.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                settingsDialog.cancel();
+                resetState();
+                resetMenu();
+                invalidate();
+            }
+        });
+
+        Button settingsButtonPositive = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_positive);
+        settingsButtonPositive.setOnClickListener(new OnClickListener() {
+
+
+            @Override
+            public void onClick(View v) {
+                try {
+
+                    File file = new File(String.valueOf(Environment.getExternalStoragePublicDirectory(stringUrlParser())), "iiif.json");
+
+                    FileReader fileReader = null;
+                    try {
+                        fileReader = new FileReader(file);
+                    } catch (FileNotFoundException e) {
+                        System.out.println("File is not found");
+                        e.printStackTrace();
+                    }
+                    BufferedReader bufferedReader = new BufferedReader(fileReader);
+                    StringBuilder stringBuilder = new StringBuilder();
+
+                    String line = null;
+                    try {
+                        line = bufferedReader.readLine();
+                    } catch (IOException e) {
+                        System.out.println("Again ioexception");
+                        e.printStackTrace();
+                    }
+                    while (line != null){
+                        stringBuilder.append(line).append("\n");
+                        try {
+                            line = bufferedReader.readLine();
+                        } catch (IOException e) {
+                            System.out.println("Ioe exception");
+                            e.printStackTrace();
+                        }
+                    }
+                    try {
+                        bufferedReader.close();
+                    } catch (IOException e) {
+                        System.out.println("IOEEE exception");
+                        e.printStackTrace();
+                    }
+                    String responce = stringBuilder.toString();
+                    JSONObject jsonObject  = new JSONObject(responce);
+                    JSONArray urls = jsonObject.getJSONArray("urls");
+                    if (region.getCheckedRadioButtonId() == R.id.region_full) {
+                        regionUrl[0] = "full";
+                    }
+                    if (region.getCheckedRadioButtonId() == R.id.region_square) {
+                        regionUrl[0] = "square";
+                    }
+                    if (region.getCheckedRadioButtonId() == R.id.region_points) {
+                        regionUrl[0] = iiif_right.getText().toString() + "," + iiif_top.getText().toString() + "," + iiif_height.getText().toString() + "," + iiif_width.getText().toString();
+                    }
+                    if (region.getCheckedRadioButtonId() == R.id.region_percent){
+                        regionUrl[0] = "pct:" + iiif_right_percent.getText().toString() + "," + iiif_top_percent.getText().toString() + "," + iiif_height_percent.getText().toString() + "," + iiif_width_percent.getText().toString();
+
+                    }
+                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_color){
+                        iiifquality[0] =  "color";
+                    }
+                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_defualt){
+                        iiifquality[0] =  "default.jpg";
+                    }
+                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_gray){
+                        System.out.println("colot is gray");
+
+                        iiifquality[0] =  "gray.jpg";
+                    }
+                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_bitonal){                        System.out.println("colot is clicked");
+                        iiifquality[0] =  "bitonal.jpg";
+                    }
+                    if(iiifSize != null) {
+                        sizeurl[0] = iiifSize.getText().toString();
+                    }
+                    if(iiifrotation != null){
+                        rotationurl[0] = iiifrotation.getText().toString();
+                    }
+                    if(regionUrl[0] == null){
+                        regionUrl[0] = "full";
+                    }if( iiifquality[0] == null){
+                        iiifquality[0] = "default.jpg";
+                    } if (sizeurl[0].isEmpty()){
+                        sizeurl[0] = "full";
+                    }
+                    if (rotationurl[0].isEmpty()){
+                        rotationurl[0] = "0";
+                    }
+                    currentPageUrlId = urls.getJSONObject(document.pages.get(pageNumber.get()).number - 1);
+                    currentPageUrlId.get("id");
+                    String hostname = new URL((String) currentPageUrlId.get("url")).getHost();
+                    ImagePopup imagePopup = new ImagePopup(MainActivity.context);
+                    String[] originalurl =  new String[ currentPageUrlId.get("url").toString().split("/").length];
+
+                    originalurl = currentPageUrlId.get("url").toString().split("/");
+                    originalurl[originalurl.length - 1] = iiifquality[0];
+                    originalurl[originalurl.length - 2] = rotationurl[0];
+                    originalurl[originalurl.length - 3] = sizeurl[0];
+                    originalurl[originalurl.length - 4] = regionUrl[0];
+                    System.out.println(originalurl[0]);
+                    String stringurl = "";
+                    for (String string : originalurl) {
+                        stringurl = stringurl + "/"+ string;
+                    }
+                    String newurl;
+                    newurl = stringurl.substring(1);
+
+                    System.out.println(originalurl.length);
+                    imagePopup.setWindowHeight(800); // Optional
+                    imagePopup.setWindowWidth(800); // Optional
+                    imagePopup.setFullScreen(false); // Optional
+                    imagePopup.setHideCloseIcon(true);  // Optional
+                    imagePopup.setImageOnClickClose(true);  // Optional
+
+                    imagePopup.initiatePopupWithPicasso(newurl);
+                    imagePopup.viewPopup();
+
+                } catch (NumberFormatException | JSONException | MalformedURLException e) {
+                    // do nothing
+                }
+                resetState();
+                resetMenu();
+                invalidate();
+                settingsDialog.dismiss();
+            }
+        });
+
+        settingsDialog.show();
+
+
+
+    }
 
     /**
      * Menu entry "erase" clicked.
      */
     public void eraseClicked() {
-            nextAction = Action.ERASE;
+        nextAction = Action.ERASE;
         refresh();
     }
     /**
@@ -407,11 +626,11 @@ public class FacsimileView extends CoordinatorLayout {
     /**
      * Menu entry "measureAllClicked" clicked.
      */
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public void measureAllClicked() {
         refresh();
         setProgressBar("Vertaktoid is adding measures, please wait");
         progress.show();
-
         String[] paths = new String[document.pages.size()];
         int[] pageNumbers = new int[document.pages.size()];
         for (int i = 0; i < document.pages.size(); i++) {
@@ -424,21 +643,21 @@ public class FacsimileView extends CoordinatorLayout {
             paths[i] = path2;
             pageNumbers[i] = i;
         }
-
         getMeasureDetector(paths, pageNumbers);
     }
 
     public void setProgressBar(String text){
         progress.setTitle("Loading");
         progress.setMessage(text);
+        progress.setCancelable(false);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public  void measurPageClicked() throws InterruptedException {
         refresh();
         setProgressBar("Vertaktoid is adding measures, please wait");
 
         progress.show();
-        System.out.println("is the progress showing " + progress.isShowing());
 
         String path = document.dir.getUri().getPath();
         String folder_name2 = path.replace("tree/primary:", "");
@@ -448,8 +667,12 @@ public class FacsimileView extends CoordinatorLayout {
         String[] paths = {path2};
         int[] pageNumbers = {pageNumber.get()};
         getMeasureDetector(paths, pageNumbers);
-
-
+    }
+    public String stringUrlParser(){
+        String path = document.dir.getUri().getPath();
+        String folder_name2 = path.replace("tree/primary:", "");
+        String folder_name = folder_name2.substring(folder_name2.indexOf(":") + 1);
+        return folder_name;
     }
     /**
      * Menu entry "type"
@@ -474,7 +697,6 @@ public class FacsimileView extends CoordinatorLayout {
         refresh();
         nextAction = Action.PRECISE_CUT;
     }
-
     /**
      * Menu entry "movement" clicked.
      */
@@ -485,11 +707,10 @@ public class FacsimileView extends CoordinatorLayout {
 
 
     public void getMeasureDetector(String[] paths, int[] pageNumbers) {
-
         Runnable runnable = new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.R)
             @Override
             public void run() {
-
                 for(int i = 0; i < paths.length; i++) {
 
                     float lrx;
@@ -531,21 +752,49 @@ public class FacsimileView extends CoordinatorLayout {
 
                         }
                         MEIHelper.sortMeasures(document);
-                        //  MEIHelper.sortMeasures(document);
-                        System.out.println(document.pages.get(pageNumbers[i]).measures.size() + " " + "number of  measures");
                         refresh();
-                    } catch (IOException | JSONException e) {
+                    } catch (FileNotFoundException e){
+                        Thread thread = new Thread(){
+                            public void run(){
+                                Looper.prepare();//Call looper.prepare()
+                                String message = MainActivity.context.getString(R.string.access_denied_error);
+                                showPermissionError(message);
+                                Looper.loop();
+                            }
+                        };
+                        thread.start();
+                    }catch (SSLHandshakeException | UnknownHostException e){
+                        Thread thread = new Thread(){
+                            public void run(){
+                                Looper.prepare();//Call looper.prepare()
+                                String message = MainActivity.context.getString(R.string.internet_connection_error);
+                                showPermissionError(message);
+                                Looper.loop();
+                            }
+                        };
+                        thread.start();
+                    }catch (IOException | JSONException e) {
                         e.printStackTrace();
                     } finally {
                     }
 
                 }
-
                 progress.dismiss();
             }
+
         };
 
         new Thread(runnable).start();
+
+    }
+
+    private void showPermissionError(String message) {
+        Context context = MainActivity.context;
+        CharSequence text = message;
+        int duration = Toast.LENGTH_LONG;
+
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
     }
 
     public void undoClicked() {

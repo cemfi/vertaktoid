@@ -3,8 +3,6 @@ package zemfi.de.vertaktoid.commands;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
-
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
@@ -29,10 +27,6 @@ public class CreateMeasureCommand implements ICommand, Parcelable {
         this.facsimile = facsimile;
         this.page = page;
         this.movement = null;
-    }
-
-    public CreateMeasureCommand() {
-
     }
 
     protected CreateMeasureCommand(Parcel in) {
