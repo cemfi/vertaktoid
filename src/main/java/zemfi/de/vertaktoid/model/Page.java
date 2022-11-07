@@ -312,4 +312,19 @@ public class Page implements Parcelable {
         parcel.writeInt(imageHeight);
         parcel.writeInt(inSampleSize);
     }
+
+    public void setimageHeight(int imageHeight) {
+        this.imageHeight = imageHeight;
+    }
+
+    public void setimageWidth(int imageWidth) {
+        this.imageWidth = imageWidth;
+    }
+    public int getimageHeight() {
+        return this.imageHeight;
+    }
+
+    public int getimageWidth() {
+        return this.imageWidth;
+    }
 }

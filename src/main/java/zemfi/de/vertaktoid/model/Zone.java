@@ -163,16 +163,21 @@ public class Zone implements Comparable<Zone>, Parcelable {
     @Override
     public int compareTo(Zone zone) {
         int result = 0;
+        // The same zones
         if (this.boundLeft == zone.boundLeft && this.boundTop == zone.boundTop &&
                 this.boundRight == zone.boundRight && this.boundBottom == zone.boundBottom) {
             return 0;
         }
+        // If to be added zone has lower uly and lower ulx than the compared zone
         if (this.boundTop < zone.boundTop && this.boundLeft < zone.boundLeft) {
             return -1;
         }
+        // If to be added zone has greater uly and greater ulx than the compared zone
         if (this.boundTop > zone.boundTop && this.boundLeft > zone.boundLeft) {
             return 1;
         }
+
+        // Substracting the value of lrx from
         if(Math.min(this.boundBottom - this.boundTop, zone.boundBottom - zone.boundTop) == 0) {
             result = (int) (zone.boundLeft - this.boundLeft);
             if(result == 0) {

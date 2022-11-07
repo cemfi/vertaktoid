@@ -11,12 +11,14 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     repositories {
         google()
         mavenCentral()
         jcenter()
-        maven { url 'https://repo.spring.io/plugins-release/' }
+        maven { url 'https://repo.spring.io/plugins-release/'}
+        maven { url "https://jitpack.io" }
+
     }
 
     defaultConfig {
@@ -74,6 +76,7 @@ buildscript {
 dependencies {
     testImplementation 'junit:junit:4.13.2'
     implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation'com.github.chathuralakmal:AndroidImagePopup:1.2.2'
     implementation 'com.android.support:design:28.0.0'
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.5.0'
     implementation 'com.goebl:simplify:1.0.0'
@@ -83,5 +86,12 @@ dependencies {
         exclude module: 'xml-apis'
     }
     implementation 'com.android.volley:volley:1.2.1'
+    implementation "com.squareup.okhttp3:okhttp:4.9.3"
+    implementation(platform ("com.squareup.okhttp3:okhttp-bom:4.9.3"))
+
+    // define any required OkHttp artifacts without version
+    implementation "com.squareup.okhttp3:okhttp"
+    implementation "com.squareup.okhttp3:logging-interceptor"
 
 }
+

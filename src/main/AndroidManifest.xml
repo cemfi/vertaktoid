@@ -3,13 +3,19 @@
     package="zemfi.de.vertaktoid">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+
+
+
 
 
 
     <application
         android:name="zemfi.de.vertaktoid.Vertaktoid"
         android:allowBackup="true"
+        android:requestLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:icon="@mipmap/ic_launcher"

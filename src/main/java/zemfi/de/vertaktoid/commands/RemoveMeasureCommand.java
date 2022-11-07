@@ -4,7 +4,6 @@ package zemfi.de.vertaktoid.commands;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 

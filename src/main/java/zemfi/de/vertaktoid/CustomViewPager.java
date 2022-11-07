@@ -1,12 +1,9 @@
 package zemfi.de.vertaktoid;
 
 import android.content.Context;
-import android.os.Parcelable;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-
-import java.io.Console;
 
 /**
  * Layout manager that contains an adapter to show the pages.
@@ -23,9 +20,9 @@ public class CustomViewPager extends ViewPager {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if(ev.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) {
+        /* if(ev.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) {
             return super.onInterceptTouchEvent(ev);
-        }
+        } */
         return false;
     }
     public void recycle(){

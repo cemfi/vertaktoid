@@ -8,13 +8,23 @@
     <string name="dialog_goto_titel">Go To Page</string>
     <string name="dialog_settings_horover_label">Horizontal overlapping:</string>
     <string name="dialog_settings_titel">Settings</string>
-    <string name="dialog_download_progress_titel">Download Progress</string>
+    <string name="dialog_iifs_titel">IIIF Viewer</string>
+    <string name="dialog_iiif_horover_label">Regions:</string>
     <string name="dialog_settings_undosize_label">Max. size for undo/redo stack:</string>
+    <string name="dialog_iiif_region">Region:</string>
+    <string name="dialog_iiif_quality_label">Quality:</string>
+    <string name="dialog_iiif_size_label">Size:</string>
+    <string name="iiif_quality_defualt_label">Defualt:</string>
+    <string name="iiif_quality_color_label">Color:</string>
+    <string name="iiif_quality_gray_label">Gray:</string>
+    <string name="iiif_quality_bitonal_label">Bitonal:</string>
+    <string name="dialog_iiif_rotation_label">Rotation:</string>
     <string name="dialog_settings_percents">percents of page width</string>
+    <string name="dialog_iiif_square">Square</string>
+    <string name="dialog_iiif_points">Points</string>
+    <string name="dialog_iiif_percent">Percent</string>
     <string name="dialog_settings_points">points</string>
-    <string name="dialog_settings_corner_label">Corner type of measures:</string>
-    <string name="dialog_settings_corner_rounded">rounded</string>
-    <string name="dialog_settings_corner_straight">straight</string>
+    <string name="dialog_iiif_full">Full</string>
     <string name="dialog_editmo_titel">Set Movement Anchor</string>
     <string name="dialog_editmo_movement_label">Select existing movement or create new one:</string>
     <string name="dialog_editmo_spinner_optdef">create new</string>
@@ -28,4 +38,7 @@
     <string name="dialog_settings_mei_canonical">orthogonal box</string>
     <string name="dialog_settings_mei_extended">oriented box</string>
     <string name="dialog_settings_mei_polygonal">polygon</string>
+    <string name="internet_connection_error">Please connect to the internet</string>
+    <string name="access_denied_error">Please allow access your media files to Veraktoid</string>
+
 </resources>

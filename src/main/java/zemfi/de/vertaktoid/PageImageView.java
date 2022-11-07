@@ -47,7 +47,6 @@ import zemfi.de.vertaktoid.model.Page;
  */
 
 public class PageImageView extends SubsamplingScaleImageView {
-
     private final FacsimileView facsimileView;
     private final Facsimile facsimile;
     private final Page page;
@@ -409,6 +408,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             verticesPath.moveTo(fp.x, fp.y);
             for(int j = 1; j < vertices.size(); j++) {
                 final PointF cp = sourceToViewCoord(vertices.get(j).getPointF());
+                System.out.println("this are the points " + cp);
                 verticesPath.lineTo(cp.x, cp.y);
             }
             verticesPath.close();
@@ -444,15 +444,18 @@ public class PageImageView extends SubsamplingScaleImageView {
             // draw sequence number
             String measureLabel = measure.manualSequenceNumber != null ?
                     "" + measure.manualSequenceNumber : "" + measure.sequenceNumber;
-            String movementLabel = measure.movement.getName() + " >>";
+            String movementLabel =  measure.movement.getName() +  " >>";
+
             largeTextPaint.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
             smallTextPaint.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
             Point2D centroid = Geometry.centroid2D(measure.zone.getVertices());
+            System.out.println("this is " +  centroid);
             PointF centroidF = sourceToViewCoord((float) centroid.x(), (float) centroid.y());
             float leftTextBox = centroidF.x - measureNameRect.width() / 2 - 5;
             float topTextBox = centroidF.y - 20 - measureNameRect.height() /2 ;
             float rightTextBox = centroidF.x + measureNameRect.width() / 2 + 5;
             float bottomTextBox = centroidF.y - 15 + measureNameRect.height() / 2;
+            System.out.println("this are the points " + leftTextBox + " " +  topTextBox + " " + rightTextBox + " " +  bottomTextBox );
             if(measure.manualSequenceNumber != null) {
                 canvas.drawRect(leftTextBox, topTextBox, rightTextBox, bottomTextBox, drawPaint);
             }
@@ -696,10 +699,10 @@ public class PageImageView extends SubsamplingScaleImageView {
         float touchX = event.getX();
         float touchY = event.getY();
         touchBitmapPosition = new Point2D(viewToSourceCoord(touchX, touchY));
-        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
+        /*if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
         {
             return super.onTouchEvent(event);
-        }
+        } */
 
         final ArrayList<Measure> measures = page.getMeasuresAt(touchBitmapPosition);
         final Measure measure = page.getMeasureAt(touchBitmapPosition);
@@ -797,7 +800,9 @@ public class PageImageView extends SubsamplingScaleImageView {
                         if(facsimileView.currentMovementNumber >= facsimile.movements.size()) {
                             facsimileView.currentMovementNumber = facsimile.movements.get(facsimile.movements.size() - 1).number;
                         }
+                        invalidate();
                         break;
+
                     case ADJUST_MOVEMENT:
                         if (measure != null) {
                             buildMODialog(measure);
@@ -809,6 +814,8 @@ public class PageImageView extends SubsamplingScaleImageView {
                             buildMEDialog(measure);
                         }
                         break;
+                    case IIIFZOOM:
+                        System.out.println("this is IIIF Zoom thing");
                     case DRAW:
                         if(lastPolygonPoint == null) {
                             break;

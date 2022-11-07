@@ -4,7 +4,7 @@ package zemfi.de.vertaktoid.commands;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,9 +20,6 @@ public class RemoveMeasuresCommand implements ICommand, Parcelable {
     RemoveMeasuresCommand(List<Measure> measures, Facsimile facsimile) {
         this.facsimile = facsimile;
         this.measures = new ArrayList<>(measures);
-    }
-
-    public RemoveMeasuresCommand() {
     }
 
     protected RemoveMeasuresCommand(Parcel in) {
@@ -49,15 +46,7 @@ public class RemoveMeasuresCommand implements ICommand, Parcelable {
     public void setFacsimile(Facsimile facsimile) {
         this.facsimile = facsimile;
     }
-
-    public List<Measure> getMeasures() {
-        return measures;
-    }
-
-    public void setMeasures(ArrayList<Measure> measures) {
-        this.measures = measures;
-    }
-
+    
     @Override
     public int execute(){
         if(measures.size() > 0) {
