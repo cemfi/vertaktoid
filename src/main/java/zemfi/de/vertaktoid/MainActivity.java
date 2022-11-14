@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,10 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
 import android.widget.Toast;
-
-import com.ceylonlabs.imageviewpopup.ImagePopup;
 
 import org.json.JSONException;
 
@@ -401,35 +397,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_save:
                 item.setIcon(R.drawable.save_off);
                 saveclicked();
-                break;
-            case R.id.iiif_view:
-                try {
-                    view.iiif_view();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    public void iiif_view() {
-        ImagePopup imagePopup = new ImagePopup(this);
-
-
-        imagePopup.setWindowHeight(800); // Optional
-        imagePopup.setWindowWidth(800); // Optional
-        imagePopup.setBackgroundColor(Color.WHITE);  // Optional
-        imagePopup.setFullScreen(true); // Optional
-        imagePopup.setHideCloseIcon(true);  // Optional
-        imagePopup.setImageOnClickClose(true);  // Optional
-
-        ImageView imageView = (ImageView) findViewById(R.id.iiifimage);
-
-        imagePopup.initiatePopupWithPicasso("https://ids.lib.harvard.edu/ids/iiif/437958013/125,15,200,200/!800,800/0/default.jpg"); // Load Image from Drawable
-        imagePopup.viewPopup();
-
-
     }
 
 

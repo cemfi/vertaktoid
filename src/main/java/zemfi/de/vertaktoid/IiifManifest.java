@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.text.InputType;
@@ -35,9 +34,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -349,25 +345,6 @@ public class IiifManifest extends Activity {
 
         progressBarContent(imageUrl.size());
 
-        JSONArray jsonArray = new JSONArray();
-        int count = 1;
-        for(String url : imageUrl){
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id",  count);
-            jsonObject.put("url", url);
-            jsonArray.put(jsonObject);
-            count++;
-        }
-        JSONObject urls = new JSONObject();
-        urls.put("urls", jsonArray);
-        String jsonStr = urls.toString();
-
-        File file = new File(String.valueOf(Environment.getExternalStoragePublicDirectory(finalurl)), "iiif.json");
-        FileWriter fileWriter = new FileWriter(file, true);
-        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-        bufferedWriter.write(jsonStr);
-        bufferedWriter.close();
-
         Button cancel = (Button) downloadProgressDialogue.findViewById(R.id.cancel);
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -396,8 +373,6 @@ public class IiifManifest extends Activity {
                     if(canceled) break;
 
                     try {
-
-
                         Uri downloadUri = Uri.parse(imageUrl.get(i));
                         DownloadManager.Request request = new DownloadManager.Request(downloadUri);
                         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)

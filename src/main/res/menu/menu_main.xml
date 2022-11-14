@@ -84,11 +84,6 @@
             android:icon="@drawable/eraser_off"
             app:showAsAction="never" />
         <item
-            android:id="@+id/iiif_view"
-            android:title="Erase Measures From All Pages"
-            android:icon="@drawable/eraser_off"
-            app:showAsAction="always" />
-        <item
             android:id="@+id/action_save"
             android:title="Save"
             android:icon="@drawable/save_off"

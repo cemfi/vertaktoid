@@ -699,10 +699,10 @@ public class PageImageView extends SubsamplingScaleImageView {
         float touchX = event.getX();
         float touchY = event.getY();
         touchBitmapPosition = new Point2D(viewToSourceCoord(touchX, touchY));
-        /*if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
+        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
         {
             return super.onTouchEvent(event);
-        } */
+        }
 
         final ArrayList<Measure> measures = page.getMeasuresAt(touchBitmapPosition);
         final Measure measure = page.getMeasureAt(touchBitmapPosition);
