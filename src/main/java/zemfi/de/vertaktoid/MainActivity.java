@@ -401,13 +401,6 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_save:
                 item.setIcon(R.drawable.save_off);
                 saveclicked();
-                break;
-            case R.id.iiif_view:
-                try {
-                    view.iiif_view();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
         }
 
         return super.onOptionsItemSelected(item);
