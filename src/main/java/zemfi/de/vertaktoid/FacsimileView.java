@@ -632,7 +632,7 @@ public class FacsimileView extends CoordinatorLayout {
     }
     /**
      * Menu entry "measureAllClicked" clicked.
-     */
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     public void measureAllClicked() {
         refresh();
@@ -652,7 +652,7 @@ public class FacsimileView extends CoordinatorLayout {
         }
         getMeasureDetector(paths, pageNumbers);
     }
-
+     */
     public void setProgressBar(String text){
         progress.setTitle("Loading");
         progress.setMessage(text);

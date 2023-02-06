@@ -69,11 +69,6 @@
             android:icon="@drawable/ruler"
             app:showAsAction="never"/>
         <item
-            android:id="@+id/action_measure_detector_all"
-            android:title="Add Measures on All Pages"
-            android:icon="@drawable/ruler"
-            app:showAsAction="never" />
-        <item
             android:id="@+id/action_erase_page"
             android:title="Erase Measures From Current Page"
             android:icon="@drawable/eraser_off"

@@ -404,14 +404,10 @@ public class MainActivity extends AppCompatActivity {
                 item.setIcon(R.drawable.eraser_on);
                 view.eraseAllClicked();
                 break;
-            case R.id.action_measure_detector_all:
-                item.setIcon(R.drawable.ruler);
-                view.measureAllClicked();
-                break;
             case R.id.action_save:
                 item.setIcon(R.drawable.save_off);
                 saveclicked();
-                
+
         }
 
         return super.onOptionsItemSelected(item);
