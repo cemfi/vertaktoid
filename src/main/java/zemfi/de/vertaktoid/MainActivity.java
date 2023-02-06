@@ -409,10 +409,9 @@ public class MainActivity extends AppCompatActivity {
                 saveclicked();
 
         }
-
         return super.onOptionsItemSelected(item);
     }
-
+/**
     public void iiif_view() {
         ImagePopup imagePopup = new ImagePopup(this);
 
@@ -431,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
+*/
 
     /**
      * Shows the system file selection dialog.
