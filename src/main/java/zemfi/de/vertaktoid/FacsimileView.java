@@ -56,6 +56,9 @@ import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Page;
+import zemfi.de.vertaktoid.model.Zone;
 
 /**
  * Contains the presentation and user interaction functions (click on icon). Directs the UI layouts.
@@ -110,7 +113,7 @@ public class FacsimileView extends CoordinatorLayout {
 
 
 
-    public enum Action {DRAW, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, IIIFZOOM, ADJUST_MOVEMENT;
+    public enum Action {DRAW, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, IIIF_ZOOM, ADJUST_MOVEMENT;
     }
 
     public Action nextAction = Action.DRAW;
@@ -334,6 +337,7 @@ public class FacsimileView extends CoordinatorLayout {
      */
     public void setFacsimile(Facsimile facsimile) {
         movementColors = new ArrayList<>();
+
         this.document = facsimile;
         pageNumber.set(0);
         currentMovementNumber = document.movements.size() - 1;
@@ -362,7 +366,9 @@ public class FacsimileView extends CoordinatorLayout {
         refresh();
     }
     public void iiif_view() throws JSONException {
-        resetState();
+        nextAction = Action.IIIF_ZOOM;
+        refresh();
+/*        resetState();
         final Dialog settingsDialog = new Dialog(getContext());
         Window window = settingsDialog.getWindow();
         WindowManager.LayoutParams wlp = window.getAttributes();
@@ -432,6 +438,7 @@ public class FacsimileView extends CoordinatorLayout {
 
             @Override
             public void onClick(View v) {
+
                 try {
 
                     File file = new File(String.valueOf(Environment.getExternalStoragePublicDirectory(stringUrlParser())), "iiif.json");
@@ -554,8 +561,7 @@ public class FacsimileView extends CoordinatorLayout {
         });
 
         settingsDialog.show();
-
-
+*/
 
     }
 
@@ -597,6 +603,7 @@ public class FacsimileView extends CoordinatorLayout {
      * Menu entry "erase all measures" clicked.
      */
     public void eraseAllClicked() {
+
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.context).create();
         alertDialog.setTitle("Alert");
         alertDialog.setMessage("Are you sure, you want to delete all measures from all pages?");
@@ -822,6 +829,7 @@ public class FacsimileView extends CoordinatorLayout {
      */
     void resetState() {
         nextAction = Action.DRAW;
+
         refresh();
 
     }

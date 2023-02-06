@@ -54,7 +54,8 @@ import zemfi.de.vertaktoid.mei.MEIHelper;
  */
 public class IiifManifest extends Activity {
 
-    public String url = "", ids;
+    public static String url = "";
+    public String ids;
     public String usrname, pss= "";
     private RequestQueue mQueue;
     public static String[] imgs;
@@ -70,6 +71,7 @@ public class IiifManifest extends Activity {
     public DownloadManager dm;
     public boolean canceled = false;
     public String usernamePasswordBase64 = "";
+    private DocumentFile dir;
 
 
     /**
@@ -117,6 +119,7 @@ public class IiifManifest extends Activity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void authenticationPopup() {
+
     /*
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.context);
         builder.setTitle("Please insert your username and password");
@@ -177,7 +180,7 @@ public class IiifManifest extends Activity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void jsonparser(String autherization) {
         if (autherization == null){
-
+            System.out.println("authentication is empty");
         }else  {
             setUsernamePasswordBase64(Base64.getEncoder().encodeToString(autherization.getBytes()));
         }
@@ -199,7 +202,6 @@ public class IiifManifest extends Activity {
                                 canvas = canv.getJSONArray("canvases");
 
                                 imgs = new String[canvas.length()];
-
                                 for (int i = 0; i < canvas.length(); i++) {
                                     img = canvas.getJSONObject(i);
                                     image = img.getJSONArray("images");
@@ -208,7 +210,6 @@ public class IiifManifest extends Activity {
                                     ids = resource.getString("@id");
                                     imgs[i] = ids;
                                     imageUrl.add(imgs[i]);
-
                                 }
 
 
@@ -248,8 +249,6 @@ public class IiifManifest extends Activity {
                             e.printStackTrace();
 
                         }
-
-
                     }
                 },
                 new Response.ErrorListener() {
@@ -257,10 +256,15 @@ public class IiifManifest extends Activity {
                     public void onErrorResponse(VolleyError volleyError) {
 
                         if(volleyError.toString().contains("Bad URL")){
-                            displayError();
+                            displayError("Bad URL");
+                        }
+                        if(volleyError.networkResponse == null){
+                            System.out.println("null response " + volleyError.getMessage());
+                            authenticationPopup();
                         }
                         else if(volleyError.networkResponse.statusCode == 401){
                             authenticationPopup();
+                            System.out.println("401 error");
                         }
                     }
                 })
@@ -277,7 +281,7 @@ public class IiifManifest extends Activity {
         };
 
         if (imgs == null) {
-            displayError();
+            displayError("No available image");
         }
 
         mQueue.add(request);
@@ -292,7 +296,7 @@ public class IiifManifest extends Activity {
      */
     public void chooseDownloadDirectory(int requestCode) throws IOException {
         MainActivity mainActivity = new MainActivity();
-        mainActivity.actionOpen(requestCode);
+        mainActivity.actionOpen(requestCode, this.dir);
         FacsimileView view = (FacsimileView) MainActivity.context.findViewById(R.id.facsimile_view);
         view.resetMenu();
     }
@@ -311,11 +315,11 @@ public class IiifManifest extends Activity {
      * Display error message for wrong url
      */
 
-    public void displayError() {
+    public void displayError(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.context);
         builder.setTitle("Error");
         // Set up the buttons
-        builder.setMessage("Wrong url input");
+        builder.setMessage(message);
         builder.show();
     }
 
@@ -326,7 +330,7 @@ public class IiifManifest extends Activity {
      */
 
     public void downloadImage(DocumentFile df) throws IOException, InterruptedException, JSONException {
-
+        this.dir = df;
         String directorypath = df.getUri().toString();
         String decodedurl = URLDecoder.decode(directorypath, "UTF-8");
         String trimedurl = decodedurl.replace(":", "/");
@@ -349,7 +353,7 @@ public class IiifManifest extends Activity {
 
         progressBarContent(imageUrl.size());
 
-        JSONArray jsonArray = new JSONArray();
+   /*     JSONArray jsonArray = new JSONArray();
         int count = 1;
         for(String url : imageUrl){
             JSONObject jsonObject = new JSONObject();
@@ -367,7 +371,7 @@ public class IiifManifest extends Activity {
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
         bufferedWriter.write(jsonStr);
         bufferedWriter.close();
-
+*/
         Button cancel = (Button) downloadProgressDialogue.findViewById(R.id.cancel);
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -396,8 +400,6 @@ public class IiifManifest extends Activity {
                     if(canceled) break;
 
                     try {
-
-
                         Uri downloadUri = Uri.parse(imageUrl.get(i));
                         DownloadManager.Request request = new DownloadManager.Request(downloadUri);
                         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
@@ -411,8 +413,8 @@ public class IiifManifest extends Activity {
                         if(canceled) break;
                         long downloadId = dm.enqueue(request);
                         downloadIds.add(0, downloadId);
-
                         getDownloadStatus(downloadId, imageUrl.size());
+
 
                     }catch (Exception e){
                         System.out.println("Failed with error " + e);
@@ -457,10 +459,13 @@ public class IiifManifest extends Activity {
 
     }
 
-    public void updateProgressBar(int totalImage){
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void updateProgressBar(int totalImage) throws IOException {
 
         progress++;
         if (progress == totalImage){
+            MainActivity mainActivity = new MainActivity();
+            mainActivity.actionOpen(3, this.dir);
             downloadProgressDialogue.dismiss();
             return;
         }
@@ -502,9 +507,14 @@ public class IiifManifest extends Activity {
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
                             timer.cancel();
                             runOnUiThread(new Runnable() {
+                                @RequiresApi(api = Build.VERSION_CODES.O)
                                 @Override
                                 public void run() {
-                                    updateProgressBar(totalImage);
+                                    try {
+                                        updateProgressBar(totalImage);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                             });
                         }else {

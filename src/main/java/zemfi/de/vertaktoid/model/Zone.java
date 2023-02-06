@@ -79,6 +79,7 @@ public class Zone implements Comparable<Zone>, Parcelable {
         vertices.add(new Point2D(boundLeft, boundBottom));
         vertices.add(new Point2D(boundRight, boundBottom));
         vertices.add(new Point2D(boundRight, boundTop));
+
     }
 
     public void convertToOrientedBox() {
@@ -107,6 +108,8 @@ public class Zone implements Comparable<Zone>, Parcelable {
 
         Point2D[] simplifiedVertices = simplify.simplify(verticesArray, 10f, true);
         vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices));
+        System.out.println("this are zone vertices " + vertices);
+
     }
 
     public double getBoundLeft() {

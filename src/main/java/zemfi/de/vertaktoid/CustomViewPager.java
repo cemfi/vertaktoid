@@ -20,10 +20,10 @@ public class CustomViewPager extends ViewPager {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        /* if(ev.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) {
+       if(ev.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) {
             return super.onInterceptTouchEvent(ev);
-        } */
-        return false;
+       }
+       return false;
     }
     public void recycle(){
         ((CustomPagerAdapter)getAdapter()).recycle();

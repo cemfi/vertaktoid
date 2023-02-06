@@ -19,7 +19,7 @@ public class Vertaktoid extends Application implements Serializable {
     public final static String APP_SUBFOLDER = "vertaktoid";
     // Default MEI name space.
     public final static String MEI_NS = "http://www.music-encoding.org/ns/mei";
-    public final static String VERTACTOID_VERSION = "Vertaktoid v2.0.2";
+    public final static String VERTACTOID_VERSION = "Vertaktoid v4.0.0";
     public final static String MEI_ZONE_ID_PREFIX = "zone_";
     public final static String MEI_MEASURE_ID_PREFIX = "measure_";
     public final static String MEI_MDIV_ID_PREFIX = "page_";

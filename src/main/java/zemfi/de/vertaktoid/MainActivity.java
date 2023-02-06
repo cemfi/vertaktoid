@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     IiifManifest iiifManifestObj = new IiifManifest() ;
     Menu mainMenu;
+    DocumentFile dirf;
 
     //autosave
     private final Handler tmpSaveHandler = new Handler();
@@ -117,6 +118,8 @@ public class MainActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void loadFacsimile(DocumentFile dir) {
+        facsimileView = (FacsimileView) MainActivity.context.findViewById(R.id.facsimile_view);
+
         // facsimile contains pages, movements, breaks
         Facsimile facsimile = new Facsimile();
 
@@ -124,8 +127,11 @@ public class MainActivity extends AppCompatActivity {
         prepareApplicationFiles(dir);
 
         facsimile.openDirectory(dir);
+        System.out.println("name of the folder " + facsimile.dir.getName());
 
         facsimileView.setFacsimile(facsimile);
+        viewPager = (CustomViewPager) MainActivity.context.findViewById(R.id.view_pager);
+
         viewPager.setAdapter(new CustomPagerAdapter(facsimileView));
         viewPager.clearOnPageChangeListeners();
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -165,10 +171,14 @@ public class MainActivity extends AppCompatActivity {
         }
         DocumentFile image404 = systemDir.findFile(Vertaktoid.NOT_FOUND_STUBIMG);
         if (image404 == null || !image404.exists()) {
-            Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.facsimile404);
+            if(this.context == null){
+                this.context = MainActivity.context;
+            }
+            Bitmap bm = BitmapFactory.decodeResource(MainActivity.context.getResources(), R.drawable.facsimile404);
+
             try {
                 image404 = systemDir.createFile("image/png", Vertaktoid.NOT_FOUND_STUBIMG);
-                ParcelFileDescriptor pdf = getContentResolver().openFileDescriptor(image404.getUri(), "w");
+                ParcelFileDescriptor pdf = MainActivity.context.getContentResolver().openFileDescriptor(image404.getUri(), "w");
                 FileOutputStream outStream = new FileOutputStream(pdf.getFileDescriptor());
                 bm.compress(Bitmap.CompressFormat.PNG, 100, outStream);
                 outStream.flush();
@@ -344,7 +354,7 @@ public class MainActivity extends AppCompatActivity {
                 view.brushClicked();
                 return true;
             case R.id.action_open:
-                actionOpen(0);
+                actionOpen(0, this.dir);
                 view.resetMenu();
                 break;
             case R.id.action_orthogonal_cut:
@@ -401,13 +411,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_save:
                 item.setIcon(R.drawable.save_off);
                 saveclicked();
-                break;
-            case R.id.iiif_view:
-                try {
-                    view.iiif_view();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                
         }
 
         return super.onOptionsItemSelected(item);
@@ -437,10 +441,15 @@ public class MainActivity extends AppCompatActivity {
      * Shows the system file selection dialog.
      */
 
-    public void actionOpen(int requestCode) {
-
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void actionOpen(int requestCode, DocumentFile dirf) {
         Activity activity = (Activity) context;
         Intent intent = new Intent((Intent.ACTION_OPEN_DOCUMENT_TREE));
+        this.dirf = dirf;
+        if(requestCode == 3){
+            loadFacsimile(dirf);
+            return;
+        }
 
 
         try {
@@ -470,7 +479,8 @@ public class MainActivity extends AppCompatActivity {
                         loadFacsimile(dir);
                     }
 
-                } else {
+                }
+                else{
                     status.setDate(new Date());
                     status.setAction(StatusStrings.ActionId.LOADED);
                     status.setStatus(StatusStrings.StatusId.FAIL);

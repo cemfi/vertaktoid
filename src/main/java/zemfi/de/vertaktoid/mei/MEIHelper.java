@@ -9,6 +9,9 @@ import android.util.Log;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +31,7 @@ import nu.xom.Elements;
 import nu.xom.ParsingException;
 import nu.xom.Serializer;
 import nu.xom.ValidityException;
+import zemfi.de.vertaktoid.IiifManifest;
 import zemfi.de.vertaktoid.MainActivity;
 import zemfi.de.vertaktoid.Vertaktoid;
 import zemfi.de.vertaktoid.helpers.Point2D;
@@ -44,7 +48,7 @@ public class MEIHelper {
 
     public static Document meiDocument;
     public static String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-
+    public static ArrayList<String> iiifimg = new ArrayList<String>();
     public static void clearDocument() {
         meiDocument = new Document(new Element("mei", Vertaktoid.MEI_NS));
     }
@@ -74,6 +78,7 @@ public class MEIHelper {
      * @return true if no exceptions.
      */
     public static boolean writeMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
+
         boolean returnValue = true;
         Dialog downloadProgressDialogue = null;
         ProgressBar text;
@@ -119,7 +124,7 @@ public class MEIHelper {
             name.insertChild(VERTACTOID_VERSION,0);
             application.appendChild(name);
             application.appendChild(ptr);
-            a1 = new Attribute("target","https://github.com/cemfi/vertaktoid/releases/tag/v2.0.2");
+            a1 = new Attribute("target","hhttps://github.com/cemfi/vertaktoid/releases/tag/v4.0.0");
             ptr.addAttribute(a1);
         }
         Elements musics = meiElement.getChildElements("music", Vertaktoid.MEI_NS);
@@ -139,6 +144,9 @@ public class MEIHelper {
         } else {
             facsimile = facsimiles.get(0);
         }
+        Element source;
+
+
 
         Elements bodies = music.getChildElements("body", Vertaktoid.MEI_NS);
         Element body;
@@ -182,6 +190,27 @@ public class MEIHelper {
             if(graphic == null) {
                 graphic = new Element("graphic", Vertaktoid.MEI_NS);
                 surface.appendChild(graphic);
+            }
+            Elements iiifimages = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
+            Element iiifimage = findElementByUiid(iiifimages, page.graphicUuid);
+            if(IiifManifest.imgs != null  && iiifimage == null ){
+                iiifimage = new Element("graphic", Vertaktoid.MEI_NS);
+                surface.appendChild(iiifimage);
+
+                a = new Attribute("id", page.graphicUuid);
+                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
+                graphic.addAttribute(a);
+                a = new Attribute("target", page.getImageFileName());
+                //a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
+                graphic.addAttribute(a);
+                a = new Attribute("type", "facsimile");
+                graphic.addAttribute(a);
+                a = new Attribute("width", "" + page.imageWidth);
+                graphic.addAttribute(a);
+                a = new Attribute("height", "" + page.imageHeight);
+                graphic.addAttribute(a);
+                a = new Attribute("base", "" + IiifManifest.imgs[i]);
+                graphic.addAttribute(a);
             }
             a = new Attribute("id", page.graphicUuid);
             a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
@@ -383,6 +412,7 @@ public class MEIHelper {
      * @return true if properly readed.
      */
     public static boolean readMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
+        iiifimg.clear();
         Attribute a;
         if(!meiFile.exists()) {
             return false;
@@ -493,6 +523,10 @@ public class MEIHelper {
             Element surface = surfaces.get(i);
             Elements graphics = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
             Element graphic = graphics.get(0);
+            if(graphics.size() > 1){
+                Element graphic2 = graphics.get(1);
+                iiifimg.add(graphic2.getAttributeValue("target"));
+            }
             final String filename = graphic.getAttributeValue("target");
             Page page= new Page(dir,filename, i+1);
             page.imageWidth = Integer.parseInt(graphic.getAttributeValue("width"));
@@ -590,14 +624,14 @@ public class MEIHelper {
         return true;
     }
 
-    private static long toSourceCoords(double value, int inSampleSize, long max) {
+    public static long toSourceCoords(double value, int inSampleSize, long max) {
         long result = Math.round(value * inSampleSize);
         if(result <= 0) return 0;
         if(result >= max) return max;
         return result;
     }
 
-    private static long fromSourceCoords(double value, int inSampleSize, long max) {
+    public static long fromSourceCoords(double value, int inSampleSize, long max) {
         long result = Math.round(value / inSampleSize);
         if(result <= 0) return 0;
         if(result >= max) return max;
