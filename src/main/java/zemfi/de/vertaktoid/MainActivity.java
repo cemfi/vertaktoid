@@ -1,15 +1,24 @@
 package zemfi.de.vertaktoid;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.support.v4.view.ViewPager;
@@ -24,6 +33,7 @@ import com.ceylonlabs.imageviewpopup.ImagePopup;
 
 import org.json.JSONException;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -380,6 +390,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_undo:
                 view.undoClicked();
                 break;
+            case R.id.action_pdf:
+                actionOpen(4, this.dir);
+                break;
             case R.id.action_redo:
                 view.redoClicked();
                 break;
@@ -441,18 +454,39 @@ public class MainActivity extends AppCompatActivity {
         Activity activity = (Activity) context;
         Intent intent = new Intent((Intent.ACTION_OPEN_DOCUMENT_TREE));
         this.dirf = dirf;
+        if(requestCode == 0){
+            try {
+                activity.startActivityForResult(Intent.createChooser(intent,"choose pdf file"), requestCode);
+            } catch (android.content.ActivityNotFoundException ex) {
+                // Potentially direct the user to the Market with a Dialog
+                Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+            }
+        }
         if(requestCode == 3){
             loadFacsimile(dirf);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            try {
+                activity.startActivityForResult(Intent.createChooser(intent,"choose pdf file"), requestCode);
+            } catch (android.content.ActivityNotFoundException ex) {
+                // Potentially direct the user to the Market with a Dialog
+                Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+            }
             return;
         }
+        if(requestCode == 4){
+            Intent intent2 = new Intent(Intent.ACTION_GET_CONTENT);
+            intent2.setType("application/pdf");
+            try {
+                activity.startActivityForResult(Intent.createChooser(intent2,"choose pdf file"), requestCode);
 
-
-        try {
-            activity.startActivityForResult(intent, requestCode);
-        } catch (android.content.ActivityNotFoundException ex) {
-            // Potentially direct the user to the Market with a Dialog
-            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+            } catch (android.content.ActivityNotFoundException ex) {
+                // Potentially direct the user to the Market with a Dialog
+                Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+            }
         }
+
+
+
     }
 
     /**
@@ -474,8 +508,7 @@ public class MainActivity extends AppCompatActivity {
                         loadFacsimile(dir);
                     }
 
-                }
-                else{
+                } else {
                     status.setDate(new Date());
                     status.setAction(StatusStrings.ActionId.LOADED);
                     status.setStatus(StatusStrings.StatusId.FAIL);
@@ -492,7 +525,91 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 }
+            case 4:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    ContentResolver contentResolver = context.getContentResolver();
+                    DocumentFile documentFile = DocumentFile.fromSingleUri(context, uri);
+                    String path = "/storage/emulated/0/" + documentFile.getUri().getPath().replace("/document/primary:", "");
+                    File file = new File(path);
+                    String filePathWithoutFileName = file.getParent();
+
+                    try {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setMessage("Are you sure you want to select this file?")
+                                .setCancelable(false)
+                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        // User confirmed selection, do something with the selected file
+                                        try {
+                                            facsimileView.openpdfClicked(file, filePathWithoutFileName);
+                                            loadFacsimile(DocumentFile.fromFile(new File(file.getParent())));
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                    }
+                                })
+                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        // User cancelled selection, remove the alert and go back to file selection
+                                        dialog.dismiss();
+                                    }
+                                });
+                        AlertDialog alert = builder.create();
+                        alert.show();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+
         }
         super.onActivityResult(requestCode, resultCode, data);
+
+    }
+
+    public static String getPath(Context context, Uri uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            return getPathFromUriAboveKitkat(context, uri);
+        } else {
+            return getPathFromUriBelowKitkat(context, uri);
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private static String getPathFromUriAboveKitkat(Context context, Uri uri) {
+        String filePath = "";
+        String wholeID = DocumentsContract.getDocumentId(Uri.parse("content://com.android.externalstorage.documents/tree/primary/DCIM"));
+
+        String id = wholeID.split(":")[1];
+        String[] column = {MediaStore.Images.Media.DATA};
+        String sel = MediaStore.Images.Media._ID + "=?";
+
+        Cursor cursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                column, sel, new String[]{id}, null);
+
+        int columnIndex = cursor.getColumnIndex(column[0]);
+
+        if (cursor.moveToFirst()) {
+            filePath = cursor.getString(columnIndex);
+        }
+        cursor.close();
+        return filePath;
+    }
+
+    private static String getPathFromUriBelowKitkat(Context context, Uri uri) {
+        String filePath = "";
+        String[] projection = {MediaStore.Images.Media.DATA};
+        Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
+
+        if (cursor != null) {
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            filePath = cursor.getString(column_index);
+        }
+        cursor.close();
+        return filePath;
     }
 }

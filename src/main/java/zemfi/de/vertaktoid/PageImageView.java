@@ -26,9 +26,12 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+
 import com.ceylonlabs.imageviewpopup.ImagePopup;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.goebl.simplify.PointExtractor;
+import com.goebl.simplify.Simplify;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -44,13 +47,16 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 
 import kotlin.collections.IntIterator;
 import zemfi.de.vertaktoid.helpers.Geometry;
 import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.Point2D;
+import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
@@ -86,6 +92,7 @@ public class PageImageView extends SubsamplingScaleImageView {
     private final float l = 30f;
     private final float a = 1f;
     private final float brushSize = 5;
+    private List<Point2D> vertices;
     Path grayPath;
     Path polygonHoverPath;
     Point2D firstDrawPoint;
@@ -749,6 +756,17 @@ public class PageImageView extends SubsamplingScaleImageView {
                             // continue and handle the ActionId as a click in brush state
                         }
                         break;
+                    case DRAW2:
+                        if (facsimileView.isFirstPoint) {
+                            // add to current Path
+                            pointPath = new ArrayList<>();
+                            pointPath.add(touchBitmapPosition);
+                            firstDrawPoint = touchBitmapPosition;
+                            facsimileView.isFirstPoint = false;
+                            lastPolygonPoint = touchBitmapPosition;
+                            invalidate();
+                        }
+                        break;
                     case DRAW:
                         if (facsimileView.isFirstPoint) {
                             // add to current Path
@@ -790,6 +808,12 @@ public class PageImageView extends SubsamplingScaleImageView {
                             pointPath.add(touchBitmapPosition);
                             lastPolygonPoint = touchBitmapPosition;
                         }
+                    case DRAW2:
+                        if (!facsimileView.isFirstPoint) {
+                            pointPath.add(touchBitmapPosition);
+                            lastPolygonPoint = touchBitmapPosition;
+                        }
+                        break;
                     case DRAW:
                         if (!facsimileView.isFirstPoint) {
                             pointPath.add(touchBitmapPosition);
@@ -950,17 +974,119 @@ public class PageImageView extends SubsamplingScaleImageView {
 
                         }
                             break;
-                    case DRAW:
+                    case DRAW2:
                         if(lastPolygonPoint == null) {
                             break;
                         }
                         pointPath.add(touchBitmapPosition);
                         lastPolygonPoint = new Point2D(touchX, touchY);
-                        PointF firstPointInTouch = sourceToViewCoord(firstDrawPoint.getPointF()); // due to scrolling this may be another position than initially stored in firstDrawPoint
-                        double trackLength = 0;
+                        PointF firstPointInTouch3 = sourceToViewCoord(firstDrawPoint.getPointF()); // due to scrolling this may be another position than initially stored in firstDrawPoint
+                        double trackLength3 = 0;
                         for(int i = 1; i < pointPath.size(); i++) {
-                            trackLength += pointPath.get(i-1).distanceTo(pointPath.get(i));
+                            trackLength3 += pointPath.get(i-1).distanceTo(pointPath.get(i));
                         }
+                        Measure newMeasure3 = new Measure();
+                        trackLength3 += pointPath.get(pointPath.size()-1).distanceTo(pointPath.get(0));
+                        double distanceToFirstPoint3 = Math.sqrt((double) (touchX - firstPointInTouch3.x) * (touchX - firstPointInTouch3.x) + (touchY - firstPointInTouch3.y) * (touchY - firstPointInTouch3.y));
+                        float boundLeft = Float.MAX_VALUE;
+                        float boundRight = Float.MIN_VALUE;
+                        float boundTop = Float.MAX_VALUE;
+                        float boundBottom = Float.MIN_VALUE;
+                        vertices = pointPath;
+                        for(Point2D vertex : vertices) {
+                            if(boundLeft > vertex.x()) {
+                                boundLeft = (float) vertex.x();
+                            }
+                            if(boundRight < vertex.x()) {
+                                boundRight = (float) vertex.x();
+                            }
+                            if(boundTop > vertex.y()) {
+                                boundTop = (float) vertex.y();
+                            }
+                            if(boundBottom < vertex.y()) {
+                                boundBottom = (float) vertex.y();
+                            }
+                        }
+                        if (distanceToFirstPoint3 < 20.0f && trackLength3 > 20f) {
+                            pointPath.remove(pointPath.size() - 1);
+                            switch (facsimile.nextAnnotationsType) {
+                                case ORTHOGONAL_BOX:
+                                    vertices.clear();
+                                    vertices.add(new Point2D(boundLeft, boundTop));
+                                    vertices.add(new Point2D(boundLeft, boundBottom));
+                                    vertices.add(new Point2D(boundRight, boundBottom));
+                                    vertices.add(new Point2D(boundRight, boundTop));
+                                    break;
+                                case ORIENTED_BOX:
+                                    // uses rotating calipers
+                                    Point2D[] verticesArray = new Point2D[vertices.size()];
+                                    for(int i = 0; i < vertices.size(); i++) {
+                                        verticesArray[i] = vertices.get(i);
+                                    }
+                                    Simplify<Point2D> simplify = new Simplify<Point2D>(new Point2D[0],
+                                            new PointExtractor<Point2D>() {
+                                                @Override
+                                                public double getX(Point2D point) {
+                                                    return point.x();
+                                                }
+
+                                                @Override
+                                                public double getY(Point2D point) {
+                                                    return point.y();
+                                                }
+                                            });
+
+                                    Point2D[] simplifiedVertices = simplify.simplify(verticesArray, 10f, true);
+                                    vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices));
+                                    Point2D[] minBoundingBox = RotatingCalipers.getMinimumBoundingRectangle(vertices);
+                                    vertices = new ArrayList<Point2D>(Arrays.asList(minBoundingBox));
+                                    break;
+                                case POLYGON:
+                                    Point2D[] verticesArray2 = new Point2D[vertices.size()];
+                                    for(int i = 0; i < vertices.size(); i++) {
+                                        verticesArray2[i] = vertices.get(i);
+                                    }
+                                    Simplify<Point2D> simplify2 = new Simplify<Point2D>(new Point2D[0],
+                                            new PointExtractor<Point2D>() {
+                                                @Override
+                                                public double getX(Point2D point) {
+                                                    return point.x();
+                                                }
+
+                                                @Override
+                                                public double getY(Point2D point) {
+                                                    return point.y();
+                                                }
+                                            });
+
+                                    Point2D[] simplifiedVertices2 = simplify2.simplify(verticesArray2, 10f, true);
+                                    vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices2));
+                            }
+                            if(newMeasure3.zone.getBoundRight() - newMeasure3.zone.getBoundLeft() > 5 &&
+                                    newMeasure3.zone.getBoundBottom() - newMeasure3.zone.getBoundTop() > 5) {
+                                if (facsimileView.currentMovementNumber > facsimile.movements.size() - 1) {
+                                    facsimileView.currentMovementNumber = facsimile.movements.size() - 1;
+                                }
+                                facsimileView.commandManager.processCreateMeasureCommand(newMeasure3, facsimile, page);
+                                invalidate();
+                            }
+                            pointPath = new ArrayList<>();
+                            System.out.println("this is point of path " + pointPath);
+                            facsimileView.isFirstPoint = true;
+                            invalidate();
+                        }
+                        break;
+                    case DRAW:
+                        if(lastPolygonPoint == null) {
+                            break;
+                        }
+                        pointPath.add(touchBitmapPosition);
+                            lastPolygonPoint = new Point2D(touchX, touchY);
+                            PointF firstPointInTouch = sourceToViewCoord(firstDrawPoint.getPointF()); // due to scrolling this may be another position than initially stored in firstDrawPoint
+                            double trackLength = 0;
+                            for(int i = 1; i < pointPath.size(); i++) {
+                                trackLength += pointPath.get(i-1).distanceTo(pointPath.get(i));
+                            }
                         trackLength += pointPath.get(pointPath.size()-1).distanceTo(pointPath.get(0));
                         double distanceToFirstPoint = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
                         if (distanceToFirstPoint < 20.0f && trackLength > 20f) {
@@ -994,6 +1120,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                             facsimileView.isFirstPoint = true;
                             invalidate();
                         }
+
                 }
                 selectedMeasures.clear();
                 break;

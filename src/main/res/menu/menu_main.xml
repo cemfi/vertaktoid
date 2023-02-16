@@ -52,7 +52,11 @@
             android:title="Redo"
             android:icon="@drawable/redo_off"
             app:showAsAction="always" />
-
+        <item
+            android:id="@+id/action_pdf"
+            android:title="Open"
+            android:icon="@drawable/pdf"
+            app:showAsAction="always" />
         <item
             android:id="@+id/action_open"
             android:title="Open"
