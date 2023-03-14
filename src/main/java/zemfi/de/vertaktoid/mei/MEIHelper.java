@@ -80,10 +80,6 @@ public class MEIHelper {
     public static boolean writeMEI(DocumentFile dir, DocumentFile meiFile, Facsimile document) {
 
         boolean returnValue = true;
-        Dialog downloadProgressDialogue = null;
-        ProgressBar text;
-        TextView text2;
-        final Boolean[] canceled = new Boolean[1];
 
         //save in measures objects if last at system or page
         document.calculateBreaks();
@@ -282,6 +278,7 @@ public class MEIHelper {
                 mdiv = new Element("mdiv", Vertaktoid.MEI_NS);
                 body.appendChild(mdiv);
             }
+
             a = new Attribute("id", movement.mdivUuid);
             a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
             mdiv.addAttribute(a);
@@ -333,6 +330,7 @@ public class MEIHelper {
                 //        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
 
                 // calculation of a unique and sequent number n
+
                 a = new Attribute("n", "" + (i + 1));
                 measureElem.addAttribute(a);
                 // label will later be read and used to calculate the sequenceNumber
@@ -344,6 +342,11 @@ public class MEIHelper {
                 measureElem.addAttribute(a);
                 a = new Attribute("facs", "#" + measure.zone.zoneUuid);
                 measureElem.addAttribute(a);
+
+                if(measure.metcon == false){
+                    a = new Attribute("mercon", "false");
+                    measureElem.addAttribute(a);
+                }
             }
             section.removeChildren();
 

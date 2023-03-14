@@ -58,7 +58,6 @@ import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.Point2D;
 import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 import zemfi.de.vertaktoid.mei.MEIHelper;
-import zemfi.de.vertaktoid.model.Annotation;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
@@ -997,13 +996,10 @@ public class PageImageView extends SubsamplingScaleImageView {
                         trackLength3 += pointPath.get(pointPath.size() - 1).distanceTo(pointPath.get(0));
                         double distanceToFirstPoint3 = Math.sqrt((double) (touchX - firstPointInTouch3.x) * (touchX - firstPointInTouch3.x) + (touchY - firstPointInTouch3.y) * (touchY - firstPointInTouch3.y));
                         if (distanceToFirstPoint3 < 20.0f && trackLength3 > 20f) {
-                            System.out.println("thhe drawing is done here");
                             pointPath.remove(pointPath.size() - 1);
-                            facsimileView.commandManager.processCreateMeasureCommand(facsimile, page);
                             pointPath = new ArrayList<>();
                             facsimileView.isFirstPoint = true;
                             invalidate();
-
 
                         }
 
