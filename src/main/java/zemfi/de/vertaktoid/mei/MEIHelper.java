@@ -512,6 +512,11 @@ public class MEIHelper {
                         a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
                         element.addAttribute(a);
                     }
+                    a = element.getAttribute("mercon");
+                    if(a != null) {
+                           measure.metcon = false;
+                        }
+
                     measure.measureUuid = element.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
                     measure.movement = movement;
                     movement.measures.add(measure);
