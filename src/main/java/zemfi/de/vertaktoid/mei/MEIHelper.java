@@ -351,12 +351,13 @@ public class MEIHelper {
             section.removeChildren();
 
             Collections.sort(corrMeasureElems, MeasureElementPair.MEASURE_ELEMENT_PAIR_COMPARATOR);
-
+            Measure measure;
             for(int i = 0; i < corrMeasureElems.size(); i++) {
                 Element measureElem = corrMeasureElems.get(i).getElement();
-                Measure measure = corrMeasureElems.get(i).getMeasure();
+                measure = corrMeasureElems.get(i).getMeasure();
                 section.appendChild(measureElem);
                 if(measure.lastAtPage) {
+
                     Element pb = new Element("pb", Vertaktoid.MEI_NS);
                     section.insertChild(pb, section.indexOf(measureElem) + 1);
                     Element sb = new Element("sb", Vertaktoid.MEI_NS);
@@ -367,9 +368,7 @@ public class MEIHelper {
                     section.insertChild(sb, section.indexOf(measureElem) + 1);
                 }
             }
-            // add pb at the beginning
-            Element pb = new Element("pb", Vertaktoid.MEI_NS);
-            section.insertChild(pb, 0);
+
         }
 
         for(int i = 0; i < mdivs.size(); i++) {
