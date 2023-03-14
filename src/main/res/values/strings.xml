@@ -38,6 +38,8 @@
     <string name="dialog_settings_mei_canonical">orthogonal box</string>
     <string name="dialog_settings_mei_extended">oriented box</string>
     <string name="dialog_settings_mei_polygonal">polygon</string>
+    <string name="upbeat">Upbeat</string>
+    <string name="radio_upbeat">Radio upbit</string>
     <string name="internet_connection_error">Please connect to the internet</string>
     <string name="access_denied_error">Please allow access your media files to Veraktoid</string>
 

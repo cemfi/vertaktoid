@@ -31,6 +31,7 @@ public class Measure implements Comparable<Measure>, Parcelable {
     public Movement movement;
     // Reference to the parent page.
     public Page page;
+    public boolean metcon;
 
     public boolean lastAtSystem = false;
     public boolean lastAtPage = false;
@@ -42,13 +43,16 @@ public class Measure implements Comparable<Measure>, Parcelable {
         zone = new Zone();
         zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
+        this.metcon = true;
         }
+
     public Measure(int size) {
 
         zone = new Zone();
         sequenceNumber = size;
         zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
+        this.metcon = true;
     }
 
 
@@ -60,6 +64,7 @@ public class Measure implements Comparable<Measure>, Parcelable {
         measureUuid = in.readString();
         lastAtSystem = in.readByte() != 0;
         lastAtPage = in.readByte() != 0;
+        this.metcon = true;
     }
 
 
@@ -74,6 +79,13 @@ public class Measure implements Comparable<Measure>, Parcelable {
             return new Measure[size];
         }
     };
+
+    public Measure(boolean metcon) {
+        zone = new Zone();
+        zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
+        measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
+        this.metcon = metcon;
+    }
 
     /**
      * Change the parent movement to another. Removes the measure from old movement and adds it to new.

@@ -58,6 +58,7 @@ import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.Point2D;
 import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 import zemfi.de.vertaktoid.mei.MEIHelper;
+import zemfi.de.vertaktoid.model.Annotation;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
@@ -474,6 +475,11 @@ public class PageImageView extends SubsamplingScaleImageView {
             String measureLabel = measure.manualSequenceNumber != null ?
                     "" + measure.manualSequenceNumber : "" + measure.sequenceNumber;
             String movementLabel =  measure.movement.getName() +  " >>";
+            String metconLabel = "";
+            if(measure.metcon == false){
+                metconLabel =  "upbeat";
+
+            }
 
             largeTextPaint.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
             smallTextPaint.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
@@ -490,6 +496,10 @@ public class PageImageView extends SubsamplingScaleImageView {
             canvas.drawText(measureLabel, centroidF.x - measureNameRect.centerX(), centroidF.y, largeTextPaint);
             if(measure.movement.measures.indexOf(measure) == 0) {
                 canvas.drawText(movementLabel, centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallTextPaint);
+            }
+            if(measure.metcon == false){
+                canvas.drawText("upbeat", centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallTextPaint);
+
             }
         } // end for (foreach measure)
 
@@ -786,7 +796,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                 trackSegment[1] = touchBitmapPosition;
                 List<Measure> underlyingMeasures = page.getMeasuresAtSegment(trackSegment);
                 for (Measure m : underlyingMeasures) {
-                    if(!selectedMeasures.contains(m)) {
+                    if (!selectedMeasures.contains(m)) {
                         selectedMeasures.add(m);
                     }
                 }
@@ -827,7 +837,7 @@ public class PageImageView extends SubsamplingScaleImageView {
             case MotionEvent.ACTION_UP:
                 switch (facsimileView.nextAction) {
                     case ORTHOGONAL_CUT:
-                        if(firstCutPoint != null && lastCutPoint != null) {
+                        if (firstCutPoint != null && lastCutPoint != null) {
                             if (firstCutPoint.distanceTo(touchBitmapPosition) >= Vertaktoid.MIN_GESTURE_LENGTH) {
                                 cutMeasures(selectedMeasures, new Point2D[]{firstCutPoint, lastCutPoint});
                                 firstCutPoint = null;
@@ -837,7 +847,7 @@ public class PageImageView extends SubsamplingScaleImageView {
 
                         break;
                     case PRECISE_CUT:
-                        if(firstCutPoint != null && lastCutPoint != null) {
+                        if (firstCutPoint != null && lastCutPoint != null) {
                             if (firstCutPoint.distanceTo(touchBitmapPosition) >= Vertaktoid.MIN_GESTURE_LENGTH) {
                                 cutMeasures(selectedMeasures, new Point2D[]{firstGesturePoint, touchBitmapPosition});
                                 firstCutPoint = null;
@@ -847,7 +857,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                         break;
                     case ERASE:
                         eraseMeasures(selectedMeasures);
-                        if(facsimileView.currentMovementNumber >= facsimile.movements.size()) {
+                        if (facsimileView.currentMovementNumber >= facsimile.movements.size()) {
                             facsimileView.currentMovementNumber = facsimile.movements.get(facsimile.movements.size() - 1).number;
                         }
                         invalidate();
@@ -865,17 +875,17 @@ public class PageImageView extends SubsamplingScaleImageView {
                         }
                         break;
                     case IIIF_ZOOM:
-                        if(lastPolygonPoint == null) {
+                        if (lastPolygonPoint == null) {
                             break;
                         }
                         pointPath.add(touchBitmapPosition);
                         lastPolygonPoint = new Point2D(touchX, touchY);
                         PointF firstPointInTouch2 = sourceToViewCoord(firstDrawPoint.getPointF()); // due to scrolling this may be another position than initially stored in firstDrawPoint
                         double trackLength2 = 0;
-                        for(int i = 1; i < pointPath.size(); i++) {
-                            trackLength2 += pointPath.get(i-1).distanceTo(pointPath.get(i));
+                        for (int i = 1; i < pointPath.size(); i++) {
+                            trackLength2 += pointPath.get(i - 1).distanceTo(pointPath.get(i));
                         }
-                        trackLength2 += pointPath.get(pointPath.size()-1).distanceTo(pointPath.get(0));
+                        trackLength2 += pointPath.get(pointPath.size() - 1).distanceTo(pointPath.get(0));
                         double distanceToFirstPoint2 = Math.sqrt((double) (touchX - firstPointInTouch2.x) * (touchX - firstPointInTouch2.x) + (touchY - firstPointInTouch2.y) * (touchY - firstPointInTouch2.y));
                         if (distanceToFirstPoint2 < 20.0f && trackLength2 > 20f) {
                             pointPath.remove(pointPath.size() - 1);
@@ -897,41 +907,41 @@ public class PageImageView extends SubsamplingScaleImageView {
                                     break;
                             }
                             System.out.println("LIST OF IMAGE " + MEIHelper.iiifimg);
-                            PointF topLeft = sourceToViewCoord((float)newMeasure.zone.getBoundLeft(), (float) newMeasure.zone.getBoundTop());
+                            PointF topLeft = sourceToViewCoord((float) newMeasure.zone.getBoundLeft(), (float) newMeasure.zone.getBoundTop());
                             PointF bottomRight = sourceToViewCoord((float) newMeasure.zone.getBoundRight(), (float) newMeasure.zone.getBoundBottom());
                             System.out.println("left " + topLeft.x);
                             System.out.println("right " + bottomRight.x);
                             System.out.println("top " + topLeft.y);
                             System.out.println("bottom " + bottomRight.y);
-                            int pageNumber  = page.number;
+                            int pageNumber = page.number;
                             int index = pageNumber - 1;
                             System.out.println("index is " + index);
-                                System.out.println("CURRENT URL  " + MEIHelper.iiifimg.get(index));
-                                System.out.println("CURRENT PAGE  " + Integer.toString(page.number));
-                                currentPageUrlId = MEIHelper.iiifimg.get(index);
-                                String[] originalurl = new String[currentPageUrlId.split("/").length];
-                                double left = newMeasure.zone.getBoundLeft();
-                                double right =  newMeasure.zone.getBoundRight();
-                                double top =    newMeasure.zone.getBoundTop();
-                                double bottom =  newMeasure.zone.getBoundBottom();
+                            System.out.println("CURRENT URL  " + MEIHelper.iiifimg.get(index));
+                            System.out.println("CURRENT PAGE  " + Integer.toString(page.number));
+                            currentPageUrlId = MEIHelper.iiifimg.get(index);
+                            String[] originalurl = new String[currentPageUrlId.split("/").length];
+                            double left = newMeasure.zone.getBoundLeft();
+                            double right = newMeasure.zone.getBoundRight();
+                            double top = newMeasure.zone.getBoundTop();
+                            double bottom = newMeasure.zone.getBoundBottom();
 
-                                double width = Math.abs(left - right);
-                                double height = Math.abs(bottom - top);
-                                System.out.println(" image height " + page.imageHeight + " image width" + page.imageWidth + " buttom " + bottom + " top" + top + " left " + left + " right " + right);
-                                newMeasure.zone.getBoundTop();
-                                String region = left + "," + top + ","  + width  + "," + height ;
-                                originalurl = currentPageUrlId.toString().split("/");
-                                originalurl[originalurl.length - 4] = region;
-                                String stringurl = "";
-                                for (String string : originalurl) {
-                                    stringurl = stringurl + "/" + string;
-                                }
-                                String newurl;
-                                 newurl = stringurl.substring(1);
+                            double width = Math.abs(left - right);
+                            double height = Math.abs(bottom - top);
+                            System.out.println(" image height " + page.imageHeight + " image width" + page.imageWidth + " buttom " + bottom + " top" + top + " left " + left + " right " + right);
+                            newMeasure.zone.getBoundTop();
+                            String region = left + "," + top + "," + width + "," + height;
+                            originalurl = currentPageUrlId.toString().split("/");
+                            originalurl[originalurl.length - 4] = region;
+                            String stringurl = "";
+                            for (String string : originalurl) {
+                                stringurl = stringurl + "/" + string;
+                            }
+                            String newurl;
+                            newurl = stringurl.substring(1);
                             Thread gfgThread = new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    try  {
+                                    try {
                                         try {
                                             HttpURLConnection conn = (HttpURLConnection) (new URL(newurl))
                                                     .openConnection();
@@ -939,10 +949,9 @@ public class PageImageView extends SubsamplingScaleImageView {
                                             conn.connect();
                                             status = conn.getResponseCode();
                                             System.out.println("stats");
-                                            if(status == 404)
-                                            {
+                                            if (status == 404) {
                                                 Handler uiHandler = new Handler(Looper.getMainLooper());
-                                                uiHandler.post(new Runnable(){
+                                                uiHandler.post(new Runnable() {
                                                     @Override
                                                     public void run() {
                                                         IiifManifest iiifmanifest = new IiifManifest();
@@ -950,7 +959,7 @@ public class PageImageView extends SubsamplingScaleImageView {
                                                     }
                                                 });
 
-                                            }else{
+                                            } else {
                                                 System.out.println(newurl);
                                                 displaImage(newurl);
                                             }
@@ -968,118 +977,43 @@ public class PageImageView extends SubsamplingScaleImageView {
                             gfgThread.start();
 
 
-                                pointPath = new ArrayList<>();
-                                facsimileView.isFirstPoint = true;
-                                invalidate();
+                            pointPath = new ArrayList<>();
+                            facsimileView.isFirstPoint = true;
+                            invalidate();
 
                         }
-                            break;
+                        break;
                     case DRAW2:
-                        if(lastPolygonPoint == null) {
+                        if (lastPolygonPoint == null) {
                             break;
                         }
                         pointPath.add(touchBitmapPosition);
                         lastPolygonPoint = new Point2D(touchX, touchY);
                         PointF firstPointInTouch3 = sourceToViewCoord(firstDrawPoint.getPointF()); // due to scrolling this may be another position than initially stored in firstDrawPoint
                         double trackLength3 = 0;
-                        for(int i = 1; i < pointPath.size(); i++) {
-                            trackLength3 += pointPath.get(i-1).distanceTo(pointPath.get(i));
+                        for (int i = 1; i < pointPath.size(); i++) {
+                            trackLength3 += pointPath.get(i - 1).distanceTo(pointPath.get(i));
                         }
-                        Measure newMeasure3 = new Measure();
-                        trackLength3 += pointPath.get(pointPath.size()-1).distanceTo(pointPath.get(0));
+                        trackLength3 += pointPath.get(pointPath.size() - 1).distanceTo(pointPath.get(0));
                         double distanceToFirstPoint3 = Math.sqrt((double) (touchX - firstPointInTouch3.x) * (touchX - firstPointInTouch3.x) + (touchY - firstPointInTouch3.y) * (touchY - firstPointInTouch3.y));
-                        float boundLeft = Float.MAX_VALUE;
-                        float boundRight = Float.MIN_VALUE;
-                        float boundTop = Float.MAX_VALUE;
-                        float boundBottom = Float.MIN_VALUE;
-                        vertices = pointPath;
-                        for(Point2D vertex : vertices) {
-                            if(boundLeft > vertex.x()) {
-                                boundLeft = (float) vertex.x();
-                            }
-                            if(boundRight < vertex.x()) {
-                                boundRight = (float) vertex.x();
-                            }
-                            if(boundTop > vertex.y()) {
-                                boundTop = (float) vertex.y();
-                            }
-                            if(boundBottom < vertex.y()) {
-                                boundBottom = (float) vertex.y();
-                            }
-                        }
                         if (distanceToFirstPoint3 < 20.0f && trackLength3 > 20f) {
+                            System.out.println("thhe drawing is done here");
                             pointPath.remove(pointPath.size() - 1);
-                            switch (facsimile.nextAnnotationsType) {
-                                case ORTHOGONAL_BOX:
-                                    vertices.clear();
-                                    vertices.add(new Point2D(boundLeft, boundTop));
-                                    vertices.add(new Point2D(boundLeft, boundBottom));
-                                    vertices.add(new Point2D(boundRight, boundBottom));
-                                    vertices.add(new Point2D(boundRight, boundTop));
-                                    break;
-                                case ORIENTED_BOX:
-                                    // uses rotating calipers
-                                    Point2D[] verticesArray = new Point2D[vertices.size()];
-                                    for(int i = 0; i < vertices.size(); i++) {
-                                        verticesArray[i] = vertices.get(i);
-                                    }
-                                    Simplify<Point2D> simplify = new Simplify<Point2D>(new Point2D[0],
-                                            new PointExtractor<Point2D>() {
-                                                @Override
-                                                public double getX(Point2D point) {
-                                                    return point.x();
-                                                }
-
-                                                @Override
-                                                public double getY(Point2D point) {
-                                                    return point.y();
-                                                }
-                                            });
-
-                                    Point2D[] simplifiedVertices = simplify.simplify(verticesArray, 10f, true);
-                                    vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices));
-                                    Point2D[] minBoundingBox = RotatingCalipers.getMinimumBoundingRectangle(vertices);
-                                    vertices = new ArrayList<Point2D>(Arrays.asList(minBoundingBox));
-                                    break;
-                                case POLYGON:
-                                    Point2D[] verticesArray2 = new Point2D[vertices.size()];
-                                    for(int i = 0; i < vertices.size(); i++) {
-                                        verticesArray2[i] = vertices.get(i);
-                                    }
-                                    Simplify<Point2D> simplify2 = new Simplify<Point2D>(new Point2D[0],
-                                            new PointExtractor<Point2D>() {
-                                                @Override
-                                                public double getX(Point2D point) {
-                                                    return point.x();
-                                                }
-
-                                                @Override
-                                                public double getY(Point2D point) {
-                                                    return point.y();
-                                                }
-                                            });
-
-                                    Point2D[] simplifiedVertices2 = simplify2.simplify(verticesArray2, 10f, true);
-                                    vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices2));
-                            }
-                            if(newMeasure3.zone.getBoundRight() - newMeasure3.zone.getBoundLeft() > 5 &&
-                                    newMeasure3.zone.getBoundBottom() - newMeasure3.zone.getBoundTop() > 5) {
-                                if (facsimileView.currentMovementNumber > facsimile.movements.size() - 1) {
-                                    facsimileView.currentMovementNumber = facsimile.movements.size() - 1;
-                                }
-                                facsimileView.commandManager.processCreateMeasureCommand(newMeasure3, facsimile, page);
-                                invalidate();
-                            }
+                            facsimileView.commandManager.processCreateMeasureCommand(facsimile, page);
                             pointPath = new ArrayList<>();
-                            System.out.println("this is point of path " + pointPath);
                             facsimileView.isFirstPoint = true;
                             invalidate();
+
+
                         }
+
+                        invalidate();
                         break;
                     case DRAW:
                         if(lastPolygonPoint == null) {
                             break;
                         }
+
                         pointPath.add(touchBitmapPosition);
                             lastPolygonPoint = new Point2D(touchX, touchY);
                             PointF firstPointInTouch = sourceToViewCoord(firstDrawPoint.getPointF()); // due to scrolling this may be another position than initially stored in firstDrawPoint
@@ -1091,7 +1025,15 @@ public class PageImageView extends SubsamplingScaleImageView {
                         double distanceToFirstPoint = Math.sqrt((double) (touchX - firstPointInTouch.x) * (touchX - firstPointInTouch.x) + (touchY - firstPointInTouch.y) * (touchY - firstPointInTouch.y));
                         if (distanceToFirstPoint < 20.0f && trackLength > 20f) {
                             pointPath.remove(pointPath.size() - 1);
-                            Measure newMeasure = new Measure();
+                            Measure newMeasure;
+                            if(Vertaktoid.metcon == false){
+                                 newMeasure = new Measure(Vertaktoid.metcon);
+
+                            }else{
+                                newMeasure = new Measure();
+                            }
+                            Vertaktoid.metcon = true;
+                            newMeasure.zone.setVertices(pointPath); // sets Vertices to currentPath
                             newMeasure.zone.setVertices(pointPath); // sets Vertices to currentPath
                             switch (facsimile.nextAnnotationsType) {
                                 case ORTHOGONAL_BOX:

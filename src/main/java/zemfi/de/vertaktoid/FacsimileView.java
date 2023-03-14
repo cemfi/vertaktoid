@@ -28,6 +28,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -274,6 +275,9 @@ public class FacsimileView extends CoordinatorLayout {
         settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
         settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
         final RadioGroup settingsMEIType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_mei_type);
+        final RadioButton upbeat = (RadioButton) settingsDialog.findViewById(R.id.upbeat);
+
+
         if (document.nextAnnotationsType == Facsimile.AnnotationType.ORTHOGONAL_BOX) {
             settingsMEIType.check(R.id.dialog_settings_annotation_type_orthogonal);
         } else if (document.nextAnnotationsType == Facsimile.AnnotationType.ORIENTED_BOX) {
@@ -298,6 +302,10 @@ public class FacsimileView extends CoordinatorLayout {
             @Override
             public void onClick(View v) {
                 try {
+                    if(upbeat.isChecked()){
+                        Vertaktoid.metcon = false;
+                    }
+
                     String historyMaxSize = settingsUndosizeInput.getText().toString();
                     if (!historyMaxSize.equals("")) {
                         commandManager.setHistoryMaxSize(Integer.parseInt(settingsUndosizeInput.getText().toString()));
