@@ -98,19 +98,22 @@ public class Facsimile implements Parcelable {
      * @param page target page
      */
     public void addMeasure(Measure measure, Page page) {
-        measure.page = page;
-        page.measures.add(measure);
-        for(int i = movements.size() - 1; i >= 0; i--) {
-            if(movements.get(i).measures.size() > 0) {
-                if (Measure.MEASURE_POSITION_COMPARATOR.compare(movements.get(i).measures.get(0), measure) < 0) {
-                    measure.movement = movements.get(i);
-                    movements.get(i).measures.add(measure);
-                    return;
+        if(measure != null){
+            measure.page = page;
+            page.measures.add(measure);
+            for(int i = movements.size() - 1; i >= 0; i--) {
+                if(movements.get(i).measures.size() > 0) {
+                    if (Measure.MEASURE_POSITION_COMPARATOR.compare(movements.get(i).measures.get(0), measure) < 0) {
+                        measure.movement = movements.get(i);
+                        movements.get(i).measures.add(measure);
+                        return;
+                    }
                 }
             }
+            measure.movement = movements.get(0);
+            movements.get(0).measures.add(measure);
         }
-        measure.movement = movements.get(0);
-        movements.get(0).measures.add(measure);
+
     }
 
     /**

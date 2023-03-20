@@ -29,6 +29,12 @@ public class CreateMeasureCommand implements ICommand, Parcelable {
         this.movement = null;
     }
 
+    public CreateMeasureCommand(Facsimile facsimile, Page page) {
+        this.facsimile = facsimile;
+        this.page = page;
+        this.movement = null;
+    }
+
     protected CreateMeasureCommand(Parcel in) {
         measure = in.readParcelable(Measure.class.getClassLoader());
         facsimile = in.readParcelable(Facsimile.class.getClassLoader());

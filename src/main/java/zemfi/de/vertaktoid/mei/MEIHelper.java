@@ -70,6 +70,24 @@ public class MEIHelper {
         return null;
     }
 
+    public static Element findElementByFacs(Elements elements, String facsid) {
+        for(int i = 0; i < elements.size(); i++) {
+            Element element = elements.get(i);
+            if(element.getAttribute("plist") != null) {
+                Attribute attr = element.getAttribute("plist");
+                if(attr != null) {
+                    String elemFacs = element.getAttributeValue("plist");
+                    System.out.println("we are in attribute " + elemFacs);
+                    if (elemFacs.equals(facsid)) {
+                        return element;
+                    }
+                }
+            }
+
+        }
+        return null;
+    }
+
     /**
      * Exports data in MEI file. The initial structure of MEI file will be kept so far as possible.
      * The comments will be lost.
@@ -122,7 +140,21 @@ public class MEIHelper {
             application.appendChild(ptr);
             a1 = new Attribute("target","hhttps://github.com/cemfi/vertaktoid/releases/tag/v4.0.0");
             ptr.addAttribute(a1);
+
+            Element work = meiHead.getFirstChildElement("work");
+
+            if(work == null) {
+                work = new Element("work");
+                meiHead.appendChild(work);
+            }
+            Element notesStmt = work.getFirstChildElement("notesStmt");
+            if(notesStmt == null) {
+                notesStmt = new Element("notesStmt");
+                work.appendChild(notesStmt);
+            }
+
         }
+
         Elements musics = meiElement.getChildElements("music", Vertaktoid.MEI_NS);
         Element music;
         if(musics.size() == 0) {
@@ -187,6 +219,7 @@ public class MEIHelper {
                 graphic = new Element("graphic", Vertaktoid.MEI_NS);
                 surface.appendChild(graphic);
             }
+
             Elements iiifimages = surface.getChildElements("graphic", Vertaktoid.MEI_NS);
             Element iiifimage = findElementByUiid(iiifimages, page.graphicUuid);
             if(IiifManifest.imgs != null  && iiifimage == null ){
@@ -225,12 +258,14 @@ public class MEIHelper {
             Elements zones = surface.getChildElements("zone", Vertaktoid.MEI_NS);
             for(Measure measure : page.measures) {
                 Element zone = findElementByUiid(zones, measure.zone.zoneUuid);
-                existingZones.add(zone);
-                if(zone == null) {
+                 existingZones.add(zone);
+                 if(zone == null) {
                     zone = new Element("zone", Vertaktoid.MEI_NS);
                     surface.appendChild(zone);
                 }
                 zone.removeChildren();
+                System.out.println("this is zone id " + measure.zone.zoneUuid);
+
                 a = new Attribute("id", measure.zone.zoneUuid);
                 a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
                 zone.addAttribute(a);
@@ -278,15 +313,15 @@ public class MEIHelper {
                 mdiv = new Element("mdiv", Vertaktoid.MEI_NS);
                 body.appendChild(mdiv);
             }
-
-            a = new Attribute("id", movement.mdivUuid);
-            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
-            mdiv.addAttribute(a);
-            a = new Attribute("n", "" + (document.movements.indexOf(movement) + 1));
-            mdiv.addAttribute(a);
-            a = new Attribute("label", movement.label);
-            mdiv.addAttribute(a);
-
+            if(Vertaktoid.annotType != "annot"){
+                a = new Attribute("id", movement.mdivUuid);
+                a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace"); // set its namespace to xml
+                mdiv.addAttribute(a);
+                a = new Attribute("n", "" + (document.movements.indexOf(movement) + 1));
+                mdiv.addAttribute(a);
+                a = new Attribute("label", movement.label);
+                mdiv.addAttribute(a);
+            }
             Element score = mdiv.getFirstChildElement("score", Vertaktoid.MEI_NS);
             if(score == null) {
                 score = new Element("score", Vertaktoid.MEI_NS);
@@ -317,6 +352,9 @@ public class MEIHelper {
 
             ArrayList<MeasureElementPair> corrMeasureElems = new ArrayList<>();
             Elements measureElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
+            Element work = meiHead.getFirstChildElement("work");
+            Element notesStmt = work.getFirstChildElement("notesStmt");
+
             for(int i = 0; i < movement.measures.size(); i++) {
                 Measure measure = movement.measures.get(i);
                 Element measureElem = findElementByUiid(measureElems, measure.measureUuid);
@@ -330,13 +368,14 @@ public class MEIHelper {
                 //        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
 
                 // calculation of a unique and sequent number n
-
-                a = new Attribute("n", "" + (i + 1));
-                measureElem.addAttribute(a);
-                // label will later be read and used to calculate the sequenceNumber
-                a = new Attribute("label", measure.manualSequenceNumber == null ?
-                        String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
-                measureElem.addAttribute(a);
+                if(measure.annoType != "annot"){
+                    a = new Attribute("n", "" + (i + 1));
+                    measureElem.addAttribute(a);
+                    // label will later be read and used to calculate the sequenceNumber
+                    a = new Attribute("label", measure.manualSequenceNumber == null ?
+                            String.valueOf(measure.sequenceNumber) : measure.manualSequenceNumber);
+                    measureElem.addAttribute(a);
+                }
                 a = new Attribute("id", measure.measureUuid);
                 a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
                 measureElem.addAttribute(a);
@@ -344,8 +383,26 @@ public class MEIHelper {
                 measureElem.addAttribute(a);
 
                 if(measure.metcon == false){
-                    a = new Attribute("mercon", "false");
+                    a = new Attribute("metcon", "false");
                     measureElem.addAttribute(a);
+                }
+                if(measure.annoType == "annot"){
+                    Elements annotations = notesStmt.getChildElements("annotation");
+                    Element annotation = findElementByFacs(annotations,  "#"+measure.zone.zoneUuid);
+                    if(annotation == null){
+                        Element anno = new Element("annotation");
+                        a = new Attribute("annotation", "true");
+                        measureElem.addAttribute(a);
+                        a = new Attribute("type", "editorialComment");
+                        anno.addAttribute(a);
+                        a = new Attribute("id", measure.zone.annotationId);
+                        a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
+                        anno.addAttribute(a);
+                        a = new Attribute("plist", "#"+measure.zone.zoneUuid);
+                        anno.addAttribute(a);
+                        notesStmt.appendChild(anno);
+                    }
+
                 }
             }
             section.removeChildren();
@@ -376,10 +433,16 @@ public class MEIHelper {
                 body.removeChild(mdivs.get(i));
             }
         }
+
         if(meiFile == null) {
             meiFile = dir.createFile("application/xml", dir.getName() + Vertaktoid.DEFAULT_MEI_EXTENSION);
         }
+        return writer(meiFile, meiDocument);
 
+    }
+
+    private static boolean writer(DocumentFile meiFile, Document meiDocument) {
+        boolean returnValue = false;
         try {
             ParcelFileDescriptor pfd = MainActivity.context.getContentResolver().
                     openFileDescriptor(meiFile.getUri(), "wt");
@@ -405,8 +468,9 @@ public class MEIHelper {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return returnValue;
+        return  returnValue;
     }
+
     /**
      * Reads the data from MEI file.
      * @param meiFile The MEI file.
@@ -487,33 +551,41 @@ public class MEIHelper {
                     section.removeChild(element);
                 }
                 if (element.getLocalName().equals("measure")) {
-                    String name = element.getAttributeValue("label");
-                    Measure measure = new Measure();
-                    measure.manualSequenceNumber = name;
-                    a = element.getAttribute("facs");
-                    if(a != null) {
-                        measure.zone.zoneUuid = element.getAttributeValue("facs");
-                        if (measure.zone.zoneUuid.startsWith("#")) {
-                            measure.zone.zoneUuid = measure.zone.zoneUuid.substring(1);
-                        }
-                        if (measure.zone.zoneUuid.substring(0, 1).matches("\\d")) {
-                            measure.zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + measure.zone.zoneUuid;
-                            a.setValue("#" + measure.zone.zoneUuid);
-                        }
+                    String annot = element.getAttributeValue("annotation");
+                    Measure measure;
+                    if(annot != null){
+                        measure = new Measure("annot");
+
+                    }else {
+                        String name = element.getAttributeValue("label");
+                        measure = new Measure();
+                        measure.manualSequenceNumber = name;
                     }
-                    a = element.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
-                    if(a != null) {
-                        if(a.getValue().substring(0, 1).matches("\\d")) {
-                            a.setValue(Vertaktoid.MEI_MEASURE_ID_PREFIX + a.getValue());
+                        a = element.getAttribute("facs");
+                        if(a != null) {
+                            measure.zone.zoneUuid = element.getAttributeValue("facs");
+                            if (measure.zone.zoneUuid.startsWith("#")) {
+                                measure.zone.zoneUuid = measure.zone.zoneUuid.substring(1);
+                            }
+                            if (measure.zone.zoneUuid.substring(0, 1).matches("\\d")) {
+                                measure.zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX + measure.zone.zoneUuid;
+                                a.setValue("#" + measure.zone.zoneUuid);
+                            }
                         }
-                    } else {
-                        a = new Attribute("id", Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString());
-                        a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
-                        element.addAttribute(a);
-                    }
-                    a = element.getAttribute("mercon");
-                    if(a != null) {
-                           measure.metcon = false;
+                        a = element.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
+                        if(a != null) {
+                            if(a.getValue().substring(0, 1).matches("\\d")) {
+                                a.setValue(Vertaktoid.MEI_MEASURE_ID_PREFIX + a.getValue());
+                            }
+                        } else {
+                            a = new Attribute("id", Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString());
+                            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");
+                            element.addAttribute(a);
+                        }
+                        a = element.getAttribute("metcon");
+                        if(a != null) {
+                            measure.metcon = false;
+                            System.out.println("metcon is false");
                         }
 
                     measure.measureUuid = element.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");

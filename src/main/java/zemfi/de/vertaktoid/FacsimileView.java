@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -275,7 +276,9 @@ public class FacsimileView extends CoordinatorLayout {
         settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
         settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
         final RadioGroup settingsMEIType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_mei_type);
-        final RadioButton upbeat = (RadioButton) settingsDialog.findViewById(R.id.upbeat);
+        final CheckBox upbeat = (CheckBox) settingsDialog.findViewById(R.id.upbeat);
+        final CheckBox annot = (CheckBox) settingsDialog.findViewById(R.id.annot);
+
 
 
         if (document.nextAnnotationsType == Facsimile.AnnotationType.ORTHOGONAL_BOX) {
@@ -304,6 +307,10 @@ public class FacsimileView extends CoordinatorLayout {
                 try {
                     if(upbeat.isChecked()){
                         Vertaktoid.metcon = false;
+                    }
+                    else if(annot.isChecked()){
+                        Vertaktoid.annotType = "annot";
+
                     }
 
                     String historyMaxSize = settingsUndosizeInput.getText().toString();
@@ -620,14 +627,12 @@ public class FacsimileView extends CoordinatorLayout {
     }
 
     public void undoClicked(){
-     /** int pageIndex = commandManager.undo();
+     int pageIndex = commandManager.undo();
         if (pageIndex != -1 && pageIndex != pageNumber.get()) {
             pageNumber.set(pageIndex);
             setPage(pageIndex);
         }
         adjustHistoryNavigation();
-        refresh(); **/
-        nextAction = Action.DRAW2;
         refresh();
     }
 

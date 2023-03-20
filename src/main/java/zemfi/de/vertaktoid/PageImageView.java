@@ -474,16 +474,25 @@ public class PageImageView extends SubsamplingScaleImageView {
             String measureLabel = measure.manualSequenceNumber != null ?
                     "" + measure.manualSequenceNumber : "" + measure.sequenceNumber;
             String movementLabel =  measure.movement.getName() +  " >>";
+            System.out.println("old = " + measure.manualSequenceNumber);
+
             String metconLabel = "";
-            if(measure.metcon == false){
-                metconLabel =  "upbeat";
+            if(measure.annoType == "annot"){
 
+                System.out.println("this is annot at pageview");
+                measureLabel =  " ";
+                if(measure.manualSequenceNumber != null){
+                    System.out.println("this is sequence number " + measure.sequenceNumber);
+                    measure.sequenceNumber =  measure.sequenceNumber - 1;
+
+                    System.out.println("this is manual sequence number " + measure.manualSequenceNumber);
+                    measure.manualSequenceNumber = String.valueOf(Integer.parseInt(measure.manualSequenceNumber) - 1);
+                    System.out.println("new = " + measure.manualSequenceNumber);
+              }
             }
-
             largeTextPaint.getTextBounds(measureLabel, 0, measureLabel.length(), measureNameRect);
             smallTextPaint.getTextBounds(movementLabel, 0, movementLabel.length(), movementNameRect);
             Point2D centroid = Geometry.centroid2D(measure.zone.getVertices());
-            System.out.println("this is " +  centroid);
             PointF centroidF = sourceToViewCoord((float) centroid.x(), (float) centroid.y());
             float leftTextBox = centroidF.x - measureNameRect.width() / 2 - 5;
             float topTextBox = centroidF.y - 20 - measureNameRect.height() /2 ;
@@ -500,9 +509,14 @@ public class PageImageView extends SubsamplingScaleImageView {
                 canvas.drawText("upbeat", centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallTextPaint);
 
             }
+            if(measure.annoType == "annot"){
+                canvas.drawText("annotation", centroidF.x - movementNameRect.centerX(),centroidF.y + 30, smallTextPaint);
+
+            }
         } // end for (foreach measure)
 
         // build current Path
+
         verticesPath.reset();
         for (int i = 0; i < pointPath.size(); i++) {
             PointF bitmapCoord = pointPath.get(i).getPointF();
@@ -637,6 +651,9 @@ public class PageImageView extends SubsamplingScaleImageView {
             List<Point2D> vertices2 = new ArrayList<>();
 
             for(int i = 0; i < measure.zone.getVertices().size() - 1; i++) {
+                if(measure.rest > 0){
+                    m1.rest = measure.rest;
+                }
                 Point2D[] side = new Point2D[2];
                 side[0] = measure.zone.getVertices().get(i);
                 side[1] = measure.zone.getVertices().get(i+1);
@@ -1025,9 +1042,17 @@ public class PageImageView extends SubsamplingScaleImageView {
                             if(Vertaktoid.metcon == false){
                                  newMeasure = new Measure(Vertaktoid.metcon);
 
+                            }
+                            else if(Vertaktoid.annotType == "annot"){
+                                newMeasure = new Measure(Vertaktoid.annotType);
+                                newMeasure.annoType = "annot";
                             }else{
                                 newMeasure = new Measure();
+                                Vertaktoid.metcon = true;
                             }
+                            System.out.println(
+                                    "this is annotation type " + Vertaktoid.annotType
+                            );
                             Vertaktoid.metcon = true;
                             newMeasure.zone.setVertices(pointPath); // sets Vertices to currentPath
                             newMeasure.zone.setVertices(pointPath); // sets Vertices to currentPath
@@ -1051,7 +1076,9 @@ public class PageImageView extends SubsamplingScaleImageView {
                                 if (facsimileView.currentMovementNumber > facsimile.movements.size() - 1) {
                                     facsimileView.currentMovementNumber = facsimile.movements.size() - 1;
                                 }
-                                facsimileView.commandManager.processCreateMeasureCommand(newMeasure, facsimile, page);
+                                    facsimileView.commandManager.processCreateMeasureCommand(newMeasure, facsimile, page);
+                                Vertaktoid.annotType = "";
+
                                 invalidate();
                             }
                             pointPath = new ArrayList<>();

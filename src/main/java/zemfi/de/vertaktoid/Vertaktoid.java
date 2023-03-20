@@ -21,6 +21,7 @@ public class Vertaktoid extends Application implements Serializable {
     public final static String MEI_NS = "http://www.music-encoding.org/ns/mei";
     public final static String VERTACTOID_VERSION = "Vertaktoid v4.0.0";
     public final static String MEI_ZONE_ID_PREFIX = "zone_";
+    public final static String MEI_ANNOTATION_ID_PREFIX = "baudi_annotation_";
     public final static String MEI_MEASURE_ID_PREFIX = "measure_";
     public final static String MEI_MDIV_ID_PREFIX = "page_";
     public final static String MEI_GRAPHIC_ID_PREFIX = "graphic_";
@@ -28,7 +29,7 @@ public class Vertaktoid extends Application implements Serializable {
     public final static String MEI_APPLICATION_ID_PREFIX = "application_";
     public final static int DEFAULT_UNDOREDO_STACK_SIZE = 50;
     public static boolean metcon = true;
-
+    public static String annotType;
 
 
     public void onCreate() {

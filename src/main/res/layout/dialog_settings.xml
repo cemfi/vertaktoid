@@ -74,13 +74,19 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginTop="20dp"
+        android:text="Measure Type" />
+
+    <CheckBox
+        android:id="@+id/upbeat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="Upbeat" />
 
-    <RadioButton android:id="@+id/upbeat"
-        android:layout_width="wrap_content"
+    <CheckBox
+        android:id="@+id/annot"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Upbeat" />
+        android:text="Annotation" />
 
     <LinearLayout
         style="?android:attr/buttonBarStyle"

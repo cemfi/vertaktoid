@@ -16,6 +16,7 @@ import zemfi.de.vertaktoid.Vertaktoid;
 public class Measure implements Comparable<Measure>, Parcelable {
 
     public final Zone zone;
+    public String annoType;
     // Automatically calculated sequence number of measure in "Movement"
     public int sequenceNumber = -1;
     // Manually created name of measure. Is a string.
@@ -44,7 +45,7 @@ public class Measure implements Comparable<Measure>, Parcelable {
         zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
         measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
         this.metcon = true;
-        }
+    }
 
     public Measure(int size) {
 
@@ -87,6 +88,18 @@ public class Measure implements Comparable<Measure>, Parcelable {
         this.metcon = metcon;
     }
 
+    public Measure(String annotType) {
+        Vertaktoid.annotType = annotType;
+        this.annoType = annotType;
+        this.metcon = true;
+        zone = new Zone(annotType);
+        zone.zoneUuid = Vertaktoid.MEI_ZONE_ID_PREFIX +  UUID.randomUUID().toString();
+        measureUuid = Vertaktoid.MEI_MEASURE_ID_PREFIX + UUID.randomUUID().toString();
+        zone.annotationId = Vertaktoid.MEI_ANNOTATION_ID_PREFIX +  UUID.randomUUID().toString();
+
+    }
+
+
     /**
      * Change the parent movement to another. Removes the measure from old movement and adds it to new.
      * The references will be adjusted.
@@ -126,7 +139,7 @@ public class Measure implements Comparable<Measure>, Parcelable {
         @Override
         public int compare(Measure m1, Measure m2) {
             if(m1.page.number == m2.page.number) {
-               return m1.zone.compareTo(m2.zone);
+                return m1.zone.compareTo(m2.zone);
             }
             else return m1.page.number - m2.page.number;
         }

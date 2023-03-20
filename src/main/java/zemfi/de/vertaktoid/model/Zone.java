@@ -18,6 +18,7 @@ import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 
 public class Zone implements Comparable<Zone>, Parcelable {
     public String zoneUuid = null;
+    public String annotationId;
     private Facsimile.AnnotationType annotationType;
     private double boundLeft = Double.MAX_VALUE;
     private double boundRight = Double.MIN_VALUE;
@@ -55,6 +56,11 @@ public class Zone implements Comparable<Zone>, Parcelable {
             return new Zone[size];
         }
     };
+
+    public Zone(String annotType) {
+      //  vertices = new ArrayList<>();
+        //annotationType = annotType;
+    }
 
     public Facsimile.AnnotationType getAnnotationType() {
         return annotationType;

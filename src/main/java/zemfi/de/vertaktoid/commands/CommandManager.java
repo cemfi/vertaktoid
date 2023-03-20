@@ -121,6 +121,13 @@ public class CommandManager implements Parcelable {
         redoCommands.clear();
     }
 
+    public void processCreateMeasureCommand(Facsimile facsimile,
+                                            Page page) {
+        ICommand command = new CreateMeasureCommand(facsimile, page);
+        command.execute();
+        undoCommands.push(command);
+        redoCommands.clear();
+    }
     public void processRemoveMeasureCommand(Measure measure, Facsimile facsimile) {
         ICommand command = new RemoveMeasureCommand(measure, facsimile);
         command.execute();
