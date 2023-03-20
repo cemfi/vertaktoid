@@ -18,6 +18,7 @@ import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 
 public class Zone implements Comparable<Zone>, Parcelable {
     public String zoneUuid = null;
+    public String annotationId;
     private Facsimile.AnnotationType annotationType;
     private double boundLeft = Double.MAX_VALUE;
     private double boundRight = Double.MIN_VALUE;
@@ -56,6 +57,11 @@ public class Zone implements Comparable<Zone>, Parcelable {
         }
     };
 
+    public Zone(String annotType) {
+      //  vertices = new ArrayList<>();
+        //annotationType = annotType;
+    }
+
     public Facsimile.AnnotationType getAnnotationType() {
         return annotationType;
     }
@@ -79,6 +85,7 @@ public class Zone implements Comparable<Zone>, Parcelable {
         vertices.add(new Point2D(boundLeft, boundBottom));
         vertices.add(new Point2D(boundRight, boundBottom));
         vertices.add(new Point2D(boundRight, boundTop));
+
     }
 
     public void convertToOrientedBox() {
@@ -107,6 +114,7 @@ public class Zone implements Comparable<Zone>, Parcelable {
 
         Point2D[] simplifiedVertices = simplify.simplify(verticesArray, 10f, true);
         vertices = new ArrayList<Point2D>(Arrays.asList(simplifiedVertices));
+
     }
 
     public double getBoundLeft() {

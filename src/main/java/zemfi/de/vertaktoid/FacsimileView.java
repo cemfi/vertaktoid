@@ -7,10 +7,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.pdf.PdfRenderer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.CoordinatorLayout;
@@ -22,7 +27,9 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,6 +43,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -56,6 +64,9 @@ import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 import zemfi.de.vertaktoid.model.Facsimile;
+import zemfi.de.vertaktoid.model.Measure;
+import zemfi.de.vertaktoid.model.Page;
+import zemfi.de.vertaktoid.model.Zone;
 
 /**
  * Contains the presentation and user interaction functions (click on icon). Directs the UI layouts.
@@ -110,7 +121,7 @@ public class FacsimileView extends CoordinatorLayout {
 
 
 
-    public enum Action {DRAW, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, IIIFZOOM, ADJUST_MOVEMENT;
+    public enum Action {DRAW, DRAW2, ERASE, ADJUST_MEASURE, ORTHOGONAL_CUT, PRECISE_CUT, IIIF_ZOOM, ADJUST_MOVEMENT;
     }
 
     public Action nextAction = Action.DRAW;
@@ -265,6 +276,11 @@ public class FacsimileView extends CoordinatorLayout {
         settingsUndosizeInput.setHint("" + commandManager.getHistoryMaxSize());
         settingsUndosizeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
         final RadioGroup settingsMEIType = (RadioGroup) settingsDialog.findViewById(R.id.dialog_settings_mei_type);
+        final CheckBox upbeat = (CheckBox) settingsDialog.findViewById(R.id.upbeat);
+        final CheckBox annot = (CheckBox) settingsDialog.findViewById(R.id.annot);
+
+
+
         if (document.nextAnnotationsType == Facsimile.AnnotationType.ORTHOGONAL_BOX) {
             settingsMEIType.check(R.id.dialog_settings_annotation_type_orthogonal);
         } else if (document.nextAnnotationsType == Facsimile.AnnotationType.ORIENTED_BOX) {
@@ -289,6 +305,14 @@ public class FacsimileView extends CoordinatorLayout {
             @Override
             public void onClick(View v) {
                 try {
+                    if(upbeat.isChecked()){
+                        Vertaktoid.metcon = false;
+                    }
+                    else if(annot.isChecked()){
+                        Vertaktoid.annotType = "annot";
+
+                    }
+
                     String historyMaxSize = settingsUndosizeInput.getText().toString();
                     if (!historyMaxSize.equals("")) {
                         commandManager.setHistoryMaxSize(Integer.parseInt(settingsUndosizeInput.getText().toString()));
@@ -334,6 +358,7 @@ public class FacsimileView extends CoordinatorLayout {
      */
     public void setFacsimile(Facsimile facsimile) {
         movementColors = new ArrayList<>();
+
         this.document = facsimile;
         pageNumber.set(0);
         currentMovementNumber = document.movements.size() - 1;
@@ -360,203 +385,6 @@ public class FacsimileView extends CoordinatorLayout {
     public void brushClicked() {
         nextAction = Action.DRAW;
         refresh();
-    }
-    public void iiif_view() throws JSONException {
-        resetState();
-        final Dialog settingsDialog = new Dialog(getContext());
-        Window window = settingsDialog.getWindow();
-        WindowManager.LayoutParams wlp = window.getAttributes();
-        wlp.gravity = Gravity.TOP;
-        window.setAttributes(wlp);
-        settingsDialog.setContentView(R.layout.iiif_layout);
-        settingsDialog.setTitle(R.string.dialog_iifs_titel);
-        final String[] regionUrl = new String[1];
-        final String[] sizeurl = new String[1];
-        final String[] rotationurl =  new String[1];
-        final String[] iiifquality =  new String[1];
-
-        final EditText iiif_right = (EditText) settingsDialog.findViewById(R.id.iiif_right);
-        final EditText iiif_top = (EditText) settingsDialog.findViewById(R.id.iiif_top);
-        final EditText iiif_width = (EditText) settingsDialog.findViewById(R.id.iiif_width);
-        final EditText iiif_height = (EditText) settingsDialog.findViewById(R.id.iiif_height);
-
-        final EditText iiif_right_percent = (EditText) settingsDialog.findViewById(R.id.iiif_right_percent);
-        final EditText iiif_top_percent = (EditText) settingsDialog.findViewById(R.id.iiif_top_percent);
-        final EditText iiif_width_percent= (EditText) settingsDialog.findViewById(R.id.iiif_width_percent);
-        final EditText iiif_height_percent = (EditText) settingsDialog.findViewById(R.id.iiif_height_percent);
-
-        final EditText iiifSize = (EditText) settingsDialog.findViewById(R.id.dialog_iiif_size_input);
-
-        final EditText iiifrotation = (EditText) settingsDialog.findViewById(R.id.dialog_iiif_rotation_input);
-
-        final RadioGroup region = (RadioGroup) settingsDialog.findViewById(R.id.regions);
-        final RadioGroup quality = (RadioGroup) settingsDialog.findViewById(R.id.quality);
-
-
-
-        region.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                    if (region.getCheckedRadioButtonId() == R.id.region_points) {
-                        iiif_right.setEnabled(true);
-                        iiif_top.setEnabled(true);
-                        iiif_width.setEnabled(true);
-                        iiif_height.setEnabled(true);
-
-                    }
-                    else if (region.getCheckedRadioButtonId() == R.id.region_percent) {
-                        iiif_right_percent.setEnabled(true);
-                        iiif_top_percent.setEnabled(true);
-                        iiif_width_percent.setEnabled(true);
-                        iiif_height_percent.setEnabled(true);
-                }
-            }
-        });
-
-        Button settingsButtonNegative = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_negative);
-
-        settingsButtonNegative.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                settingsDialog.cancel();
-                resetState();
-                resetMenu();
-                invalidate();
-            }
-        });
-
-        Button settingsButtonPositive = (Button) settingsDialog.findViewById(R.id.dialog_settings_button_positive);
-        settingsButtonPositive.setOnClickListener(new OnClickListener() {
-
-
-            @Override
-            public void onClick(View v) {
-                try {
-
-                    File file = new File(String.valueOf(Environment.getExternalStoragePublicDirectory(stringUrlParser())), "iiif.json");
-
-                    FileReader fileReader = null;
-                    try {
-                        fileReader = new FileReader(file);
-                    } catch (FileNotFoundException e) {
-                        System.out.println("File is not found");
-                        e.printStackTrace();
-                    }
-                    BufferedReader bufferedReader = new BufferedReader(fileReader);
-                    StringBuilder stringBuilder = new StringBuilder();
-
-                    String line = null;
-                    try {
-                        line = bufferedReader.readLine();
-                    } catch (IOException e) {
-                        System.out.println("Again ioexception");
-                        e.printStackTrace();
-                    }
-                    while (line != null){
-                        stringBuilder.append(line).append("\n");
-                        try {
-                            line = bufferedReader.readLine();
-                        } catch (IOException e) {
-                            System.out.println("Ioe exception");
-                            e.printStackTrace();
-                        }
-                    }
-                    try {
-                        bufferedReader.close();
-                    } catch (IOException e) {
-                        System.out.println("IOEEE exception");
-                        e.printStackTrace();
-                    }
-                    String responce = stringBuilder.toString();
-                    JSONObject jsonObject  = new JSONObject(responce);
-                    JSONArray urls = jsonObject.getJSONArray("urls");
-                    if (region.getCheckedRadioButtonId() == R.id.region_full) {
-                        regionUrl[0] = "full";
-                    }
-                    if (region.getCheckedRadioButtonId() == R.id.region_square) {
-                        regionUrl[0] = "square";
-                    }
-                    if (region.getCheckedRadioButtonId() == R.id.region_points) {
-                        regionUrl[0] = iiif_right.getText().toString() + "," + iiif_top.getText().toString() + "," + iiif_height.getText().toString() + "," + iiif_width.getText().toString();
-                    }
-                    if (region.getCheckedRadioButtonId() == R.id.region_percent){
-                        regionUrl[0] = "pct:" + iiif_right_percent.getText().toString() + "," + iiif_top_percent.getText().toString() + "," + iiif_height_percent.getText().toString() + "," + iiif_width_percent.getText().toString();
-
-                    }
-                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_color){
-                        iiifquality[0] =  "color";
-                    }
-                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_defualt){
-                        iiifquality[0] =  "default.jpg";
-                    }
-                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_gray){
-                        System.out.println("colot is gray");
-
-                        iiifquality[0] =  "gray.jpg";
-                    }
-                    if (quality.getCheckedRadioButtonId() == R.id.iiif_quality_bitonal){                        System.out.println("colot is clicked");
-                        iiifquality[0] =  "bitonal.jpg";
-                    }
-                    if(iiifSize != null) {
-                        sizeurl[0] = iiifSize.getText().toString();
-                    }
-                    if(iiifrotation != null){
-                        rotationurl[0] = iiifrotation.getText().toString();
-                    }
-                    if(regionUrl[0] == null){
-                        regionUrl[0] = "full";
-                    }if( iiifquality[0] == null){
-                        iiifquality[0] = "default.jpg";
-                    } if (sizeurl[0].isEmpty()){
-                        sizeurl[0] = "full";
-                    }
-                    if (rotationurl[0].isEmpty()){
-                        rotationurl[0] = "0";
-                    }
-                    currentPageUrlId = urls.getJSONObject(document.pages.get(pageNumber.get()).number - 1);
-                    currentPageUrlId.get("id");
-                    String hostname = new URL((String) currentPageUrlId.get("url")).getHost();
-                    ImagePopup imagePopup = new ImagePopup(MainActivity.context);
-                    String[] originalurl =  new String[ currentPageUrlId.get("url").toString().split("/").length];
-
-                    originalurl = currentPageUrlId.get("url").toString().split("/");
-                    originalurl[originalurl.length - 1] = iiifquality[0];
-                    originalurl[originalurl.length - 2] = rotationurl[0];
-                    originalurl[originalurl.length - 3] = sizeurl[0];
-                    originalurl[originalurl.length - 4] = regionUrl[0];
-                    System.out.println(originalurl[0]);
-                    String stringurl = "";
-                    for (String string : originalurl) {
-                        stringurl = stringurl + "/"+ string;
-                    }
-                    String newurl;
-                    newurl = stringurl.substring(1);
-
-                    System.out.println(originalurl.length);
-                    imagePopup.setWindowHeight(800); // Optional
-                    imagePopup.setWindowWidth(800); // Optional
-                    imagePopup.setFullScreen(false); // Optional
-                    imagePopup.setHideCloseIcon(true);  // Optional
-                    imagePopup.setImageOnClickClose(true);  // Optional
-
-                    imagePopup.initiatePopupWithPicasso(newurl);
-                    imagePopup.viewPopup();
-
-                } catch (NumberFormatException | JSONException | MalformedURLException e) {
-                    // do nothing
-                }
-                resetState();
-                resetMenu();
-                invalidate();
-                settingsDialog.dismiss();
-            }
-        });
-
-        settingsDialog.show();
-
-
-
     }
 
     /**
@@ -597,6 +425,7 @@ public class FacsimileView extends CoordinatorLayout {
      * Menu entry "erase all measures" clicked.
      */
     public void eraseAllClicked() {
+
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.context).create();
         alertDialog.setTitle("Alert");
         alertDialog.setMessage("Are you sure, you want to delete all measures from all pages?");
@@ -625,7 +454,7 @@ public class FacsimileView extends CoordinatorLayout {
     }
     /**
      * Menu entry "measureAllClicked" clicked.
-     */
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     public void measureAllClicked() {
         refresh();
@@ -645,7 +474,7 @@ public class FacsimileView extends CoordinatorLayout {
         }
         getMeasureDetector(paths, pageNumbers);
     }
-
+     */
     public void setProgressBar(String text){
         progress.setTitle("Loading");
         progress.setMessage(text);
@@ -653,7 +482,7 @@ public class FacsimileView extends CoordinatorLayout {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    public  void measurPageClicked() throws InterruptedException {
+    public void measurPageClicked() throws InterruptedException {
         refresh();
         setProgressBar("Vertaktoid is adding measures, please wait");
 
@@ -797,8 +626,8 @@ public class FacsimileView extends CoordinatorLayout {
         toast.show();
     }
 
-    public void undoClicked() {
-        int pageIndex = commandManager.undo();
+    public void undoClicked(){
+     int pageIndex = commandManager.undo();
         if (pageIndex != -1 && pageIndex != pageNumber.get()) {
             pageNumber.set(pageIndex);
             setPage(pageIndex);
@@ -817,13 +646,64 @@ public class FacsimileView extends CoordinatorLayout {
         refresh();
     }
 
+
+    public void openpdfClicked(File dest, String folderName) throws IOException  {
+
+
+        PdfRenderer renderer = null;
+        try {
+            ParcelFileDescriptor parcelFileDescriptor = ParcelFileDescriptor.open(dest, ParcelFileDescriptor.MODE_READ_ONLY);
+            renderer = new PdfRenderer(parcelFileDescriptor);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        int pageCount = renderer.getPageCount();
+
+        for (int i = 0; i < pageCount; i++) {
+            PdfRenderer.Page page = renderer.openPage(i);
+            int width = getResources().getDisplayMetrics().densityDpi / 72 * page.getWidth();
+            int height = getResources().getDisplayMetrics().densityDpi / 72 * page.getHeight();
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+            page.close();
+
+            // Save the Bitmap to disk.
+            int bwidth = bitmap.getWidth();
+            int bheight = bitmap.getHeight();
+
+            Bitmap newBitmap = Bitmap.createBitmap(bwidth, bheight, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(newBitmap);
+            canvas.drawColor(Color.WHITE);
+            canvas.drawBitmap(bitmap, 0, 0, null);
+            System.out.println();
+
+            File imageFile = new File((String.valueOf(folderName)), "page" + i + ".png");
+            FileOutputStream out = null;
+            try {
+                out = new FileOutputStream(imageFile);
+                newBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                out.flush();
+                out.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            if (imageFile.exists()) {
+            } else {
+            }
+        }
+        renderer.close();
+
+
+    }
+
     /**
      * Reset current menu state to default "brush" entry
      */
     void resetState() {
         nextAction = Action.DRAW;
         refresh();
-
     }
 
     public void refresh() {

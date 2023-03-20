@@ -82,8 +82,13 @@ public class Movement implements Parcelable {
             // Calculate the next sequence number by default
 
             if(i > 0) {
+                if(measure.annoType == "annot"){
+                            num = measures.get(i-1).sequenceNumber;
+                            Vertaktoid.annotType = "";
+                }else{
+                    num = measures.get(i-1).sequenceNumber + (measures.get(i-1).rest > 1 ? measures.get(i-1).rest : 1);
+                }
                 // sequent number
-                num = measures.get(i-1).sequenceNumber + (measures.get(i-1).rest > 1 ? measures.get(i-1).rest : 1);
             }
             // Try to parse manual sequence number if not null.
             // If no number can be parsed from manual sequence number,

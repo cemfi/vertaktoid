@@ -58,6 +58,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/dialog_settings_mei_canonical" />
+
         <RadioButton android:id="@+id/dialog_settings_annotation_type_oriented"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -67,6 +68,26 @@
             android:layout_height="wrap_content"
             android:text="@string/dialog_settings_mei_polygonal" />
     </RadioGroup>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:text="Measure Type" />
+
+    <CheckBox
+        android:id="@+id/upbeat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Upbeat" />
+
+    <CheckBox
+        android:id="@+id/annot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Annotation" />
+
     <LinearLayout
         style="?android:attr/buttonBarStyle"
         android:orientation="horizontal"
