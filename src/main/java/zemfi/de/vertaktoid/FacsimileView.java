@@ -13,7 +13,6 @@ import android.graphics.Color;
 import android.graphics.pdf.PdfRenderer;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
@@ -29,25 +28,18 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.ceylonlabs.imageviewpopup.ImagePopup;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
@@ -64,9 +56,6 @@ import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.HSLColorsGenerator;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 import zemfi.de.vertaktoid.model.Facsimile;
-import zemfi.de.vertaktoid.model.Measure;
-import zemfi.de.vertaktoid.model.Page;
-import zemfi.de.vertaktoid.model.Zone;
 
 /**
  * Contains the presentation and user interaction functions (click on icon). Directs the UI layouts.
@@ -649,7 +638,8 @@ public class FacsimileView extends CoordinatorLayout {
 
     public void openpdfClicked(File dest, String folderName) throws IOException  {
 
-
+        setProgressBar("Converting images to pdf");
+        progress.show();
         PdfRenderer renderer = null;
         try {
             ParcelFileDescriptor parcelFileDescriptor = ParcelFileDescriptor.open(dest, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -659,7 +649,6 @@ public class FacsimileView extends CoordinatorLayout {
         }
 
         int pageCount = renderer.getPageCount();
-
         for (int i = 0; i < pageCount; i++) {
             PdfRenderer.Page page = renderer.openPage(i);
             int width = getResources().getDisplayMetrics().densityDpi / 72 * page.getWidth();
@@ -676,9 +665,8 @@ public class FacsimileView extends CoordinatorLayout {
             Canvas canvas = new Canvas(newBitmap);
             canvas.drawColor(Color.WHITE);
             canvas.drawBitmap(bitmap, 0, 0, null);
-            System.out.println();
 
-            File imageFile = new File((String.valueOf(folderName)), "page" + i + ".png");
+            File imageFile = new File((String.valueOf(folderName)), leadingZeros(i) + i + ".png");
             FileOutputStream out = null;
             try {
                 out = new FileOutputStream(imageFile);
@@ -691,6 +679,9 @@ public class FacsimileView extends CoordinatorLayout {
 
             if (imageFile.exists()) {
             } else {
+            }
+            if(i == pageCount -1){
+                progress.dismiss();
             }
         }
         renderer.close();
@@ -725,6 +716,25 @@ public class FacsimileView extends CoordinatorLayout {
     public void setMenu(Menu menu) {
         this.menu = menu;
     }
+
+    /**
+     * Add leading zeros
+     *
+     */
+    private String leadingZeros(int i) {
+        if (i < 10)
+            return "0000" + i;
+        if (i < 100)
+            return "000" + i;
+        if (i < 1000)
+            return "00" + i;
+        if (i < 10000)
+            return "0" + i;
+
+        return "" + i;
+
+    }
+
 
     /**
      * Reset menu icons.
