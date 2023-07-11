@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
@@ -26,43 +25,27 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-
 import com.ceylonlabs.imageviewpopup.ImagePopup;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
-import com.goebl.simplify.PointExtractor;
-import com.goebl.simplify.Simplify;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-
-import kotlin.collections.IntIterator;
 import zemfi.de.vertaktoid.helpers.Geometry;
 import zemfi.de.vertaktoid.helpers.HSLColor;
 import zemfi.de.vertaktoid.helpers.Point2D;
-import zemfi.de.vertaktoid.helpers.RotatingCalipers;
 import zemfi.de.vertaktoid.mei.MEIHelper;
 import zemfi.de.vertaktoid.model.Facsimile;
 import zemfi.de.vertaktoid.model.Measure;
 import zemfi.de.vertaktoid.model.Movement;
 import zemfi.de.vertaktoid.model.Page;
-import zemfi.de.vertaktoid.model.Zone;
 
 /**
  * Includes rendering functions, dialogs, touch functions.
@@ -753,10 +736,10 @@ public class PageImageView extends SubsamplingScaleImageView {
         float touchX = event.getX();
         float touchY = event.getY();
         touchBitmapPosition = new Point2D(viewToSourceCoord(touchX, touchY));
-        /** if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
+        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER)
         {
             return super.onTouchEvent(event);
-        } **/
+        }
 
         final ArrayList<Measure> measures = page.getMeasuresAt(touchBitmapPosition);
         final Measure measure = page.getMeasureAt(touchBitmapPosition);

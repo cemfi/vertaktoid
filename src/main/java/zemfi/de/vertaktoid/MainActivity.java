@@ -457,6 +457,15 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
             }
         }
+        if(requestCode == 1) {
+            try {
+                activity.startActivityForResult(Intent.createChooser(intent,"choose pdf file"), requestCode);
+            } catch (android.content.ActivityNotFoundException ex) {
+                // Potentially direct the user to the Market with a Dialog
+                Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+            }
+
+        }
         if(requestCode == 3){
             loadFacsimile(dirf);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -511,15 +520,16 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 1:
                 if (resultCode == Activity.RESULT_OK) {
-                    dir2 = DocumentFile.fromTreeUri(this, data.getData());
-
-                    try {
-                        iiifManifestObj.downloadImage(dir2);
-                    } catch (IOException | InterruptedException | JSONException e) {
-                        e.printStackTrace();
-                    }
+                    if (data != null) {
+                        dir2 = DocumentFile.fromTreeUri(this, data.getData());
+                        try {
+                            iiifManifestObj.downloadImage(dir2);
+                        } catch (IOException | InterruptedException | JSONException e) {
+                            e.printStackTrace();
+                        }                    }
 
                 }
+                break;
             case 4:
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();

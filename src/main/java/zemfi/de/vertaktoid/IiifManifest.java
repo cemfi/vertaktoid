@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.support.annotation.RequiresApi;
 import android.support.v4.provider.DocumentFile;
 import android.text.InputType;
@@ -35,9 +34,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -202,14 +198,25 @@ public class IiifManifest extends Activity {
                                 canvas = canv.getJSONArray("canvases");
 
                                 imgs = new String[canvas.length()];
-                                for (int i = 0; i < canvas.length(); i++) {
+                                System.out.println("total number of images is " + imgs.length);
+                                for (int i = 0; i < canvas.length(); i++) {                                     ;
                                     img = canvas.getJSONObject(i);
                                     image = img.getJSONArray("images");
                                     res = image.getJSONObject(0);
                                     resource = res.getJSONObject("resource");
                                     ids = resource.getString("@id");
                                     imgs[i] = ids;
-                                    imageUrl.add(imgs[i]);
+
+                                   if(!(imgs[i].endsWith(".jpg") || imgs[i].endsWith(".jpeg")) && !(imgs[i].contains("/full/full"))){
+                                       imageUrl.add(imgs[i]+"/full/full/0/default.jpg");
+                                    }else{
+                                       if(imgs[i].contains(".png")){
+                                           imgs[i].replace("png","jpg");
+                                           imageUrl.add(imgs[i].replace(".png",".jpg"));
+                                       }else{
+                                           imageUrl.add(imgs[i]);
+                                       }
+                                    }
                                 }
 
 
@@ -226,6 +233,7 @@ public class IiifManifest extends Activity {
 
                                     image = canv.getJSONArray("items");
                                     res = image.getJSONObject(0);
+
                                     item1 = res.getJSONArray("items");
                                     item2 = item1.getJSONObject(0);
                                     item3 = item2.getJSONArray("items");

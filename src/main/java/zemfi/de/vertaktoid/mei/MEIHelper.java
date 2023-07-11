@@ -2,15 +2,9 @@ package zemfi.de.vertaktoid.mei;
 
 import static zemfi.de.vertaktoid.Vertaktoid.VERTACTOID_VERSION;
 
-import android.app.Dialog;
 import android.os.ParcelFileDescriptor;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -352,8 +346,15 @@ public class MEIHelper {
 
             ArrayList<MeasureElementPair> corrMeasureElems = new ArrayList<>();
             Elements measureElems = section.getChildElements("measure", Vertaktoid.MEI_NS);
-            Element work = meiHead.getFirstChildElement("work");
-            Element notesStmt = work.getFirstChildElement("notesStmt");
+            Element work = null;
+            Element notesStmt = null;
+            if( meiHead.getFirstChildElement("work") != null){
+                work = meiHead.getFirstChildElement("work");
+                if(work.getFirstChildElement("notesStmt")!= null){
+                    notesStmt = work.getFirstChildElement("notesStmt");
+                }
+            }
+
 
             for(int i = 0; i < movement.measures.size(); i++) {
                 Measure measure = movement.measures.get(i);

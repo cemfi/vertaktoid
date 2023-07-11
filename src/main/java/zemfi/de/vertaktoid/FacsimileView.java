@@ -42,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -538,6 +539,8 @@ public class FacsimileView extends CoordinatorLayout {
 
                     try {
                         OkHttpClient client = new OkHttpClient().newBuilder()
+                                .writeTimeout(999999999, TimeUnit.MILLISECONDS)
+                                .readTimeout(999999999, TimeUnit.MILLISECONDS)
                                 .build();
                         RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
                                 .addFormDataPart("Content-Type", "image/jpg")
